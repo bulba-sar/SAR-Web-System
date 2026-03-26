@@ -15,7 +15,7 @@ app.add_middleware(
 
 # --- AUTHENTICATE GEE ---
 KEY_FILE = 'credentials.json' 
-credentials = service_account.Credentials.from_service_account_file(KEY_FILE)
+credentials = ""
 scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/earthengine'])
 
 try:
