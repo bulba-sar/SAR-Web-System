@@ -1,0 +1,121 @@
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Added a clean font */
+}
+
+.sidebar {
+  width: 300px;
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column; /* Keeps items stacked neatly */
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2ecc71; /* Gives BULBA-SAR a nice agricultural green pop */
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #ecf0f1;
+}
+
+#map {
+  flex-grow: 1;
+  z-index: 1; /* Ensures the map stays strictly behind the sidebar */
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 20px;
+  transition: background 0.3s ease; /* Smooth hover effect */
+}
+
+button:hover { 
+  background: #2ecc71; 
+}
+
+.legend {
+  margin-top: 20px;
+  background: rgba(0, 0, 0, 0.2); /* Slightly darkens the legend area to make it stand out */
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.legend h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #ecf0f1;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.dot {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+  box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Makes the legend dots pop */
+}
+
+.blue { background: #3498db; }
+.green { background: #2ecc71; }
+.yellow { background: #f1c40f; }
+.red { background: #e74c3c; }
+
+/* --- NEW: Professional Loading Spinner --- */
+.loading-container {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: #f1c40f;
+  font-weight: bold;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 4px solid rgba(241, 196, 15, 0.3);
+  border-radius: 50%;
+  border-top-color: #f1c40f;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
