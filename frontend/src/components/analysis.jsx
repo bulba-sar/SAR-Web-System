@@ -247,14 +247,12 @@ const CropAreaTooltip = ({ active, payload }) => {
 //  MAIN ANALYSIS COMPONENT
 // ============================================================
 
-export default function Analysis({ sarUrl, basemapUrl }) {
+export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon }) {
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop'
   const [startYear, setStartYear] = useState('2022');
   const [endYear, setEndYear] = useState('2023');
   const [selectedSeason, setSelectedSeason] = useState('all');
   const [sarOpacity, setSarOpacity] = useState(0.8);
-  const [drawnPolygon, setDrawnPolygon] = useState(null);
-
   // LULC state
   const [analyticsData, setAnalyticsData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

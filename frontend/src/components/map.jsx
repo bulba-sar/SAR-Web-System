@@ -145,10 +145,6 @@ export default function Map({
           setPopupInfo={setPopupInfo} 
         />
 
-        {basemapUrl && (
-          <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" />
-        )}
-
         {/* RENDER LAYERS */}
         {basemapUrl && (
           <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" />

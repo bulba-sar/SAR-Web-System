@@ -1,11 +1,22 @@
 import ee
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from google.oauth2 import service_account
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.orm import Session
+from datetime import datetime
+
+import database
+import models
+import auth as auth_module
+from database import get_db
 
 app = FastAPI(title="Thesis Backend")
+
+# --- CREATE TABLES ON STARTUP ---
+models.Base.metadata.create_all(bind=database.engine)
 
 # --- CORS ---
 app.add_middleware(
@@ -14,6 +25,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- GLOBAL EXCEPTION HANDLER (ensures CORS headers are on all errors) ---
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Server error: {str(exc)}"},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 # --- AUTHENTICATE GEE (Single Init) ---
 KEY_FILE = 'credentials.json'
@@ -34,7 +54,7 @@ assets = {
     2021: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2021_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2021_SEM2_LULC_TRY"},
     2022: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2022_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2022_SEM2_LULC_TRY"},
     2023: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2023_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2023_SEM2_LULC_TRY"},
-    2024: {"Jan-Jun": "", "Jul-Dec": ""},
+    2024: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2024_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2024_SEM2_LULC_TRY"},
     2025: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2025_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2025_SEM2_LULC_TRY"}
 }
 
@@ -895,3 +915,151 @@ async def get_crop_area(request: CropAreaRequest):
 @app.get("/")
 def read_root():
     return {"status": "SAR Backend is running!"}
+
+
+# ============================================================
+#  AUTH — REGISTER & LOGIN
+# ============================================================
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    institution: Optional[str] = None
+    role: str = "Researcher"
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+    institution: Optional[str] = None
+    role: Optional[str] = None
+
+
+class SaveAOIRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    geojson: str  # JSON string of [{lat, lng}, ...] array
+
+
+def user_to_dict(user: models.User) -> dict:
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "institution": user.institution,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+@app.post("/auth/register")
+def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(models.User).filter(models.User.email == req.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = models.User(
+        name=req.name,
+        email=req.email,
+        password_hash=auth_module.hash_password(req.password),
+        institution=req.institution,
+        role=req.role,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    token = auth_module.create_token(user.id)
+    return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
+
+
+@app.post("/auth/login")
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == req.email).first()
+    if not user or not auth_module.verify_password(req.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = auth_module.create_token(user.id)
+    return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
+
+
+# ============================================================
+#  PROFILE — GET & UPDATE
+# ============================================================
+
+@app.get("/profile/me")
+def get_me(current_user: models.User = Depends(auth_module.get_current_user)):
+    return user_to_dict(current_user)
+
+
+@app.put("/profile/me")
+def update_me(
+    req: UpdateProfileRequest,
+    current_user: models.User = Depends(auth_module.get_current_user),
+    db: Session = Depends(get_db),
+):
+    if req.name is not None:
+        current_user.name = req.name
+    if req.institution is not None:
+        current_user.institution = req.institution
+    if req.role is not None:
+        current_user.role = req.role
+    db.commit()
+    db.refresh(current_user)
+    return user_to_dict(current_user)
+
+
+# ============================================================
+#  SAVED AOIs — LIST, SAVE, DELETE
+# ============================================================
+
+def aoi_to_dict(aoi: models.SavedAOI) -> dict:
+    return {
+        "id": aoi.id,
+        "name": aoi.name,
+        "description": aoi.description,
+        "geojson": aoi.geojson,
+        "created_at": aoi.created_at.isoformat() if aoi.created_at else None,
+    }
+
+
+@app.get("/profile/aois")
+def list_aois(current_user: models.User = Depends(auth_module.get_current_user)):
+    return [aoi_to_dict(a) for a in current_user.aois]
+
+
+@app.post("/profile/aois")
+def save_aoi(
+    req: SaveAOIRequest,
+    current_user: models.User = Depends(auth_module.get_current_user),
+    db: Session = Depends(get_db),
+):
+    aoi = models.SavedAOI(
+        user_id=current_user.id,
+        name=req.name,
+        description=req.description,
+        geojson=req.geojson,
+    )
+    db.add(aoi)
+    db.commit()
+    db.refresh(aoi)
+    return aoi_to_dict(aoi)
+
+
+@app.delete("/profile/aois/{aoi_id}")
+def delete_aoi(
+    aoi_id: int,
+    current_user: models.User = Depends(auth_module.get_current_user),
+    db: Session = Depends(get_db),
+):
+    aoi = db.query(models.SavedAOI).filter(
+        models.SavedAOI.id == aoi_id,
+        models.SavedAOI.user_id == current_user.id
+    ).first()
+    if not aoi:
+        raise HTTPException(status_code=404, detail="AOI not found")
+    db.delete(aoi)
+    db.commit()
+    return {"message": "Deleted"}

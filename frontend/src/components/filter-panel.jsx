@@ -149,8 +149,8 @@ export default function FilterPanel({
             >
               <option value="all">All</option>
               <option value="agriculture">Agriculture</option>
-              <option value="urban">Built-up / Urban</option>
-              <option value="forest">Forest Cover</option>
+              <option value="urban">Urban</option>
+              <option value="forest">Forest</option>
             </select>
           </div>
 

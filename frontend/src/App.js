@@ -3,6 +3,7 @@ import Sidebar from './components/sidebar';
 import Map from './components/map';
 import FilterPanel from './components/filter-panel';
 import Analysis from './components/analysis';
+import Profile from './components/profile';
 
 export default function App() {
   const [activeNav, setActiveNav] = useState('filters');
@@ -25,6 +26,15 @@ export default function App() {
   const [activeLayer, setActiveLayer] = useState('all');
   const [sarOpacity, setSarOpacity] = useState(0.5);
   const [loading, setLoading] = useState(false);
+
+  // Drawn polygon — lifted here so Profile can save/load AOIs
+  const [drawnPolygon, setDrawnPolygon] = useState(null);
+
+  // Load a saved AOI: populate polygon + switch to Analysis view
+  const handleLoadAOI = (polygonPoints) => {
+    setDrawnPolygon(polygonPoints);
+    setActiveNav('analysis');
+  };
 
   // --- 1. Fetch Protected Areas ---
   useEffect(() => {
@@ -126,11 +136,18 @@ export default function App() {
       />
 
       {/* 2. DYNAMIC CONTENT AREA */}
-      {activeNav === 'analysis' ? (
-        
+      {activeNav === 'profile' ? (
+
+        // SHOW PROFILE DASHBOARD
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50">
+          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} />
+        </div>
+
+      ) : activeNav === 'analysis' ? (
+
         // SHOW THIS WHEN "ANALYSIS" IS CLICKED
         <div className="flex-1 h-full overflow-hidden bg-white">
-          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} />
+          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} />
         </div>
 
       ) : (
