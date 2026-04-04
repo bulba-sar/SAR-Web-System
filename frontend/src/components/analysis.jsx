@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine
@@ -40,13 +40,10 @@ const CONFIDENCE_COLORS = {
 //  MAP SUB-COMPONENTS (unchanged)
 // ============================================================
 
-const MapControls = ({ bounds, isDrawing, setIsDrawing }) => {
+const MapControls = ({ bounds }) => {
   const map = useMap();
   return (
     <div className="absolute top-3 right-3 lg:top-4 lg:right-4 z-[1000] flex flex-col shadow-lg rounded-lg overflow-hidden border border-white/10">
-      <button onClick={() => setIsDrawing(!isDrawing)} title={isDrawing ? "Click on map to draw, Double-click to finish" : "Draw Study Area"} className={`w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center transition-all border-b border-white/10 ${isDrawing ? 'bg-green-600 text-white' : 'bg-zinc-900/80 hover:bg-zinc-700 text-zinc-400 hover:text-white backdrop-blur-sm'}`}>
-        <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-      </button>
       <button onClick={() => map.zoomIn()} className="w-7 h-7 lg:w-8 lg:h-8 bg-zinc-900/80 hover:bg-zinc-700 backdrop-blur-sm flex items-center justify-center text-white transition-all border-b border-white/10">
         <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
       </button>
@@ -62,48 +59,241 @@ const MapControls = ({ bounds, isDrawing, setIsDrawing }) => {
 
 const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, drawnPolygon, setDrawnPolygon }) => {
   const [isDrawing, setIsDrawing] = useState(false);
+  const [vertexCount, setVertexCount] = useState(0);
   const mapRef = useRef(null);
+  // All native Leaflet draw layers live here — no React state, avoids stale closures
+  const drawRef = useRef({ points: [], vertices: [], poly: null, preview: null });
 
+  const cleanupLayers = useCallback((map) => {
+    const d = drawRef.current;
+    d.vertices.forEach(v => map.hasLayer(v) && map.removeLayer(v));
+    if (d.poly && map.hasLayer(d.poly)) map.removeLayer(d.poly);
+    if (d.preview && map.hasLayer(d.preview)) map.removeLayer(d.preview);
+    drawRef.current = { points: [], vertices: [], poly: null, preview: null };
+  }, []);
+
+  const finishDrawing = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const pts = drawRef.current.points;
+    if (pts.length >= 3) {
+      setDrawnPolygon([...pts]);
+    } else if (pts.length > 0) {
+      alert('Please add at least 3 points to close the polygon.');
+    }
+    cleanupLayers(map);
+    setVertexCount(0);
+    setIsDrawing(false);
+  }, [setDrawnPolygon, cleanupLayers]);
+
+  const cancelDrawing = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    cleanupLayers(map);
+    setVertexCount(0);
+    setIsDrawing(false);
+  }, [cleanupLayers]);
+
+  // Start a fresh drawing session
+  const startDrawing = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    cleanupLayers(map);
+    setVertexCount(0);
+    setIsDrawing(true);
+  };
+
+  // Undo the last placed vertex
+  const undoVertex = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const d = drawRef.current;
+    if (d.points.length === 0) return;
+    d.points.pop();
+    const lastMarker = d.vertices.pop();
+    if (lastMarker && map.hasLayer(lastMarker)) map.removeLayer(lastMarker);
+    if (d.poly && map.hasLayer(d.poly)) map.removeLayer(d.poly);
+    d.poly = d.points.length >= 2
+      ? L.polygon(d.points, { color: '#1d5e3a', weight: 2, dashArray: '6 4', fillColor: '#1d5e3a', fillOpacity: 0.15 }).addTo(map)
+      : null;
+    setVertexCount(d.points.length);
+  };
+
+  // Clear everything — both the in-progress drawing and the saved polygon
+  const clearAll = () => {
+    const map = mapRef.current;
+    if (map) cleanupLayers(map);
+    setVertexCount(0);
+    setIsDrawing(false);
+    setDrawnPolygon(null);
+  };
+
+  // Register / unregister native Leaflet events while drawing
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isDrawing) return;
-    let points = [];
-    const tempPolygon = L.polygon([], { color: '#1d5e3a', weight: 3, dashArray: '5, 5' }).addTo(map);
-    const onMapClick = (e) => { points.push(e.latlng); tempPolygon.setLatLngs(points); };
-    const onMapDblClick = () => {
-      points.pop();
-      if (points.length >= 3) { setDrawnPolygon([...points]); setIsDrawing(false); }
-      else { alert("Please click at least 3 distinct points."); }
-      map.removeLayer(tempPolygon);
+
+    const d = drawRef.current;
+
+    const onMapClick = (e) => {
+      d.points.push(e.latlng);
+
+      // Vertex dot
+      const marker = L.circleMarker(e.latlng, {
+        radius: 5, color: '#fff', fillColor: '#1d5e3a', fillOpacity: 1, weight: 2,
+      }).addTo(map);
+      d.vertices.push(marker);
+
+      // Live polygon outline
+      if (d.poly && map.hasLayer(d.poly)) map.removeLayer(d.poly);
+      if (d.points.length >= 2) {
+        d.poly = L.polygon(d.points, {
+          color: '#1d5e3a', weight: 2, dashArray: '6 4', fillColor: '#1d5e3a', fillOpacity: 0.15,
+        }).addTo(map);
+      }
+
+      setVertexCount(d.points.length);
     };
+
+    const onDblClick = () => {
+      // Leaflet fires two click events before dblclick — remove the duplicate
+      if (d.points.length > 0) d.points.pop();
+      const lastMarker = d.vertices.pop();
+      if (lastMarker && map.hasLayer(lastMarker)) map.removeLayer(lastMarker);
+      setVertexCount(d.points.length);
+      finishDrawing();
+    };
+
+    const onMouseMove = (e) => {
+      if (d.points.length === 0) return;
+      if (d.preview && map.hasLayer(d.preview)) map.removeLayer(d.preview);
+      d.preview = L.polyline([d.points[d.points.length - 1], e.latlng], {
+        color: '#1d5e3a', weight: 1.5, dashArray: '4 4', opacity: 0.7,
+      }).addTo(map);
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') cancelDrawing();
+      if (e.key === 'Enter') finishDrawing();
+    };
+
     map.on('click', onMapClick);
-    map.on('dblclick', onMapDblClick);
+    map.on('dblclick', onDblClick);
+    map.on('mousemove', onMouseMove);
+    document.addEventListener('keydown', onKeyDown);
     map.getContainer().style.cursor = 'crosshair';
+
     return () => {
-      map.off('click', onMapClick); map.off('dblclick', onMapDblClick);
+      map.off('click', onMapClick);
+      map.off('dblclick', onDblClick);
+      map.off('mousemove', onMouseMove);
+      document.removeEventListener('keydown', onKeyDown);
       map.getContainer().style.cursor = '';
-      if (map.hasLayer(tempPolygon)) map.removeLayer(tempPolygon);
+      // Clean up the preview line on mode exit (vertex dots + poly stay until clearAll/finish)
+      if (d.preview && map.hasLayer(d.preview)) map.removeLayer(d.preview);
+      d.preview = null;
     };
-  }, [isDrawing, setDrawnPolygon]);
+  }, [isDrawing, finishDrawing, cancelDrawing]);
 
   return (
-    <div className="relative w-full h-[300px] lg:h-[418px] bg-[#172229] border border-zinc-200 rounded-xl overflow-hidden shadow-inner">
-      {isDrawing && <div className="absolute top-0 left-0 w-full bg-green-600/90 text-white text-[10px] lg:text-xs font-bold text-center py-1.5 z-[2000] backdrop-blur-sm shadow-md animate-pulse">DRAW MODE: Click points on the map. Double-click to finish.</div>}
-      <MapContainer bounds={calabarzonBounds} scrollWheelZoom={false} doubleClickZoom={false} className="h-full w-full z-0" zoomControl={false} style={{ backgroundColor: '#172229' }} ref={mapRef}>
-        {basemapUrl && <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; GEE" />}
-        {sarUrl && <TileLayer key={sarUrl + sarOpacity} url={sarUrl} opacity={sarOpacity} attribution="SAR Data" />}
-        {drawnPolygon && <Polygon positions={drawnPolygon} pathOptions={{ color: '#1d5e3a', fillColor: '#1d5e3a', fillOpacity: 0.3, weight: 3 }} />}
-        <MapControls bounds={calabarzonBounds} isDrawing={isDrawing} setIsDrawing={setIsDrawing} />
-      </MapContainer>
-      <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 z-[1000] bg-zinc-900/80 backdrop-blur-sm p-2 lg:p-3 rounded-lg border border-white/10 flex items-center gap-3 shadow-xl">
-        <span className="text-[9px] lg:text-[10px] font-bold text-white uppercase tracking-wider">Opacity</span>
-        <input type="range" min="0" max="1" step="0.1" value={sarOpacity} onChange={(e) => setSarOpacity(parseFloat(e.target.value))} className="w-20 lg:w-28 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#1d5e3a]" />
-        <span className="text-[10px] lg:text-xs font-black font-mono text-white w-8">{Math.round(sarOpacity * 100)}%</span>
+    <div className="space-y-1.5">
+
+      {/* ── GEE-style toolbar ── */}
+      <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2 gap-2">
+        <div className="flex items-center gap-2">
+          {/* Draw / Drawing button */}
+          <button
+            onClick={isDrawing ? cancelDrawing : startDrawing}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              isDrawing ? 'bg-green-600 text-white' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            {isDrawing ? 'Drawing…' : 'Draw Polygon'}
+          </button>
+
+          {/* Undo */}
+          {isDrawing && vertexCount > 0 && (
+            <button onClick={undoVertex} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-bold transition-all">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+              Undo
+            </button>
+          )}
+
+          {/* Vertex count */}
+          {isDrawing && (
+            <span className="text-[10px] font-mono text-zinc-400">{vertexCount} pts</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Finish — shown when ≥3 vertices placed */}
+          {isDrawing && vertexCount >= 3 && (
+            <button onClick={finishDrawing} className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-green-700 hover:bg-green-600 text-white text-xs font-bold transition-all">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Finish
+            </button>
+          )}
+
+          {/* Clear */}
+          {(drawnPolygon || isDrawing) && (
+            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-zinc-700 hover:bg-red-700 text-zinc-300 hover:text-white text-xs font-bold transition-all">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
-      <div className="absolute bottom-3 right-3 lg:bottom-4 lg:right-4 z-[1000] bg-zinc-900/80 backdrop-blur-sm p-2 lg:p-3 rounded-lg shadow-sm text-[9px] lg:text-[10px] font-bold space-y-1 lg:space-y-1.5 border border-white/10">
-        {Object.entries(CLASS_COLORS).map(([cls, color]) => (
-          <div key={cls} className="flex items-center gap-2"><div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-white">{cls}</span></div>
-        ))}
+
+      {/* ── Map ── */}
+      <div className="relative w-full h-[285px] lg:h-[400px] bg-[#172229] border border-zinc-200 rounded-xl overflow-hidden shadow-inner">
+        {isDrawing && (
+          <div className="absolute top-0 left-0 w-full bg-zinc-900/90 text-white text-[10px] font-semibold text-center py-1.5 z-[2000] backdrop-blur-sm">
+            Click to add points &nbsp;·&nbsp; Double-click or <kbd className="bg-zinc-700 px-1 rounded text-[9px]">Enter</kbd> to finish &nbsp;·&nbsp; <kbd className="bg-zinc-700 px-1 rounded text-[9px]">ESC</kbd> to cancel
+          </div>
+        )}
+
+        <MapContainer
+          bounds={calabarzonBounds}
+          scrollWheelZoom={true}
+          doubleClickZoom={false}
+          className="h-full w-full z-0"
+          zoomControl={false}
+          style={{ backgroundColor: '#172229' }}
+          ref={mapRef}
+        >
+          {basemapUrl && <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; GEE" />}
+          {sarUrl && <TileLayer key={sarUrl + sarOpacity} url={sarUrl} opacity={sarOpacity} attribution="SAR Data" />}
+          {drawnPolygon && !isDrawing && (
+            <Polygon positions={drawnPolygon} pathOptions={{ color: '#1d5e3a', fillColor: '#1d5e3a', fillOpacity: 0.25, weight: 2.5 }} />
+          )}
+          <MapControls bounds={calabarzonBounds} />
+        </MapContainer>
+
+        {/* Opacity control */}
+        <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 z-[1000] bg-zinc-900/80 backdrop-blur-sm p-2 lg:p-3 rounded-lg border border-white/10 flex items-center gap-3 shadow-xl">
+          <span className="text-[9px] lg:text-[10px] font-bold text-white uppercase tracking-wider">Opacity</span>
+          <input type="range" min="0" max="1" step="0.1" value={sarOpacity} onChange={(e) => setSarOpacity(parseFloat(e.target.value))} className="w-20 lg:w-28 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#1d5e3a]" />
+          <span className="text-[10px] lg:text-xs font-black font-mono text-white w-8">{Math.round(sarOpacity * 100)}%</span>
+        </div>
+
+        {/* Class legend */}
+        <div className="absolute bottom-3 right-3 lg:bottom-4 lg:right-4 z-[1000] bg-zinc-900/80 backdrop-blur-sm p-2 lg:p-3 rounded-lg shadow-sm text-[9px] lg:text-[10px] font-bold space-y-1 lg:space-y-1.5 border border-white/10">
+          {Object.entries(CLASS_COLORS).map(([cls, color]) => (
+            <div key={cls} className="flex items-center gap-2">
+              <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-sm" style={{ backgroundColor: color }}></div>
+              <span className="text-white">{cls}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
