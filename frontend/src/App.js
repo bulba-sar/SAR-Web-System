@@ -130,7 +130,7 @@ export default function App() {
         
         // SHOW THIS WHEN "ANALYSIS" IS CLICKED
         <div className="flex-1 h-full overflow-hidden bg-white">
-          <Analysis />
+          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} />
         </div>
 
       ) : (
