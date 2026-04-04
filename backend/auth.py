@@ -1,13 +1,20 @@
+import os
 import bcrypt as _bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 import models
 from database import get_db
 
-SECRET_KEY = "sar-calabarzon-thesis-2026-secret-key"
+load_dotenv()
+
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY is not set. Copy backend/.env.example to backend/.env and fill in your values.")
+
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 7
 

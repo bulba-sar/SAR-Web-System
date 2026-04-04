@@ -2,6 +2,8 @@
 backend/venv/
 backend/__pycache__/
 backend/credentials.json
+backend/.env
+backend/sar_users.db
 
 # --- FRONTEND  ---
 frontend/node_modules/

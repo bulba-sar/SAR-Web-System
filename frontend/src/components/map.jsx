@@ -68,29 +68,40 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
       }
 
       if (showProtected) {
-        // Protected Areas
+        // Check protected areas first
         try {
           const response = await fetch(`http://127.0.0.1:8000/query-protected-area?lat=${lat}&lng=${lng}`);
           const data = await response.json();
           if (data.found) {
             setPopupInfo({ type: 'protected', lat, lng, location: locationText, name: data.name, desig: data.desig, loading: false });
-          } else {
-            setPopupInfo({ type: 'error', lat, lng, message: "No Protected Area found at this location.", loading: false });
+            return;
           }
-        } catch (error) {
-          setPopupInfo(null);
+        } catch (error) { /* fall through */ }
+
+        // Not a protected area — check crop suitability if that layer is also on
+        if (showCropSuitability) {
+          try {
+            const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
+            const data = await response.json();
+            if (data.found) {
+              setPopupInfo({ type: 'crop', lat, lng, location: locationText, soilName: data.soilName, slope: data.slope, ndvi: data.ndvi, crops: data.crops, reasons: data.reasons, loading: false });
+            } else {
+              setPopupInfo({ type: 'error', lat, lng, message: "No data found at this location.", loading: false });
+            }
+          } catch (error) {
+            setPopupInfo(null);
+          }
+        } else {
+          setPopupInfo({ type: 'error', lat, lng, message: "No Protected Area found at this location.", loading: false });
         }
+
       } else if (showCropSuitability) {
-        // Crop Suitability 
+        // Only crop suitability is on
         try {
           const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
           const data = await response.json();
           if (data.found) {
-            setPopupInfo({ 
-              type: 'crop', lat, lng, location: locationText, 
-              soilName: data.soilName, slope: data.slope, ndvi: data.ndvi, 
-              crops: data.crops, reasons: data.reasons, loading: false 
-            });
+            setPopupInfo({ type: 'crop', lat, lng, location: locationText, soilName: data.soilName, slope: data.slope, ndvi: data.ndvi, crops: data.crops, reasons: data.reasons, loading: false });
           } else {
             setPopupInfo({ type: 'error', lat, lng, message: "No soil or terrain data found here.", loading: false });
           }
@@ -157,7 +168,7 @@ export default function Map({
         
         {/* POPUP UI */}
         {popupInfo && (
-          <Popup position={[popupInfo.lat, popupInfo.lng]} onClose={() => setPopupInfo(null)}>
+          <Popup position={[popupInfo.lat, popupInfo.lng]} onClose={() => setPopupInfo(null)} autoClose={false} closeOnClick={false}>
             <div className="font-sans min-w-[200px] lg:min-w-[240px] p-0.5 lg:p-1 transition-all">
               
               {popupInfo.loading ? (

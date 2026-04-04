@@ -1,8 +1,14 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from typing import Generator
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:thesis-sar2026@db.jlgzedqkmmrvrzysinmw.supabase.co:5432/postgres?sslmode=require"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set. Copy backend/.env.example to backend/.env and fill in your values.")
 
 engine = create_engine(
     DATABASE_URL,
