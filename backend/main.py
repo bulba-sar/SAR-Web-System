@@ -5,7 +5,7 @@ from google.oauth2 import service_account
 from pydantic import BaseModel
 from typing import List, Optional
 
-app = FastAPI(title="BULBA-SAR Backend")
+app = FastAPI(title="Thesis Backend")
 
 # --- CORS ---
 app.add_middleware(
