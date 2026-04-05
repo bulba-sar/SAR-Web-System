@@ -211,19 +211,7 @@ export default function FilterPanel({
           </label>
 
         </div>
-
       </div>
-
-      {/* === Export LGU Report Button === */}
-      <div className="p-4 lg:p-6 bg-white border-t border-zinc-100">
-        <button 
-          onClick={() => window.print()} 
-          className="w-full py-2 lg:py-2.5 bg-green-600 text-white text-xs lg:text-sm font-bold rounded-lg shadow-md hover:bg-green-700 transition-colors"
-        >
-          Export LGU Report
-        </button>
-      </div>
-
     </div>
   );
 }
