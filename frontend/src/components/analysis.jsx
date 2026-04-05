@@ -199,13 +199,13 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
     <div className="space-y-1.5">
 
       {/* ── GEE-style toolbar ── */}
-      <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2 gap-2">
+      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2 gap-2">
         <div className="flex items-center gap-2">
           {/* Draw / Drawing button */}
           <button
             onClick={isDrawing ? cancelDrawing : startDrawing}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-              isDrawing ? 'bg-green-600 text-white' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'
+              isDrawing ? 'bg-gradient-to-r from-[#23432f] to-[#1d5e3a] text-white opacity-80' : 'bg-gradient-to-r from-[#23432f] to-[#1d5e3a] text-white hover:opacity-90'
             }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +216,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Undo */}
           {isDrawing && vertexCount > 0 && (
-            <button onClick={undoVertex} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-bold transition-all">
+            <button onClick={undoVertex} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 hover:bg-green-200 text-green-800 text-xs font-bold transition-all">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
@@ -226,7 +226,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Vertex count */}
           {isDrawing && (
-            <span className="text-[10px] font-mono text-zinc-400">{vertexCount} pts</span>
+            <span className="text-[10px] font-mono text-green-700">{vertexCount} pts</span>
           )}
         </div>
 
@@ -243,7 +243,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Clear */}
           {(drawnPolygon || isDrawing) && (
-            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-zinc-700 hover:bg-red-700 text-zinc-300 hover:text-white text-xs font-bold transition-all">
+            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 hover:bg-red-100 text-green-800 hover:text-red-700 text-xs font-bold transition-all border border-green-800 hover:border-red-700">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -396,8 +396,11 @@ const LoadingState = ({ message }) => (
 
 const ErrorState = ({ message }) => (
   <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-red-200 rounded-xl bg-red-50 text-center px-6">
-    <svg className="w-10 h-10 text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-    <p className="text-sm font-bold text-red-700">Analysis Error</p>
+    <svg className="w-10 h-10 text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l4 4m0-4l-4 4" />
+    </svg>
+    <p className="text-sm font-bold text-red-700">No Result Found</p>
     <p className="text-xs text-red-600 mt-1 max-w-sm">{message}</p>
   </div>
 );
@@ -932,19 +935,14 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
                 <div className="p-4 lg:p-5 space-y-5">
                   {/* Timelines */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                    <div className="bg-white border border-zinc-100 rounded-lg p-3 lg:p-4">
-                      <TimelineChart data={ndviWithPeaks} dataKey="ndvi_mean" color="#15803d" label="NDVI Timeline" unit="Vegetation Index" minVal={0} maxVal={1} />
-                      {yr.peak_months.length > 0 && (
-                        <p className="text-[9px] lg:text-[10px] text-zinc-400 mt-2">
-                          Peak months: <strong className="text-zinc-600">{yr.peak_months.map(m => MONTH_LABELS[m - 1]).join(', ')}</strong>
-                          <span className="inline-block w-2 h-2 bg-amber-400 rounded-full ml-1.5 align-middle ring-1 ring-offset-1 ring-amber-400"></span>
-                        </p>
-                      )}
-                    </div>
-                    <div className="bg-white border border-zinc-100 rounded-lg p-3 lg:p-4">
-                      <TimelineChart data={yr.sar_timeline} dataKey="vh_mean" color="#1d4ed8" label="SAR VH Backscatter" unit="dB" minVal={-25} maxVal={-5} />
-                    </div>
+                  <div className="bg-white border border-zinc-100 rounded-lg p-3 lg:p-4">
+                    <TimelineChart data={ndviWithPeaks} dataKey="ndvi_mean" color="#15803d" label="Monthly Vegetation Health" unit="Greenness Index (0–1)" minVal={0} maxVal={1} />
+                    {yr.peak_months.length > 0 && (
+                      <p className="text-[9px] lg:text-[10px] text-zinc-400 mt-2">
+                        Peak months: <strong className="text-zinc-600">{yr.peak_months.map(m => MONTH_LABELS[m - 1]).join(', ')}</strong>
+                        <span className="inline-block w-2 h-2 bg-amber-400 rounded-full ml-1.5 align-middle ring-1 ring-offset-1 ring-amber-400"></span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Estimated Crops */}

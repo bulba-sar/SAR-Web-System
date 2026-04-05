@@ -2,7 +2,6 @@
 backend/venv/
 backend/__pycache__/
 backend/credentials.json
-backend/.env
 backend/sar_users.db
 
 # --- FRONTEND  ---
@@ -18,6 +17,7 @@ frontend/.env.production.local
 
 # --- GLOBAL RULES  ---
 # This ignores .env files and logs regardless of which folder they are in
+**.venv
 **/.env
 **/*.log
 **/npm-debug.log*
