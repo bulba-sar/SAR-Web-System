@@ -84,9 +84,9 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
             const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
             const data = await response.json();
             if (data.found) {
-              setPopupInfo({ type: 'crop', lat, lng, location: locationText, soilName: data.soilName, slope: data.slope, ndvi: data.ndvi, crops: data.crops, reasons: data.reasons, loading: false });
+              setPopupInfo({ type: 'crop', lat, lng, ...data, loading: false });
             } else {
-              setPopupInfo({ type: 'error', lat, lng, message: "No data found at this location.", loading: false });
+              setPopupInfo({ type: 'error', lat, lng, message: data.reason === 'outside_calabarzon' ? 'Outside CALABARZON boundary.' : 'No data found at this location.', loading: false });
             }
           } catch (error) {
             setPopupInfo(null);
@@ -101,9 +101,9 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
           const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
           const data = await response.json();
           if (data.found) {
-            setPopupInfo({ type: 'crop', lat, lng, location: locationText, soilName: data.soilName, slope: data.slope, ndvi: data.ndvi, crops: data.crops, reasons: data.reasons, loading: false });
+            setPopupInfo({ type: 'crop', lat, lng, ...data, loading: false });
           } else {
-            setPopupInfo({ type: 'error', lat, lng, message: "No soil or terrain data found here.", loading: false });
+            setPopupInfo({ type: 'error', lat, lng, message: data.reason === 'outside_calabarzon' ? 'Outside CALABARZON boundary.' : 'No soil or terrain data found here.', loading: false });
           }
         } catch (error) {
           setPopupInfo(null);
@@ -194,40 +194,60 @@ export default function Map({
                   </div>
                 </div>
               ) : popupInfo.type === 'crop' ? (
-                <div className="space-y-3 lg:space-y-4 transition-all">
-                  <div className="border-b border-zinc-200 pb-1.5 lg:pb-2">
-                    <h3 className="m-0 text-sm lg:text-base font-black text-green-700 leading-tight flex items-center gap-1.5 lg:gap-2 transition-all">
-                       Crop Suitability
-                    </h3>
-                    <p className="m-0 mt-1 text-[10px] lg:text-xs font-medium text-zinc-500 transition-all">{popupInfo.location}</p>
+                <div className="space-y-2.5 transition-all min-w-[260px]">
+                  {/* Header */}
+                  <div className="border-b border-zinc-100 pb-2">
+                    <h3 className="m-0 text-sm font-black text-green-700 leading-tight">Crop Suitability</h3>
+                    {popupInfo.location && (
+                      <p className="m-0 mt-0.5 text-[10px] font-medium text-zinc-500">
+                        {popupInfo.location.barangay}, {popupInfo.location.municipality}, {popupInfo.location.province}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5 lg:gap-2 bg-zinc-50 p-1.5 lg:p-2 rounded-lg border border-zinc-100 transition-all">
+                  {/* LULC badge */}
+                  <div className={`px-2 py-1 rounded text-[10px] font-bold ${popupInfo.lulc?.is_non_agri ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                    {popupInfo.lulc?.is_non_agri ? '⚠ ' : ''}Land Use: {popupInfo.lulc?.label ?? '—'}
+                    {popupInfo.lulc?.is_non_agri && <span className="block font-normal mt-0.5">Not currently used for crops.</span>}
+                  </div>
+
+                  {/* Info strip: Soil + Crop Reco */}
+                  <div className="grid grid-cols-2 gap-1.5 bg-zinc-50 p-1.5 rounded-lg border border-zinc-100">
                     <div>
-                      <p className="m-0 text-[8px] lg:text-[9px] font-bold text-zinc-400 uppercase tracking-wider transition-all">Soil Type</p>
-                      <p className="m-0 text-[10px] lg:text-xs font-bold text-zinc-800 truncate transition-all" title={popupInfo.soilName}>
-                        {popupInfo.soilName}
-                      </p>
+                      <p className="m-0 text-[8px] font-bold text-zinc-400 uppercase">Soil Type</p>
+                      <p className="m-0 text-[10px] font-black text-zinc-800 leading-tight">{popupInfo.soil ?? '—'}</p>
                     </div>
                     <div>
-                      <p className="m-0 text-[8px] lg:text-[9px] font-bold text-zinc-400 uppercase tracking-wider transition-all">Terrain</p>
-                      <p className="m-0 text-[10px] lg:text-xs font-bold text-zinc-800 transition-all">
-                        Slp: {popupInfo.slope?.toFixed(1) || 0}° | NDVI: {popupInfo.ndvi?.toFixed(2) || 0}
-                      </p>
+                      <p className="m-0 text-[8px] font-bold text-zinc-400 uppercase">Crop Reco</p>
+                      <p className="m-0 text-[10px] font-black text-[#1d5e3a] leading-tight">{(popupInfo.terrain_recommendation || []).join(', ') || '—'}</p>
                     </div>
                   </div>
 
-                  <div>
-                    <p className="m-0 mb-1.5 lg:mb-2 text-[9px] lg:text-[10px] font-bold text-zinc-400 uppercase tracking-wider transition-all">Recommended Crops</p>
-                    <div className="space-y-2 lg:space-y-2.5 max-h-[120px] lg:max-h-[150px] overflow-y-auto pr-1">
-                      {popupInfo.crops.map((crop, index) => (
-                        <div key={index} className="leading-tight">
-                          <span className="font-bold text-xs lg:text-sm text-zinc-800 block transition-all">{crop}</span>
-                          <span className="text-[9px] lg:text-[11px] text-zinc-500 block mt-0.5 transition-all">• {popupInfo.reasons[index]}</span>
-                        </div>
-                      ))}
+                  {/* Top crops dropdowns — only if agricultural */}
+                  {!popupInfo.lulc?.is_non_agri && popupInfo.top_crops && (
+                    <div className="space-y-1">
+                      {[['Major Crops', 'major', '#1d5e3a'], ['Fruits', 'fruit', '#b45309'], ['Vegetables', 'vegetable', '#1d4ed8']].map(([title, key, color]) => {
+                        const list = popupInfo.top_crops[key] || [];
+                        if (!list.length) return null;
+                        return (
+                          <details key={key} className="rounded-lg border border-zinc-100 overflow-hidden">
+                            <summary className="cursor-pointer px-3 py-1.5 text-[10px] font-black uppercase tracking-wider select-none list-none flex items-center justify-between" style={{ color, backgroundColor: `${color}10` }}>
+                              {title}
+                              <span className="text-zinc-400 font-normal text-[9px]">▼</span>
+                            </summary>
+                            <div className="px-3 py-1.5 space-y-0.5 bg-white">
+                              {list.map((item, i) => (
+                                <div key={i} className="flex justify-between text-[10px]">
+                                  <span className="text-zinc-700">{i + 1}. {item.crop}</span>
+                                  <span className="font-bold text-zinc-500">{item.rate}%</span>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        );
+                      })}
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : null}
 
