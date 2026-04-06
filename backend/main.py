@@ -16,7 +16,11 @@ from database import get_db
 app = FastAPI(title="Thesis Backend")
 
 # --- CREATE TABLES ON STARTUP ---
-models.Base.metadata.create_all(bind=database.engine)
+try:
+    models.Base.metadata.create_all(bind=database.engine)
+except Exception as e:
+    print(f"WARNING: Could not connect to database on startup: {e}")
+    print("Backend will still serve map/GEE endpoints. Login/profile features will be unavailable.")
 
 # --- CORS ---
 app.add_middleware(
@@ -45,17 +49,17 @@ try:
 except Exception as e:
     print(f"Failed to initialize GEE with service account: {e}")
 
-# === DEFINE THE CALABARZON BOUNDARY ===
+# === SHARED GEE ASSETS ===
 calabarzon = ee.FeatureCollection("FAO/GAUL/2015/level2") \
     .filter(ee.Filter.inList('ADM2_NAME', ['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']))
 
 # === LULC ASSET REGISTRY ===
 assets = {
-    2021: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2021_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2021_SEM2_LULC_TRY"},
-    2022: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2022_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2022_SEM2_LULC_TRY"},
-    2023: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2023_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2023_SEM2_LULC_TRY"},
-    2024: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2024_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2024_SEM2_LULC_TRY"},
-    2025: {"Jan-Jun": "projects/sar-calabarzon/assets/lulc/2025_SEM1_LULC_TRY", "Jul-Dec": "projects/sar-calabarzon/assets/lulc/2025_SEM2_LULC_TRY"}
+    2021: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2021_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2021_S2_LULC_CALABARZON"},
+    2022: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2022_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2022_S2_LULC_CALABARZON"},
+    2023: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2023_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2023_S2_LULC_CALABARZON"},
+    2024: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2024_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2024_S2_LULC_CALABARZON"},
+    2025: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2025_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2025_S2_LULC_CALABARZON"}
 }
 
 CLASS_MAP = {
@@ -223,14 +227,34 @@ def query_crop_suitability(lat: float, lng: float):
 @app.get("/get-agri-layer")
 def get_agri_layer():
     try:
-        agri_image = ee.Image("projects/sar-calabarzon/assets/export/Agri_Only_S1_2024")
-        vis_params = {'min': 1, 'max': 1, 'palette': ['yellow']}
+        agri_image = ee.Image("projects/sar-calabarzon/assets/TRY2/2025_S2_LULC_CALABARZON")
+        vis_params = {'min': 3, 'max': 3, 'palette': ['yellow']}
         map_id_dict = ee.Image(agri_image).getMapId(vis_params)
         tile_url = map_id_dict['tile_fetcher'].url_format
         return {"url": tile_url, "status": "success"}
 
     except Exception as e:
         return {"error": str(e), "status": "failed"}
+
+
+@app.get("/get-crop-suitability/{year}/{period}")
+def get_crop_suitability(year: int, period: str):
+    """
+    Substitute for the deleted crop suitability GeoTIFF.
+    Uses the 2025 S2 LULC Calabarzon asset and shows only
+    Agriculture pixels (class 3) in yellow.
+    """
+    try:
+        asset_id = "projects/sar-calabarzon/assets/TRY2/2025_S2_LULC_CALABARZON"
+        lulc = ee.Image(asset_id).select(0).clip(calabarzon)
+        # eq(3) → binary 0/1; selfMask() hides the 0s so only Agriculture shows
+        cropland = lulc.eq(3).selfMask()
+        vis_params = {'min': 1, 'max': 1, 'palette': ['#ca8a04']}
+        map_id = cropland.getMapId(vis_params)
+        return {"tile_url": map_id['tile_fetcher'].url_format}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # ============================================================
