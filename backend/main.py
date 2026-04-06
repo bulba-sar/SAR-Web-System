@@ -171,52 +171,107 @@ def query_protected_area(lat: float, lng: float):
 
 
 @app.get("/query-crop-suitability")
-def query_crop_suitability(lat: float, lng: float):
+def query_crop_suitability(lat: float, lng: float, month: Optional[int] = None):
     try:
         point = ee.Geometry.Point([lng, lat])
-        elevation = ee.Image("USGS/SRTMGL1_003")
-        terrain = ee.Algorithms.Terrain(elevation)
-        slope_img = terrain.select('slope')
 
-        slope_val = slope_img.reduceRegion(ee.Reducer.mean(), point, 30).get('slope').getInfo()
-        elev_val = elevation.reduceRegion(ee.Reducer.mean(), point, 30).get('elevation').getInfo()
+        # --- GEE assets ---
+        gadm       = ee.FeatureCollection("projects/sar-calabarzon/assets/gadm41_PHL_3")
+        soil_fc    = ee.FeatureCollection("projects/sar-calabarzon/assets/Philippine-Soil-Series-shapefile-20250620T065600Z-1-001")
+        stats_fc   = ee.FeatureCollection("projects/sar-calabarzon/assets/historical-data/master_agri_climate_g")
+        elev_img   = ee.Image("USGS/SRTMGL1_003")
+        slope_img  = ee.Terrain.slope(elev_img).rename('slope')
+        lulc_img   = ee.Image("projects/sar-calabarzon/assets/TRY2/2025_S2_LULC_CALABARZON").select(0)
 
-        if slope_val is None or elev_val is None:
+        # --- Terrain ---
+        terrain_vals = elev_img.addBands(slope_img).reduceRegion(
+            reducer=ee.Reducer.first(), geometry=point, scale=30
+        ).getInfo()
+        elev_val  = terrain_vals.get('elevation')
+        slope_val = terrain_vals.get('slope')
+        if elev_val is None or slope_val is None:
             return {"found": False}
 
+        # --- LULC at point ---
+        lulc_band = lulc_img.bandNames().get(0).getInfo()
+        lulc_val  = lulc_img.reduceRegion(ee.Reducer.first(), point, 10).get(lulc_band).getInfo()
+        lulc_names = {0: "Water", 1: "Urban/Built-up", 2: "Forest/High Veg", 3: "Cropland/Open"}
+        lulc_label = lulc_names.get(int(lulc_val) if lulc_val is not None else -1, "Unknown")
+        is_non_agri = lulc_val in [0, 1]
+
+        # --- NDVI from S2 ---
         s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
             .filterBounds(point) \
             .filterDate('2024-01-01', '2024-12-31') \
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 40)) \
             .sort('CLOUDY_PIXEL_PERCENTAGE') \
             .first()
-
         ndvi_val = None
-        if s2:
-            ndvi = s2.normalizedDifference(['B8', 'B4']).rename('ndvi')
-            ndvi_result = ndvi.reduceRegion(ee.Reducer.mean(), point, 10).get('ndvi').getInfo()
-            ndvi_val = round(ndvi_result, 4) if ndvi_result is not None else None
+        try:
+            nd = s2.normalizedDifference(['B8', 'B4'])
+            result = nd.reduceRegion(ee.Reducer.first(), point, 10).get('nd').getInfo()
+            ndvi_val = round(result, 4) if result is not None else None
+        except Exception:
+            pass
 
-        if elev_val < 100:
-            crops = ["Rice", "Lowland Vegetables"]
-            reasons = ["Flat terrain holds water well.", "Ideal for lowland irrigation setups."]
-            soil = "Alluvial Clay"
-        elif elev_val < 500:
-            crops = ["Corn", "Coconut", "Fruit Trees"]
-            reasons = ["Good drainage on moderate slopes.", "Sufficient sunlight and root depth."]
-            soil = "Sandy Loam"
-        else:
-            crops = ["Coffee", "Cacao", "Highland Greens"]
-            reasons = ["Cooler temperatures suit these crops.", "Well-drained upland soil."]
-            soil = "Volcanic Ash / Loam"
+        # --- Admin boundaries (province / municipality / barangay) ---
+        CALABARZON = ['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']
+        admin_info = gadm.filterBounds(point).first().getInfo()
+        if not admin_info:
+            return {"found": False, "reason": "outside_calabarzon"}
+        props    = admin_info.get('properties', {})
+        province = props.get('NAME_1', 'Unknown')
+        if province not in CALABARZON:
+            return {"found": False, "reason": "outside_calabarzon"}
+        municipality = props.get('NAME_2', 'Unknown')
+        barangay     = props.get('NAME_3', 'Unknown')
+
+        # --- Soil series ---
+        soil_info   = soil_fc.filterBounds(point).first().getInfo()
+        soil_series = (soil_info or {}).get('properties', {}).get('SoilSeries', 'Unknown')
+
+        # --- Top crops from master_agri_climate_g ---
+        def get_top_crops(category):
+            f = ee.Filter.And(
+                ee.Filter.eq('Province', province),
+                ee.Filter.eq('Category', category)
+            )
+            if month:
+                f = ee.Filter.And(f, ee.Filter.eq('Month', month))
+            feats = stats_fc.filter(f).sort('SuccessRate', False).limit(5).getInfo()
+            return [
+                {'crop': ft['properties']['Crop'],
+                 'rate': round(float(ft['properties']['SuccessRate']), 1)}
+                for ft in (feats or {}).get('features', [])
+            ]
+
+        top_crops = {}
+        if not is_non_agri:
+            top_crops = {
+                'major':     get_top_crops('Major'),
+                'fruit':     get_top_crops('Fruit'),
+                'vegetable': get_top_crops('Vegetable'),
+            }
+
+        # --- Terrain recommendation (matches GEE logic) ---
+        recs = []
+        sv = slope_val or 0
+        nv = ndvi_val or 0
+        if sv < 3:               recs.append("Rice")
+        if 3 <= sv <= 12:        recs.append("Corn")
+        if nv > 0.4:             recs.append("Banana")
+        if not recs:             recs.append("Root Crops")
 
         return {
             "found": True,
+            "location": {"barangay": barangay, "municipality": municipality, "province": province},
+            "lulc": {"value": lulc_val, "label": lulc_label, "is_non_agri": is_non_agri},
+            "soil": soil_series,
             "elevation": round(elev_val, 1),
-            "soilName": soil,
-            "slope": slope_val,
+            "slope": round(slope_val, 1),
             "ndvi": ndvi_val,
-            "crops": crops,
-            "reasons": reasons
+            "terrain_recommendation": recs,
+            "top_crops": top_crops,
         }
 
     except Exception as e:
@@ -707,6 +762,27 @@ async def get_crop_intensity(request: CropIntensityRequest):
         if mean_elevation is None:
             mean_elevation = 0.0
 
+        # 1b. Get province from polygon centroid → query historical dominant crop
+        CALABARZON = ['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']
+        dominant_crop_historical = None
+        try:
+            centroid = roi.centroid(maxError=1)
+            gadm = ee.FeatureCollection("projects/sar-calabarzon/assets/gadm41_PHL_3")
+            admin_info = gadm.filterBounds(centroid).first().getInfo()
+            province = (admin_info or {}).get('properties', {}).get('NAME_1') if admin_info else None
+            if province and province in CALABARZON:
+                stats_fc = ee.FeatureCollection("projects/sar-calabarzon/assets/historical-data/master_agri_climate_g")
+                top = stats_fc.filter(
+                    ee.Filter.And(
+                        ee.Filter.eq('Province', province),
+                        ee.Filter.eq('Category', 'Major')
+                    )
+                ).sort('SuccessRate', False).first().getInfo()
+                if top:
+                    dominant_crop_historical = top['properties'].get('Crop')
+        except Exception as e:
+            print(f"Historical dominant crop lookup failed: {e}")
+
         # 2. Process each year
         yearly_results = []
         skipped_years = []
@@ -781,14 +857,15 @@ async def get_crop_intensity(request: CropIntensityRequest):
         avg_utilization = round(sum(r['utilization_percent'] for r in yearly_results) / total_years, 1) if total_years > 0 else 0
         avg_ndvi = round(sum(r['mean_ndvi'] for r in yearly_results) / total_years, 4) if total_years > 0 else 0
 
-        # Determine the most common crop across years
-        all_crops = {}
-        for r in yearly_results:
-            for c in r['estimated_crops']:
-                name = c['crop']
-                all_crops[name] = all_crops.get(name, 0) + 1
-        
-        dominant_crop = max(all_crops, key=all_crops.get) if all_crops else "Unknown"
+        # Dominant crop: prefer historical data, fall back to SAR-estimated
+        if dominant_crop_historical:
+            dominant_crop = dominant_crop_historical
+        else:
+            all_crops = {}
+            for r in yearly_results:
+                for c in r['estimated_crops']:
+                    all_crops[c['crop']] = all_crops.get(c['crop'], 0) + 1
+            dominant_crop = max(all_crops, key=all_crops.get) if all_crops else "Unknown"
 
         summary = {
             "total_years_analyzed": total_years,
