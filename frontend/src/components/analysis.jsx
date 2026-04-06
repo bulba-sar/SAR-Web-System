@@ -441,7 +441,7 @@ const CropAreaTooltip = ({ active, payload }) => {
 // ============================================================
 
 export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon }) {
-  const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop'
+  const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'suitability'
   const [startYear, setStartYear] = useState('2022');
   const [endYear, setEndYear] = useState('2023');
   const [selectedSeason, setSelectedSeason] = useState('all');
@@ -459,6 +459,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   // Crop Area Coverage state (bar chart — both-semester Agriculture pixels)
   const [cropAreaData, setCropAreaData] = useState(null);
   const [cropAreaError, setCropAreaError] = useState(null);
+
+  // Crop Suitability state
+  const [suitabilityData, setSuitabilityData] = useState(null);
+  const [isSuitabilityAnalyzing, setIsSuitabilityAnalyzing] = useState(false);
+  const [suitabilityError, setSuitabilityError] = useState(null);
 
   // ── LULC Computed Values ──
   const overallSummary = useMemo(() => {
@@ -516,6 +521,29 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     setAnalyticsData(null); setAnalysisError(null);
     setCropData(null); setCropError(null);
     setCropAreaData(null); setCropAreaError(null);
+    setSuitabilityData(null); setSuitabilityError(null);
+  };
+
+  // ── Run Crop Suitability (centroid of drawn polygon) ──
+  const handleRunSuitability = async () => {
+    if (!drawnPolygon) { alert("Please draw your study area first."); return; }
+    setIsSuitabilityAnalyzing(true);
+    setSuitabilityError(null);
+    setSuitabilityData(null);
+
+    // Compute centroid
+    const avgLat = drawnPolygon.reduce((s, p) => s + p.lat, 0) / drawnPolygon.length;
+    const avgLng = drawnPolygon.reduce((s, p) => s + p.lng, 0) / drawnPolygon.length;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${avgLat}&lng=${avgLng}`);
+      const data = await res.json();
+      if (data.found) setSuitabilityData(data);
+      else setSuitabilityError("No terrain or suitability data found for this area.");
+    } catch {
+      setSuitabilityError("Could not connect to the backend. Is FastAPI running on port 8000?");
+    }
+    setIsSuitabilityAnalyzing(false);
   };
 
   // ── Run LULC Analysis ──
@@ -586,7 +614,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
   const handleRunAnalysis = () => {
     if (activeTab === 'lulc') handleRunLULC();
-    else handleRunCropIntensity();
+    else if (activeTab === 'crop') handleRunCropIntensity();
+    else handleRunSuitability();
   };
 
   return (
@@ -598,20 +627,23 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           <h2 className="text-xl lg:text-2xl font-black text-zinc-900 leading-tight">Analysis Dashboard</h2>
           <p className="text-xs lg:text-sm text-zinc-500 mt-1">Draw a study area and analyze land use or crop activity</p>
         </div>
-        <button onClick={() => { if (analyticsData || cropData) window.print(); }} disabled={!analyticsData && !cropData} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
-          <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-          Export Report
-        </button>
-      </div>
-
-      {/* ── Tab Switcher ── */}
-      <div className="flex gap-1.5 p-1.5 bg-zinc-50 rounded-xl border border-zinc-100 w-fit">
-        <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-          LULC Change
-        </button>
-        <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-          Crop Intensity
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5 p-1.5 bg-zinc-50 rounded-xl border border-zinc-100">
+            <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              LULC Change
+            </button>
+            <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              Crop Intensity
+            </button>
+            <button onClick={() => setActiveTab('suitability')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'suitability' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              Crop Suitability
+            </button>
+          </div>
+          <button onClick={() => { if (analyticsData || cropData) window.print(); }} disabled={!analyticsData && !cropData} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
+            <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Export Report
+          </button>
+        </div>
       </div>
 
       {/* ── Control Row ── */}
@@ -644,9 +676,9 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
           <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] bg-white border border-[#23432f] px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 transition whitespace-nowrap">Clear</button>
-          <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
-            {(isAnalyzing || isCropAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-            {(isAnalyzing || isCropAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
+          <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
+            {(isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+            {(isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
           </button>
         </div>
       </div>
@@ -704,6 +736,67 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                     {CLASS_ORDER.filter(cls => overallSummary.classes[cls]).sort((a, b) => (overallSummary.classes[b]?.percentage || 0) - (overallSummary.classes[a]?.percentage || 0)).map(cls => (
                       <ClassBar key={cls} label={cls} percentage={overallSummary.classes[cls].percentage} color={CLASS_COLORS[cls]} pixelCount={overallSummary.classes[cls].pixel_count} />
                     ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ════════ CROP SUITABILITY TAB ════════ */}
+          {activeTab === 'suitability' && (
+            <>
+              {!suitabilityData && !isSuitabilityAnalyzing && !suitabilityError && <EmptyState message="No suitability results yet" sub="Draw a study area and click Run Analysis" />}
+              {isSuitabilityAnalyzing && <LoadingState message="Querying terrain and vegetation data..." />}
+              {suitabilityError && <ErrorState message={suitabilityError} />}
+
+              {suitabilityData && (
+                <div className="space-y-4">
+                  {/* Terrain Summary */}
+                  <div className="border-2 border-amber-200/50 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-amber-50/50 to-white space-y-4">
+                    <h3 className="text-sm lg:text-base font-black text-amber-800 uppercase tracking-wide flex items-center gap-2">
+                      <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                      Terrain Profile
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
+                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Elevation</p>
+                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.elevation}<span className="text-sm font-bold text-zinc-400 ml-1">m</span></p>
+                      </div>
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
+                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Slope</p>
+                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.slope?.toFixed(1)}<span className="text-sm font-bold text-zinc-400 ml-1">°</span></p>
+                      </div>
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
+                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">NDVI</p>
+                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.ndvi ?? '—'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-white border border-zinc-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                      <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>
+                      <div>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Soil Type</p>
+                        <p className="text-sm font-bold text-zinc-800">{suitabilityData.soilName}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommended Crops */}
+                  <div className="border border-zinc-200 rounded-xl p-4 lg:p-5 bg-white space-y-3">
+                    <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#2d6a4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                      Recommended Crops
+                    </h4>
+                    <div className="space-y-2">
+                      {suitabilityData.crops.map((crop, i) => (
+                        <div key={crop} className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-lg px-4 py-3">
+                          <div className="w-6 h-6 rounded-full bg-[#1d5e3a] text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</div>
+                          <div>
+                            <p className="text-sm font-black text-[#1d5e3a]">{crop}</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">{suitabilityData.reasons[i]}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
