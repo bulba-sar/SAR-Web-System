@@ -119,8 +119,8 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
 // MAIN MAP COMPONENT 
 export default function Map({ 
   basemapUrl, sarUrl, year, period, loading, targetLocation, 
-  protectedUrl, showProtected, sarOpacity, agriUrl,
-  cropSuitabilityUrl, showCropSuitability 
+  protectedUrl, showProtected, sarOpacity,
+  cropSuitabilityUrl, showCropSuitability
 }) {
 
   const [popupInfo, setPopupInfo] = useState(null);
@@ -162,7 +162,6 @@ export default function Map({
         )}
         
         {sarUrl && !showCropSuitability && <GEELayer url={sarUrl} key={`sar-${sarUrl}`} opacity={sarOpacity} />}
-        {agriUrl && showCropSuitability && <GEELayer url={agriUrl} key="agri-guide" opacity={sarOpacity} />}
         {cropSuitabilityUrl && showCropSuitability && <GEELayer url={cropSuitabilityUrl} key={`crop-${cropSuitabilityUrl}`} opacity={sarOpacity} />}
         {protectedUrl && <GEELayer url={protectedUrl} key={`pa-${protectedUrl}`} opacity={1.0} />}
         
