@@ -753,6 +753,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const [suitabilityData, setSuitabilityData] = useState(null);
   const [isSuitabilityAnalyzing, setIsSuitabilityAnalyzing] = useState(false);
   const [suitabilityError, setSuitabilityError] = useState(null);
+  const [suitabilityMonth, setSuitabilityMonth] = useState(0); // 0 = all months
 
   // ── LULC Computed Values ──
   const overallSummary = useMemo(() => {
@@ -810,7 +811,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     setAnalyticsData(null); setAnalysisError(null);
     setCropData(null); setCropError(null);
     setCropAreaData(null); setCropAreaError(null);
-    setSuitabilityData(null); setSuitabilityError(null);
+    setSuitabilityData(null); setSuitabilityError(null); setSuitabilityMonth(0);
   };
 
   // ── Run Crop Suitability (centroid of drawn polygon) ──
@@ -825,7 +826,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     const avgLng = drawnPolygon.reduce((s, p) => s + p.lng, 0) / drawnPolygon.length;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${avgLat}&lng=${avgLng}`);
+      const monthParam = suitabilityMonth > 0 ? `&month=${suitabilityMonth}` : '';
+      const res = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${avgLat}&lng=${avgLng}${monthParam}`);
       const data = await res.json();
       if (data.found) setSuitabilityData(data);
       else setSuitabilityError("No terrain or suitability data found for this area.");
@@ -969,6 +971,22 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           </div>
         )}
 
+        {activeTab === 'suitability' && (
+          <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 px-3 lg:px-4 flex-shrink-0">
+            <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider">Month</span>
+            <select
+              value={suitabilityMonth}
+              onChange={e => setSuitabilityMonth(Number(e.target.value))}
+              className="text-xs font-bold text-zinc-800 bg-white px-2 py-1 rounded-lg border border-zinc-200 outline-none cursor-pointer"
+            >
+              <option value={0}>All Months</option>
+              {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                <option key={m} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
           <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] bg-white border border-[#23432f] px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 transition whitespace-nowrap">Clear</button>
           <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
@@ -1042,58 +1060,52 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           {activeTab === 'suitability' && (
             <>
               {!suitabilityData && !isSuitabilityAnalyzing && !suitabilityError && <EmptyState message="No suitability results yet" sub="Draw a study area and click Run Analysis" />}
-              {isSuitabilityAnalyzing && <LoadingState message="Querying terrain and vegetation data..." />}
+              {isSuitabilityAnalyzing && <LoadingState message="Querying terrain, soil, and crop success data..." />}
               {suitabilityError && <ErrorState message={suitabilityError} />}
 
               {suitabilityData && (
                 <div className="space-y-4">
-                  {/* Terrain Summary */}
-                  <div className="border-2 border-amber-200/50 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-amber-50/50 to-white space-y-4">
-                    <h3 className="text-sm lg:text-base font-black text-amber-800 uppercase tracking-wide flex items-center gap-2">
-                      <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                      Terrain Profile
-                    </h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
-                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Elevation</p>
-                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.elevation}<span className="text-sm font-bold text-zinc-400 ml-1">m</span></p>
-                      </div>
-                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
-                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Slope</p>
-                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.slope?.toFixed(1)}<span className="text-sm font-bold text-zinc-400 ml-1">°</span></p>
-                      </div>
-                      <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm text-center">
-                        <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">NDVI</p>
-                        <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{suitabilityData.ndvi ?? '—'}</p>
-                      </div>
-                    </div>
-                    <div className="bg-white border border-zinc-200 rounded-xl px-4 py-3 flex items-center gap-3">
-                      <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>
+
+                  {/* Location + LULC */}
+                  <div className="border-2 border-amber-200/50 rounded-xl p-4 lg:p-5 bg-gradient-to-br from-amber-50/50 to-white space-y-3">
+                    {suitabilityData.location && (
                       <div>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Soil Type</p>
-                        <p className="text-sm font-bold text-zinc-800">{suitabilityData.soilName}</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Location (centroid)</p>
+                        <p className="text-sm font-black text-zinc-800 mt-0.5">
+                          {suitabilityData.location.barangay}, {suitabilityData.location.municipality}
+                        </p>
+                        <p className="text-xs text-zinc-500">{suitabilityData.location.province}</p>
                       </div>
+                    )}
+                    <div className={`px-3 py-2 rounded-lg text-xs font-bold ${suitabilityData.lulc?.is_non_agri ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                      {suitabilityData.lulc?.is_non_agri ? '⚠ ' : ''}Land Use: {suitabilityData.lulc?.label ?? '—'}
+                      {suitabilityData.lulc?.is_non_agri && <span className="block font-normal text-[10px] mt-0.5">This area is not classified as cropland.</span>}
                     </div>
                   </div>
 
-                  {/* Recommended Crops */}
+                  {/* Terrain metrics */}
                   <div className="border border-zinc-200 rounded-xl p-4 lg:p-5 bg-white space-y-3">
-                    <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
-                      <svg className="w-4 h-4 text-[#2d6a4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                      Recommended Crops
-                    </h4>
-                    <div className="space-y-2">
-                      {suitabilityData.crops.map((crop, i) => (
-                        <div key={crop} className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-lg px-4 py-3">
-                          <div className="w-6 h-6 rounded-full bg-[#1d5e3a] text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</div>
-                          <div>
-                            <p className="text-sm font-black text-[#1d5e3a]">{crop}</p>
-                            <p className="text-xs text-zinc-500 mt-0.5">{suitabilityData.reasons[i]}</p>
-                          </div>
+                    <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide">Terrain Profile</h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[['Elevation', `${suitabilityData.elevation} m`], ['Slope', `${suitabilityData.slope?.toFixed(1)}°`], ['NDVI', suitabilityData.ndvi?.toFixed(3) ?? '—']].map(([label, val]) => (
+                        <div key={label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-center">
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase">{label}</p>
+                          <p className="text-base lg:text-xl font-black text-zinc-900 mt-1">{val}</p>
                         </div>
                       ))}
                     </div>
+                    <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3">
+                      <div>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Soil Series</p>
+                        <p className="text-sm font-bold text-zinc-800">{suitabilityData.soil}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase mb-1">Terrain Recommendation</p>
+                      <p className="text-sm font-black text-[#1d5e3a]">{(suitabilityData.terrain_recommendation || []).join(', ')}</p>
+                    </div>
                   </div>
+
                 </div>
               )}
             </>
@@ -1218,6 +1230,40 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════
+          BELOW THE GRID: CROP SUITABILITY top crops
+         ═══════════════════════════════════════════ */}
+      {activeTab === 'suitability' && suitabilityData && !suitabilityData.lulc?.is_non_agri && suitabilityData.top_crops && (
+        <div className="border border-zinc-200 rounded-xl p-4 lg:p-6 bg-white space-y-3">
+          <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
+            Top Crops — {suitabilityData.location?.province}
+            {suitabilityMonth > 0 && (
+              <span className="text-amber-600 font-normal normal-case text-xs">
+                ({['January','February','March','April','May','June','July','August','September','October','November','December'][suitabilityMonth - 1]})
+              </span>
+            )}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[['Major Crops', 'major', '#1d5e3a'], ['Fruits', 'fruit', '#b45309'], ['Vegetables', 'vegetable', '#1d4ed8']].map(([title, key, color]) => {
+              const list = suitabilityData.top_crops[key] || [];
+              if (!list.length) return null;
+              return (
+                <div key={key} className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-wider pb-1 border-b" style={{ color, borderColor: `${color}30` }}>{title}</p>
+                  {list.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2.5 bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2">
+                      <span className="w-5 h-5 rounded-full text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ backgroundColor: color }}>{i + 1}</span>
+                      <span className="text-sm font-bold text-zinc-800 flex-1">{item.crop}</span>
+                      <span className="text-xs font-black text-zinc-500">{item.rate}%</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════
           BELOW THE GRID: LULC sections
