@@ -55,11 +55,11 @@ calabarzon = ee.FeatureCollection("FAO/GAUL/2015/level2") \
 
 # === LULC ASSET REGISTRY ===
 assets = {
-    2021: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2021_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2021_S2_LULC_CALABARZON"},
-    2022: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2022_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2022_S2_LULC_CALABARZON"},
-    2023: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2023_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2023_S2_LULC_CALABARZON"},
-    2024: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2024_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2024_S2_LULC_CALABARZON"},
-    2025: {"Jan-Jun": "projects/sar-calabarzon/assets/TRY2/2025_S1_LULC_CALABARZON", "Jul-Dec": "projects/sar-calabarzon/assets/TRY2/2025_S2_LULC_CALABARZON"}
+    2021: {"Jan-Jun": "projects/sar-calabarzon/assets/export/2021_S1_LULC_CALABARZON_PRO", "Jul-Dec": "projects/sar-calabarzon/assets/export/2021_S2_LULC_CALABARZON_PRO"},
+    2022: {"Jan-Jun": "projects/sar-calabarzon/assets/export/2022_S1_LULC_CALABARZON_PRO", "Jul-Dec": "projects/sar-calabarzon/assets/export/2022_S2_LULC_CALABARZON_PRO"},
+    2023: {"Jan-Jun": "projects/sar-calabarzon/assets/export/2023_S1_LULC_CALABARZON_PRO", "Jul-Dec": "projects/sar-calabarzon/assets/export/2023_S2_LULC_CALABARZON_PRO"},
+    2024: {"Jan-Jun": "projects/sar-calabarzon/assets/export/2024_S1_LULC_CALABARZON_PRO", "Jul-Dec": "projects/sar-calabarzon/assets/export/2024_S2_LULC_CALABARZON_PRO"},
+    2025: {"Jan-Jun": "projects/sar-calabarzon/assets/export/2025_S1_LULC_CALABARZON_PRO", "Jul-Dec": "projects/sar-calabarzon/assets/export/2025_S2_LULC_CALABARZON_PRO"}
 }
 
 CLASS_MAP = {

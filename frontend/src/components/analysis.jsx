@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { MapContainer, TileLayer, useMap, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -437,6 +437,295 @@ const CropAreaTooltip = ({ active, payload }) => {
 };
 
 // ============================================================
+//  COMPARE VIEW — side-by-side LULC maps
+// ============================================================
+
+const COMPARE_YEARS = [2021, 2022, 2023, 2024, 2025];
+const COMPARE_PERIODS = ['Jan-Jun', 'Jul-Dec'];
+const COMPARE_CLASSES = [
+  { value: 'all',         label: 'All Classes' },
+  { value: 'water',       label: 'Water',       color: '#1d4ed8' },
+  { value: 'urban',       label: 'Urban',        color: '#dc2626' },
+  { value: 'forest',      label: 'Forest',       color: '#15803d' },
+  { value: 'agriculture', label: 'Agriculture',  color: '#ca8a04' },
+];
+
+// Stores the Leaflet map instance in a ref so siblings can read it
+function CaptureMap({ mapRef }) {
+  const map = useMap();
+  useEffect(() => { mapRef.current = map; return () => { mapRef.current = null; }; }, [map, mapRef]);
+  return null;
+}
+
+// Syncs pan/zoom to the other map when this map moves
+function SyncMapView({ otherRef, lockRef }) {
+  const map = useMap();
+  useMapEvents({
+    moveend: () => {
+      if (lockRef.current || !otherRef.current) return;
+      lockRef.current = true;
+      otherRef.current.setView(map.getCenter(), map.getZoom(), { animate: false });
+      requestAnimationFrame(() => { lockRef.current = false; });
+    },
+  });
+  return null;
+}
+
+const compareBounds = [[13.1, 119.5], [15.1, 122.8]];
+
+function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, tileUrl, basemapUrl, opacity, loading, mapRef, otherRef, lockRef }) {
+  return (
+    <div className="flex flex-col rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
+      {/* Selector bar */}
+      <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800">
+        <span className={`text-[10px] font-black uppercase tracking-widest shrink-0 ${accentClass}`}>{label}</span>
+        <select
+          value={year}
+          onChange={e => setYear(Number(e.target.value))}
+          className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer"
+        >
+          {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select
+          value={period}
+          onChange={e => setPeriod(e.target.value)}
+          className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer"
+        >
+          {COMPARE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        {loading && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin ml-auto" />}
+      </div>
+
+      {/* Map */}
+      <div className="relative h-[340px] lg:h-[420px]">
+        <MapContainer
+          bounds={compareBounds}
+          scrollWheelZoom
+          zoomControl={false}
+          doubleClickZoom={false}
+          className="h-full w-full"
+          style={{ backgroundColor: '#172229' }}
+        >
+          <CaptureMap mapRef={mapRef} />
+          <SyncMapView otherRef={otherRef} lockRef={lockRef} />
+          {/* Calabarzon-clipped satellite basemap (same as main filter map) */}
+          {basemapUrl
+            ? <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; Copernicus / GEE" />
+            : <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CartoDB" />
+          }
+          {tileUrl && <TileLayer key={tileUrl + opacity} url={tileUrl} attribution="GEE LULC" opacity={opacity} />}
+          <MapControls bounds={compareBounds} />
+        </MapContainer>
+
+        {/* Period badge */}
+        <div className="absolute bottom-2 left-2 z-[1000] bg-zinc-900/80 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded-md pointer-events-none">
+          {year} · {period}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompareView({ basemapUrl }) {
+  const [leftYear, setLeftYear]       = useState(2021);
+  const [leftPeriod, setLeftPeriod]   = useState('Jan-Jun');
+  const [rightYear, setRightYear]     = useState(2024);
+  const [rightPeriod, setRightPeriod] = useState('Jan-Jun');
+  const [leftTile, setLeftTile]       = useState(null);
+  const [rightTile, setRightTile]     = useState(null);
+  const [leftLoading, setLeftLoading]   = useState(false);
+  const [rightLoading, setRightLoading] = useState(false);
+  const [classFilter, setClassFilter]   = useState('all');
+  const [opacity, setOpacity]           = useState(0.85);
+
+  // Location search
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showResults, setShowResults]     = useState(false);
+
+  const leftMapRef  = useRef(null);
+  const rightMapRef = useRef(null);
+  const syncLock    = useRef(false);
+
+  const fetchTile = useCallback(async (year, period, filter, side) => {
+    const setLoading = side === 'left' ? setLeftLoading : setRightLoading;
+    const setTile    = side === 'left' ? setLeftTile    : setRightTile;
+    setLoading(true);
+    try {
+      const res  = await fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${filter}`);
+      const data = await res.json();
+      setTile(data.tile_url || null);
+    } catch { setTile(null); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchTile(leftYear,  leftPeriod,  classFilter, 'left');  }, [leftYear,  leftPeriod,  classFilter, fetchTile]);
+  useEffect(() => { fetchTile(rightYear, rightPeriod, classFilter, 'right'); }, [rightYear, rightPeriod, classFilter, fetchTile]);
+
+  const handleSwap = () => {
+    const [ty, tp] = [leftYear, leftPeriod];
+    setLeftYear(rightYear);  setLeftPeriod(rightPeriod);
+    setRightYear(ty);        setRightPeriod(tp);
+  };
+
+  // Geocode search using Nominatim, constrained to CALABARZON bounding box
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    setShowResults(true);
+    try {
+      const params = new URLSearchParams({
+        q: searchQuery,
+        format: 'json',
+        limit: 5,
+        viewbox: '119.5,15.1,122.8,13.1', // west,north,east,south
+        bounded: 1,
+      });
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch {
+      setSearchResults([]);
+    }
+    setSearchLoading(false);
+  };
+
+  const zoomToBoth = (result) => {
+    const [south, north, west, east] = result.boundingbox.map(Number);
+    const bounds = [[south, west], [north, east]];
+    if (leftMapRef.current)  leftMapRef.current.fitBounds(bounds, { maxZoom: 14 });
+    if (rightMapRef.current) rightMapRef.current.fitBounds(bounds, { maxZoom: 14 });
+    setShowResults(false);
+    setSearchQuery(result.display_name.split(',').slice(0, 2).join(','));
+  };
+
+  return (
+    <div className="space-y-4">
+
+      {/* ── Search + Opacity row ── */}
+      <div className="flex flex-wrap items-center gap-3">
+
+        {/* Search */}
+        <form onSubmit={handleSearch} className="relative flex items-center gap-2 flex-1 min-w-[220px]">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setShowResults(false); }}
+              placeholder="Search a location in CALABARZON…"
+              className="w-full border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {/* Results dropdown */}
+            {showResults && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+                {searchLoading && (
+                  <div className="px-4 py-3 text-xs text-zinc-500 flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-[#305d3d] border-t-transparent rounded-full animate-spin" />
+                    Searching…
+                  </div>
+                )}
+                {!searchLoading && searchResults.length === 0 && (
+                  <div className="px-4 py-3 text-xs text-zinc-500">No locations found in CALABARZON.</div>
+                )}
+                {!searchLoading && searchResults.map((r, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => zoomToBoth(r)}
+                    className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors"
+                  >
+                    <span className="font-bold text-zinc-800 block truncate">{r.display_name.split(',').slice(0, 2).join(',')}</span>
+                    <span className="text-zinc-400 text-[10px]">{r.type} · {r.display_name.split(',').slice(2, 4).join(',')}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button type="submit" className="px-3 py-2 bg-[#305d3d] hover:bg-[#254a30] text-white text-xs font-bold rounded-lg transition-all shrink-0">
+            Search
+          </button>
+        </form>
+
+        {/* Opacity slider */}
+        <div className="flex items-center gap-2 bg-zinc-100 rounded-lg px-3 py-2 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">LULC Opacity</span>
+          <input
+            type="range" min="0" max="1" step="0.05"
+            value={opacity}
+            onChange={e => setOpacity(parseFloat(e.target.value))}
+            className="w-24 h-1 bg-zinc-300 rounded-lg appearance-none cursor-pointer accent-[#305d3d]"
+          />
+          <span className="text-[10px] font-black font-mono text-zinc-700 w-8">{Math.round(opacity * 100)}%</span>
+        </div>
+      </div>
+
+      {/* ── Class filter + Swap ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 shrink-0">Show:</span>
+        {COMPARE_CLASSES.map(cls => (
+          <button
+            key={cls.value}
+            onClick={() => setClassFilter(cls.value)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+              classFilter === cls.value
+                ? 'bg-[#305d3d] text-white border-[#305d3d]'
+                : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+            }`}
+          >
+            {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
+            {cls.label}
+          </button>
+        ))}
+        <button
+          onClick={handleSwap}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          Swap
+        </button>
+      </div>
+
+      {/* ── Maps ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ComparePanel
+          label="← Before"    accentClass="text-blue-400"
+          year={leftYear}     setYear={setLeftYear}
+          period={leftPeriod} setPeriod={setLeftPeriod}
+          tileUrl={leftTile}  basemapUrl={basemapUrl} opacity={opacity} loading={leftLoading}
+          mapRef={leftMapRef}  otherRef={rightMapRef} lockRef={syncLock}
+        />
+        <ComparePanel
+          label="After →"      accentClass="text-amber-400"
+          year={rightYear}     setYear={setRightYear}
+          period={rightPeriod} setPeriod={setRightPeriod}
+          tileUrl={rightTile}  basemapUrl={basemapUrl} opacity={opacity} loading={rightLoading}
+          mapRef={rightMapRef} otherRef={leftMapRef}  lockRef={syncLock}
+        />
+      </div>
+
+      {/* ── Legend ── */}
+      <div className="flex items-center justify-center gap-5 flex-wrap py-1">
+        {Object.entries(CLASS_COLORS).map(([cls, color]) => (
+          <div key={cls} className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+            <span className="text-xs font-bold text-zinc-600">{cls}</span>
+          </div>
+        ))}
+        <span className="text-[10px] text-zinc-400 ml-2">· Scroll to zoom · Both maps stay in sync</span>
+      </div>
+
+    </div>
+  );
+}
+
+// ============================================================
 //  MAIN ANALYSIS COMPONENT
 // ============================================================
 
@@ -638,6 +927,9 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             <button onClick={() => setActiveTab('suitability')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'suitability' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
               Crop Suitability
             </button>
+            <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              Compare
+            </button>
           </div>
           <button onClick={() => { if (analyticsData || cropData) window.print(); }} disabled={!analyticsData && !cropData} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -646,8 +938,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         </div>
       </div>
 
-      {/* ── Control Row ── */}
-      <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
+      {/* ── Compare View (full-width, replaces the normal grid) ── */}
+      {activeTab === 'compare' && <CompareView basemapUrl={basemapUrl} />}
+
+      {/* ── Control Row (hidden on Compare tab) ── */}
+      {activeTab !== 'compare' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
         <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
           <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
@@ -681,9 +976,10 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             {(isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
           </button>
         </div>
-      </div>
+      </div>}
 
-      {/* ── Main Grid: Map + Results ── */}
+      {/* ── Main Grid: Map + Results (hidden on Compare tab) ── */}
+      {activeTab !== 'compare' && <>
       <div className="grid grid-cols-1 xl:grid-cols-[1fr,1fr] gap-4 lg:gap-6">
         {/* Left: Mini Map */}
         <div className="space-y-3">
@@ -1069,6 +1365,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           })}
         </div>
       )}
+
+      </>}
 
     </div>
   );
