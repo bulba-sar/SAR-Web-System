@@ -1,7 +1,26 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from database import Base
+
+
+def _utcnow():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+class TileCache(Base):
+    """Persistent cache for GEE tile URLs stored in Supabase.
+    GEE tile tokens expire in ~6 hours, so entries are refreshed
+    after CACHE_TTL_HOURS (see main.py).  Storing them here means
+    every dashboard on every client skips the 3-8 s GEE round-trip
+    after the very first request for a given map config.
+    """
+    __tablename__ = "tile_cache"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    cache_key  = Column(String(300), unique=True, index=True, nullable=False)
+    tile_url   = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
 
 
 class User(Base):
@@ -13,7 +32,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     institution = Column(String(200), nullable=True)
     role = Column(String(50), default="Researcher")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
 
     aois = relationship("SavedAOI", back_populates="user", cascade="all, delete-orphan")
 
@@ -26,6 +45,6 @@ class SavedAOI(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     geojson = Column(Text, nullable=False)  # JSON string of [{lat, lng}, ...] array
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
 
     user = relationship("User", back_populates="aois")

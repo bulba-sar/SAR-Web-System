@@ -270,8 +270,8 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
           style={{ backgroundColor: '#172229' }}
           ref={mapRef}
         >
-          {basemapUrl && <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; GEE" />}
-          {sarUrl && <TileLayer key={sarUrl + sarOpacity} url={sarUrl} opacity={sarOpacity} attribution="SAR Data" />}
+          {basemapUrl && <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+          {sarUrl && <TileLayer key={sarUrl + sarOpacity} url={sarUrl} opacity={sarOpacity} attribution="SAR Data" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
           {drawnPolygon && !isDrawing && (
             <Polygon positions={drawnPolygon} pathOptions={{ color: '#1d5e3a', fillColor: '#1d5e3a', fillOpacity: 0.25, weight: 2.5 }} />
           )}
@@ -510,10 +510,10 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
           <SyncMapView otherRef={otherRef} lockRef={lockRef} />
           {/* Calabarzon-clipped satellite basemap (same as main filter map) */}
           {basemapUrl
-            ? <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; Copernicus / GEE" />
+            ? <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; Copernicus / GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
             : <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CartoDB" />
           }
-          {tileUrl && <TileLayer key={tileUrl + opacity} url={tileUrl} attribution="GEE LULC" opacity={opacity} />}
+          {tileUrl && <TileLayer key={tileUrl + opacity} url={tileUrl} attribution="GEE LULC" opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
           <MapControls bounds={compareBounds} />
         </MapContainer>
 
@@ -526,7 +526,287 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
   );
 }
 
+// ────────────────────────────────────────────────────────────────
+//  SLIDER COMPARE – one map with a draggable before/after divider
+// ────────────────────────────────────────────────────────────────
+function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
+                         rightYear, setRightYear, rightPeriod, setRightPeriod,
+                         leftTile, rightTile, basemapUrl, opacity,
+                         leftLoading, rightLoading }) {
+  const [sliderPct, setSliderPct] = useState(50);
+  const containerRef = useRef(null);
+  const isDragging   = useRef(false);
+  const leftMapRef   = useRef(null);
+  const rightMapRef  = useRef(null);
+  const syncLock     = useRef(false);
+
+  const startDrag = (e) => {
+    isDragging.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e) => {
+    if (!isDragging.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const pct  = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
+    setSliderPct(pct);
+  };
+  const stopDrag = () => { isDragging.current = false; };
+
+  const baseTile = basemapUrl
+    ? <TileLayer url={basemapUrl} attribution="&copy; Copernicus / GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
+    : <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CartoDB" />;
+
+  return (
+    <div className="space-y-0">
+      {/* ── Year/Period selectors ── */}
+      <div className="grid grid-cols-2 rounded-t-xl overflow-hidden border border-b-0 border-zinc-200">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 border-r border-zinc-700">
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 shrink-0">← Before</span>
+          <select value={leftYear} onChange={e => setLeftYear(Number(e.target.value))}
+            className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
+            {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select value={leftPeriod} onChange={e => setLeftPeriod(e.target.value)}
+            className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
+            {COMPARE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          {leftLoading && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin ml-auto" />}
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 justify-end">
+          {rightLoading && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-auto" />}
+          <select value={rightPeriod} onChange={e => setRightPeriod(e.target.value)}
+            className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
+            {COMPARE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select value={rightYear} onChange={e => setRightYear(Number(e.target.value))}
+            className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
+            {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 shrink-0">After →</span>
+        </div>
+      </div>
+
+      {/* ── Map + slider ── */}
+      <div
+        ref={containerRef}
+        className="relative h-[420px] rounded-b-xl overflow-hidden border border-zinc-200 shadow-sm select-none"
+        onPointerMove={onPointerMove}
+        onPointerUp={stopDrag}
+        onPointerLeave={stopDrag}
+      >
+        {/* Right (After) map – full width, sits at back */}
+        <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
+          className="absolute inset-0 h-full w-full" style={{ backgroundColor: '#172229' }}>
+          <CaptureMap mapRef={rightMapRef} />
+          <SyncMapView otherRef={leftMapRef} lockRef={syncLock} />
+          {baseTile}
+          {rightTile && <TileLayer key={rightTile + opacity} url={rightTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+          <MapControls bounds={compareBounds} />
+        </MapContainer>
+
+        {/* Left (Before) map – clipped to slider, floats on top */}
+        <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - sliderPct}% 0 0)` }}>
+          <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
+            className="h-full w-full" style={{ backgroundColor: '#172229' }}>
+            <CaptureMap mapRef={leftMapRef} />
+            <SyncMapView otherRef={rightMapRef} lockRef={syncLock} />
+            {baseTile}
+            {leftTile && <TileLayer key={leftTile + opacity} url={leftTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+          </MapContainer>
+        </div>
+
+        {/* Divider line */}
+        <div className="absolute inset-y-0 z-[2000] pointer-events-none"
+          style={{ left: `${sliderPct}%`, transform: 'translateX(-50%)' }}>
+          <div className="w-0.5 h-full bg-white/90 shadow-[0_0_12px_rgba(0,0,0,0.6)]" />
+        </div>
+
+        {/* Drag handle */}
+        <div
+          className="absolute z-[2001] w-9 h-9 bg-white rounded-full shadow-xl flex items-center justify-center cursor-col-resize touch-none"
+          style={{ left: `${sliderPct}%`, top: '50%', transform: 'translate(-50%, -50%)' }}
+          onPointerDown={startDrag}
+        >
+          <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
+          </svg>
+        </div>
+
+        {/* Labels */}
+        <div className="absolute top-2 left-3 z-[1001] bg-blue-600/90 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-md pointer-events-none">
+          ← BEFORE · {leftYear} · {leftPeriod}
+        </div>
+        <div className="absolute top-2 right-3 z-[1001] bg-amber-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-md pointer-events-none">
+          AFTER · {rightYear} · {rightPeriod} →
+        </div>
+
+        {/* Hint */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1001] bg-zinc-900/70 text-white text-[9px] px-3 py-1 rounded-full pointer-events-none whitespace-nowrap">
+          Drag the handle to compare
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────
+//  TIME-SERIES COMPARE – single map, scrub or play through all periods
+// ────────────────────────────────────────────────────────────────
+const ALL_PERIODS = [
+  { year: 2021, period: 'Jan-Jun' }, { year: 2021, period: 'Jul-Dec' },
+  { year: 2022, period: 'Jan-Jun' }, { year: 2022, period: 'Jul-Dec' },
+  { year: 2023, period: 'Jan-Jun' }, { year: 2023, period: 'Jul-Dec' },
+  { year: 2024, period: 'Jan-Jun' }, { year: 2024, period: 'Jul-Dec' },
+  { year: 2025, period: 'Jan-Jun' }, { year: 2025, period: 'Jul-Dec' },
+];
+
+function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  // Cache all tile URLs keyed by "year-period" — pre-fetched in parallel on mount/filter change
+  const [tileCache, setTileCache]     = useState({});
+  const [loadedCount, setLoadedCount] = useState(0);
+  const [isPlaying, setIsPlaying]     = useState(false);
+  const playRef = useRef(null);
+
+  const cacheKey = ({ year, period }) => `${year}-${period}`;
+  const current  = ALL_PERIODS[selectedIdx];
+  const allReady = loadedCount >= ALL_PERIODS.length;
+
+  // Pre-fetch ALL period tile URLs in parallel whenever classFilter changes.
+  // AbortController cancels the previous batch if React StrictMode (or a fast
+  // classFilter change) re-triggers this effect before the first batch finishes.
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    setTileCache({});
+    setLoadedCount(0);
+    setIsPlaying(false);
+
+    ALL_PERIODS.forEach(({ year, period }) => {
+      fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${classFilter}`, { signal })
+        .then(r => r.json())
+        .then(d => {
+          if (signal.aborted) return;
+          setTileCache(prev => ({ ...prev, [`${year}-${period}`]: d.tile_url || null }));
+          setLoadedCount(prev => prev + 1);
+        })
+        .catch(() => {
+          if (signal.aborted) return;
+          setTileCache(prev => ({ ...prev, [`${year}-${period}`]: null }));
+          setLoadedCount(prev => prev + 1);
+        });
+    });
+
+    return () => controller.abort();
+  }, [classFilter]);
+
+  // Auto-play: 1.2 s per step (faster since no fetch delay)
+  useEffect(() => {
+    clearInterval(playRef.current);
+    if (isPlaying) {
+      playRef.current = setInterval(() => {
+        setSelectedIdx(i => {
+          if (i >= ALL_PERIODS.length - 1) { setIsPlaying(false); return i; }
+          return i + 1;
+        });
+      }, 1200);
+    }
+    return () => clearInterval(playRef.current);
+  }, [isPlaying]);
+
+  const currentTile  = tileCache[cacheKey(current)] ?? null;
+  const isPeriodReady = (i) => cacheKey(ALL_PERIODS[i]) in tileCache;
+
+  return (
+    <div className="space-y-3">
+
+      {/* ── Pre-load progress banner (disappears when all ready) ── */}
+      {!allReady && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800 rounded-xl">
+          <div className="w-3.5 h-3.5 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-xs text-zinc-300">
+            Pre-loading all periods…&nbsp;
+            <span className="font-black text-white">{loadedCount}/{ALL_PERIODS.length}</span> ready
+          </span>
+          <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+            <div className="h-full bg-[#4ade80] transition-all duration-300"
+              style={{ width: `${(loadedCount / ALL_PERIODS.length) * 100}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Map ── */}
+      <div className="relative h-[360px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
+        <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
+          className="h-full w-full" style={{ backgroundColor: '#172229' }}>
+          {basemapUrl
+            ? <TileLayer url={basemapUrl} attribution="&copy; Copernicus / GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
+            : <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CartoDB" />}
+          {currentTile && <TileLayer key={currentTile + opacity} url={currentTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+          <MapControls bounds={compareBounds} />
+        </MapContainer>
+
+        {/* Period badge */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-2 bg-zinc-900/85 backdrop-blur-sm text-white text-sm font-black px-4 py-1.5 rounded-full pointer-events-none">
+          {current.year} · {current.period}
+          {!isPeriodReady(selectedIdx) && (
+            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          )}
+        </div>
+
+        {/* Timeline progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800/60 z-[1001]">
+          <div className="h-full bg-[#4ade80] transition-all duration-300"
+            style={{ width: `${((selectedIdx + 1) / ALL_PERIODS.length) * 100}%` }} />
+        </div>
+      </div>
+
+      {/* ── Timeline controls ── */}
+      <div className="flex items-center gap-3">
+        {/* Play/Pause — disabled until all periods are cached */}
+        <button
+          onClick={() => setIsPlaying(p => !p)}
+          disabled={!allReady}
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#305d3d] hover:bg-[#254a30] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-all shrink-0"
+        >
+          {isPlaying
+            ? <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            : <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          }
+          {isPlaying ? 'Pause' : 'Play'}
+        </button>
+
+        {/* Period buttons — green dot = URL ready, pulsing dot = still loading */}
+        <div className="flex flex-1 gap-1 overflow-x-auto pb-1">
+          {ALL_PERIODS.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => { setSelectedIdx(i); setIsPlaying(false); }}
+              className={`relative flex flex-col items-center px-2.5 py-1.5 rounded-lg text-[9px] font-bold whitespace-nowrap flex-shrink-0 transition-all ${
+                i === selectedIdx
+                  ? 'bg-[#305d3d] text-white shadow-sm'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+              }`}
+            >
+              <span className="text-[11px]">{p.year}</span>
+              <span className="opacity-80">{p.period === 'Jan-Jun' ? 'S1' : 'S2'}</span>
+              {/* Cache-ready indicator */}
+              <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${
+                isPeriodReady(i) ? 'bg-[#4ade80]' : 'bg-zinc-400 animate-pulse'
+              }`} />
+            </button>
+          ))}
+        </div>
+
+        <span className="text-[10px] text-zinc-400 font-mono shrink-0">{selectedIdx + 1} / {ALL_PERIODS.length}</span>
+      </div>
+    </div>
+  );
+}
+
 function CompareView({ basemapUrl }) {
+  const [compareMode, setCompareMode] = useState('sidebyside'); // 'sidebyside' | 'slider' | 'timeseries'
   const [leftYear, setLeftYear]       = useState(2021);
   const [leftPeriod, setLeftPeriod]   = useState('Jan-Jun');
   const [rightYear, setRightYear]     = useState(2024);
@@ -569,7 +849,6 @@ function CompareView({ basemapUrl }) {
     setRightYear(ty);        setRightPeriod(tp);
   };
 
-  // Geocode search using Nominatim, constrained to CALABARZON bounding box
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -577,18 +856,13 @@ function CompareView({ basemapUrl }) {
     setShowResults(true);
     try {
       const params = new URLSearchParams({
-        q: searchQuery,
-        format: 'json',
-        limit: 5,
-        viewbox: '119.5,15.1,122.8,13.1', // west,north,east,south
-        bounded: 1,
+        q: searchQuery, format: 'json', limit: 5,
+        viewbox: '119.5,15.1,122.8,13.1', bounded: 1,
       });
       const res  = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
       const data = await res.json();
       setSearchResults(data);
-    } catch {
-      setSearchResults([]);
-    }
+    } catch { setSearchResults([]); }
     setSearchLoading(false);
   };
 
@@ -604,11 +878,25 @@ function CompareView({ basemapUrl }) {
   return (
     <div className="space-y-4">
 
-      {/* ── Search + Opacity row ── */}
+      {/* ── Top toolbar: mode + search + opacity ── */}
       <div className="flex flex-wrap items-center gap-3">
 
+        {/* View mode selector */}
+        <div className="flex items-center gap-2 bg-zinc-100 rounded-lg px-3 py-2 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">View</span>
+          <select
+            value={compareMode}
+            onChange={e => setCompareMode(e.target.value)}
+            className="bg-white text-zinc-800 text-xs font-bold px-2 py-1 rounded-lg border border-zinc-200 outline-none cursor-pointer"
+          >
+            <option value="sidebyside">Side-by-Side</option>
+            <option value="slider">Slider</option>
+            <option value="timeseries">Time-Series</option>
+          </select>
+        </div>
+
         {/* Search */}
-        <form onSubmit={handleSearch} className="relative flex items-center gap-2 flex-1 min-w-[220px]">
+        <form onSubmit={handleSearch} className="relative flex items-center gap-2 flex-1 min-w-[200px]">
           <div className="relative flex-1">
             <input
               type="text"
@@ -620,7 +908,6 @@ function CompareView({ basemapUrl }) {
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            {/* Results dropdown */}
             {showResults && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
                 {searchLoading && (
@@ -633,12 +920,8 @@ function CompareView({ basemapUrl }) {
                   <div className="px-4 py-3 text-xs text-zinc-500">No locations found in CALABARZON.</div>
                 )}
                 {!searchLoading && searchResults.map((r, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => zoomToBoth(r)}
-                    className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors"
-                  >
+                  <button key={i} type="button" onClick={() => zoomToBoth(r)}
+                    className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors">
                     <span className="font-bold text-zinc-800 block truncate">{r.display_name.split(',').slice(0, 2).join(',')}</span>
                     <span className="text-zinc-400 text-[10px]">{r.type} · {r.display_name.split(',').slice(2, 4).join(',')}</span>
                   </button>
@@ -654,61 +937,79 @@ function CompareView({ basemapUrl }) {
         {/* Opacity slider */}
         <div className="flex items-center gap-2 bg-zinc-100 rounded-lg px-3 py-2 shrink-0">
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">LULC Opacity</span>
-          <input
-            type="range" min="0" max="1" step="0.05"
-            value={opacity}
+          <input type="range" min="0" max="1" step="0.05" value={opacity}
             onChange={e => setOpacity(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-zinc-300 rounded-lg appearance-none cursor-pointer accent-[#305d3d]"
-          />
+            className="w-24 h-1 bg-zinc-300 rounded-lg appearance-none cursor-pointer accent-[#305d3d]" />
           <span className="text-[10px] font-black font-mono text-zinc-700 w-8">{Math.round(opacity * 100)}%</span>
         </div>
       </div>
 
-      {/* ── Class filter + Swap ── */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 shrink-0">Show:</span>
-        {COMPARE_CLASSES.map(cls => (
-          <button
-            key={cls.value}
-            onClick={() => setClassFilter(cls.value)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
-              classFilter === cls.value
-                ? 'bg-[#305d3d] text-white border-[#305d3d]'
-                : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
-            }`}
-          >
-            {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
-            {cls.label}
-          </button>
-        ))}
-        <button
-          onClick={handleSwap}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
-          Swap
-        </button>
-      </div>
+      {/* ── Class filter + Swap (hidden in time-series) ── */}
+      {compareMode !== 'timeseries' && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 shrink-0">Show:</span>
+          {COMPARE_CLASSES.map(cls => (
+            <button key={cls.value} onClick={() => setClassFilter(cls.value)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+                classFilter === cls.value
+                  ? 'bg-[#305d3d] text-white border-[#305d3d]'
+                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+              }`}>
+              {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
+              {cls.label}
+            </button>
+          ))}
+          {compareMode === 'sidebyside' && (
+            <button onClick={handleSwap}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Swap
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* ── Maps ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ComparePanel
-          label="← Before"    accentClass="text-blue-400"
-          year={leftYear}     setYear={setLeftYear}
-          period={leftPeriod} setPeriod={setLeftPeriod}
-          tileUrl={leftTile}  basemapUrl={basemapUrl} opacity={opacity} loading={leftLoading}
-          mapRef={leftMapRef}  otherRef={rightMapRef} lockRef={syncLock}
+      {/* ── Map view (switches by mode) ── */}
+      {compareMode === 'sidebyside' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ComparePanel
+            label="← Before"    accentClass="text-blue-400"
+            year={leftYear}     setYear={setLeftYear}
+            period={leftPeriod} setPeriod={setLeftPeriod}
+            tileUrl={leftTile}  basemapUrl={basemapUrl} opacity={opacity} loading={leftLoading}
+            mapRef={leftMapRef}  otherRef={rightMapRef} lockRef={syncLock}
+          />
+          <ComparePanel
+            label="After →"      accentClass="text-amber-400"
+            year={rightYear}     setYear={setRightYear}
+            period={rightPeriod} setPeriod={setRightPeriod}
+            tileUrl={rightTile}  basemapUrl={basemapUrl} opacity={opacity} loading={rightLoading}
+            mapRef={rightMapRef} otherRef={leftMapRef}  lockRef={syncLock}
+          />
+        </div>
+      )}
+
+      {compareMode === 'slider' && (
+        <SliderCompare
+          leftYear={leftYear}       setLeftYear={setLeftYear}
+          leftPeriod={leftPeriod}   setLeftPeriod={setLeftPeriod}
+          rightYear={rightYear}     setRightYear={setRightYear}
+          rightPeriod={rightPeriod} setRightPeriod={setRightPeriod}
+          leftTile={leftTile}       rightTile={rightTile}
+          basemapUrl={basemapUrl}   opacity={opacity}
+          leftLoading={leftLoading} rightLoading={rightLoading}
         />
-        <ComparePanel
-          label="After →"      accentClass="text-amber-400"
-          year={rightYear}     setYear={setRightYear}
-          period={rightPeriod} setPeriod={setRightPeriod}
-          tileUrl={rightTile}  basemapUrl={basemapUrl} opacity={opacity} loading={rightLoading}
-          mapRef={rightMapRef} otherRef={leftMapRef}  lockRef={syncLock}
+      )}
+
+      {compareMode === 'timeseries' && (
+        <TimeSeriesCompare
+          basemapUrl={basemapUrl}
+          opacity={opacity}
+          classFilter={classFilter}
         />
-      </div>
+      )}
 
       {/* ── Legend ── */}
       <div className="flex items-center justify-center gap-5 flex-wrap py-1">
@@ -718,7 +1019,9 @@ function CompareView({ basemapUrl }) {
             <span className="text-xs font-bold text-zinc-600">{cls}</span>
           </div>
         ))}
-        <span className="text-[10px] text-zinc-400 ml-2">· Scroll to zoom · Both maps stay in sync</span>
+        {compareMode === 'sidebyside'  && <span className="text-[10px] text-zinc-400 ml-2">· Scroll to zoom · Both maps stay in sync</span>}
+        {compareMode === 'slider'      && <span className="text-[10px] text-zinc-400 ml-2">· Drag the handle left/right to reveal changes</span>}
+        {compareMode === 'timeseries'  && <span className="text-[10px] text-zinc-400 ml-2">· Click a period or press Play to animate through time</span>}
       </div>
 
     </div>
