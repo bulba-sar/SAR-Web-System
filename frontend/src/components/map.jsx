@@ -43,7 +43,7 @@ function ReactLegend({ showCropSuitability }) {
 // GEE TILE LAYER
 function GEELayer({ url, opacity }) {
   if (!url) return null; 
-  return <TileLayer url={url} attribution="Google Earth Engine" opacity={opacity || 1.0} />;
+  return <TileLayer url={url} attribution="Google Earth Engine" opacity={opacity || 1.0} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />;
 }
 
 // CLICK LISTENER 
@@ -124,7 +124,10 @@ export default function Map({
 }) {
 
   const [popupInfo, setPopupInfo] = useState(null);
-  
+
+  // Clear popup whenever a layer is toggled — the popup belongs to the active layer
+  useEffect(() => { setPopupInfo(null); }, [showCropSuitability, showProtected]);
+
   const calabarzonBounds = [
     [13.1000, 119.5000], 
     [15.1000, 122.8000]  
@@ -158,7 +161,7 @@ export default function Map({
 
         {/* RENDER LAYERS */}
         {basemapUrl && (
-          <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" />
+          <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
         )}
         
         {sarUrl && !showCropSuitability && <GEELayer url={sarUrl} key={`sar-${sarUrl}`} opacity={sarOpacity} />}

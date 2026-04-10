@@ -2,11 +2,12 @@ import ee
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from google.oauth2 import service_account
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import database
 import models
@@ -14,6 +15,15 @@ import auth as auth_module
 from database import get_db
 
 app = FastAPI(title="Thesis Backend")
+
+# --- STATIC TILE FILES (pre-rendered PNGs, served instantly with no GEE dependency) ---
+# Drop exported tile folders into backend/tiles/<year>-<season>/  e.g. tiles/2021-Jan-Jun/
+# Generated with: gdal2tiles.py --zoom=6-14 --resampling=near <file>.tif tiles/<folder>/
+# Frontend uses: http://127.0.0.1:8000/tiles/{folder}/{z}/{x}/{y}.png
+import pathlib
+_TILES_DIR = pathlib.Path(__file__).parent / "tiles"
+_TILES_DIR.mkdir(exist_ok=True)
+app.mount("/tiles", StaticFiles(directory=str(_TILES_DIR)), name="tiles")
 
 # --- CREATE TABLES ON STARTUP ---
 try:
@@ -73,11 +83,59 @@ CLASS_PALETTE = ['#1d4ed8', '#dc2626', '#15803d', '#ca8a04']
 
 
 # ============================================================
+#  TILE CACHE HELPERS  (Supabase-backed, permanent rows)
+#
+#  GEE tile tokens expire in ~6-7 hours, so we refresh URLs
+#  that are older than REFRESH_AFTER_HOURS.  Supabase rows are
+#  NEVER deleted — they persist forever and are simply updated
+#  with a fresh URL when the old one is about to expire.
+# ============================================================
+
+REFRESH_AFTER_HOURS = 5  # refresh URL before GEE token expires (~6-7 h)
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)  # naive UTC, matches DB storage
+
+
+def _get_cached_tile(db: Session, key: str) -> str | None:
+    """Return a cached tile URL if the row exists and the URL is still fresh.
+    Returns None (triggering a GEE refresh) if the URL is older than
+    REFRESH_AFTER_HOURS.  The row itself is never deleted.
+    """
+    entry = db.query(models.TileCache).filter(models.TileCache.cache_key == key).first()
+    if entry is None:
+        return None
+    if _now() - entry.created_at > timedelta(hours=REFRESH_AFTER_HOURS):
+        # URL is stale — caller will regenerate and upsert a fresh one
+        return None
+    return entry.tile_url
+
+
+def _set_cached_tile(db: Session, key: str, url: str) -> None:
+    """Upsert a tile URL into the cache."""
+    entry = db.query(models.TileCache).filter(models.TileCache.cache_key == key).first()
+    if entry:
+        entry.tile_url = url
+        entry.created_at = _now()
+    else:
+        entry = models.TileCache(cache_key=key, tile_url=url)
+        db.add(entry)
+    db.commit()
+
+
+# ============================================================
 #  EXISTING ENDPOINTS
 # ============================================================
 
 @app.get("/get-sar-map/{year}/{period}")
-def get_sar_map(year: int, period: str, layer: str = "all"):
+def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depends(get_db)):
+    cache_key = f"sar:{year}:{period}:{layer}"
+
+    cached = _get_cached_tile(db, cache_key)
+    if cached:
+        return {"tile_url": cached, "from_cache": True}
+
     try:
         year_data = assets.get(year)
         if not year_data:
@@ -98,14 +156,22 @@ def get_sar_map(year: int, period: str, layer: str = "all"):
 
         vis_params = {'min': 0, 'max': 3, 'palette': CLASS_PALETTE}
         map_id = sar_image.getMapId(vis_params)
-        return {"tile_url": map_id['tile_fetcher'].url_format}
+        tile_url = map_id['tile_fetcher'].url_format
+        _set_cached_tile(db, cache_key, tile_url)
+        return {"tile_url": tile_url, "from_cache": False}
 
     except Exception as e:
         return {"error": str(e)}
 
 
 @app.get("/get-satellite-basemap/{year}/{period}")
-def get_satellite_basemap(year: int, period: str):
+def get_satellite_basemap(year: int, period: str, db: Session = Depends(get_db)):
+    cache_key = f"basemap:{year}:{period}"
+
+    cached = _get_cached_tile(db, cache_key)
+    if cached:
+        return {"tile_url": cached, "from_cache": True}
+
     try:
         if period == "Jan-Jun":
             start_date, end_date = f'{year}-01-01', f'{year}-06-30'
@@ -127,7 +193,9 @@ def get_satellite_basemap(year: int, period: str):
 
         vis_params = {'min': 0, 'max': 3000, 'bands': ['B4', 'B3', 'B2']}
         map_id = dataset.getMapId(vis_params)
-        return {"tile_url": map_id['tile_fetcher'].url_format}
+        tile_url = map_id['tile_fetcher'].url_format
+        _set_cached_tile(db, cache_key, tile_url)
+        return {"tile_url": tile_url, "from_cache": False}
 
     except Exception as e:
         return {"error": str(e)}
