@@ -1,7 +1,7 @@
 import ee
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from google.oauth2 import service_account
 from pydantic import BaseModel
@@ -16,14 +16,41 @@ from database import get_db
 
 app = FastAPI(title="Thesis Backend")
 
-# --- STATIC TILE FILES (pre-rendered PNGs, served instantly with no GEE dependency) ---
-# Drop exported tile folders into backend/tiles/<year>-<season>/  e.g. tiles/2021-Jan-Jun/
-# Generated with: gdal2tiles.py --zoom=6-14 --resampling=near <file>.tif tiles/<folder>/
-# Frontend uses: http://127.0.0.1:8000/tiles/{folder}/{z}/{x}/{y}.png
+# --- LOCAL TIF TILE SERVER (rio-tiler, no GEE dependency) ---
+# Drop exported GeoTIFFs into backend/tif/ named as:  2021-Jan-Jun.tif, 2021-Jul-Dec.tif, etc.
+# /get-sar-map will automatically return a local tile URL when the TIF is present.
 import pathlib
-_TILES_DIR = pathlib.Path(__file__).parent / "tiles"
-_TILES_DIR.mkdir(exist_ok=True)
-app.mount("/tiles", StaticFiles(directory=str(_TILES_DIR)), name="tiles")
+from io import BytesIO
+try:
+    from rio_tiler.io import Reader as RioReader
+    from rio_tiler.errors import TileOutsideBounds
+    _RIO_AVAILABLE = True
+except ImportError:
+    _RIO_AVAILABLE = False
+    print("WARNING: rio-tiler not installed. Run: pip install rio-tiler")
+
+_TIF_DIR = pathlib.Path(__file__).parent / "tif"
+_TIF_DIR.mkdir(exist_ok=True)
+
+# 256x256 fully-transparent PNG returned for tiles outside the image bounds
+_EMPTY_PNG: bytes = b""
+try:
+    from PIL import Image as _PilImage
+    _buf = BytesIO()
+    _PilImage.new("RGBA", (256, 256), (0, 0, 0, 0)).save(_buf, format="PNG")
+    _EMPTY_PNG = _buf.getvalue()
+except Exception:
+    pass
+
+
+def _local_tile_url(year: int, period: str) -> str | None:
+    """Return a local tile URL template if a TIF exists for this year/period, else None."""
+    if not _RIO_AVAILABLE:
+        return None
+    tif = _TIF_DIR / f"{year}-{period}.tif"
+    if not tif.exists():
+        return None
+    return f"http://127.0.0.1:8000/lulc-tiles/{year}/{period}/{{z}}/{{x}}/{{y}}.png"
 
 # --- CREATE TABLES ON STARTUP ---
 try:
@@ -125,11 +152,67 @@ def _set_cached_tile(db: Session, key: str, url: str) -> None:
 
 
 # ============================================================
+#  LOCAL TILE ENDPOINT  (rio-tiler, served from backend/tif/)
+# ============================================================
+
+# LULC colormap: class value → RGBA (matches CLASS_PALETTE in GEE and frontend legend)
+# 0=Water(blue)  1=Urban(red)  2=Forest(green)  3=Agriculture(yellow)
+# TIFs must be exported from GEE with .unmask(255) so outside-region pixels = 255.
+# 255 is intentionally absent from this colormap → renders as transparent via nodata.
+LULC_COLORMAP = {
+    0: (29,  78,  216, 255),  # Water
+    1: (220, 38,  38,  255),  # Urban
+    2: (21,  128, 61,  255),  # Forest
+    3: (202, 138, 4,   255),  # Agriculture
+}
+
+# Pixel value used to mark "outside CALABARZON boundary" in exported TIFs.
+# GEE export: classified.unmask(LULC_OUTSIDE_VALUE).toByte()
+LULC_OUTSIDE_VALUE = 255
+
+
+@app.get("/lulc-tiles/{year}/{period}/{z}/{x}/{y}.png")
+def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
+    """Serve a 256×256 PNG tile from a local raw-class GeoTIFF.
+    Applies the LULC colormap. Pixels with value 255 (outside CALABARZON)
+    are treated as nodata and rendered fully transparent.
+    No GEE dependency — reads directly from backend/tif/.
+    """
+    if not _RIO_AVAILABLE:
+        raise HTTPException(status_code=503, detail="rio-tiler not installed")
+
+    tif_path = _TIF_DIR / f"{year}-{period}.tif"
+    if not tif_path.exists():
+        raise HTTPException(status_code=404, detail=f"TIF not found: {year}-{period}.tif")
+
+    try:
+        # nodata=255 is already stored in the TIF metadata (set by fix_tif_nodata.py).
+        # rio-tiler reads it automatically — no need to pass it as a constructor arg.
+        with RioReader(str(tif_path)) as src:
+            img = src.tile(x, y, z, tilesize=256)
+        return Response(
+            content=img.render(img_format="PNG", colormap=LULC_COLORMAP),
+            media_type="image/png",
+        )
+    except TileOutsideBounds:
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+    except Exception:
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+
+
+# ============================================================
 #  EXISTING ENDPOINTS
 # ============================================================
 
 @app.get("/get-sar-map/{year}/{period}")
 def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depends(get_db)):
+    # Local TIF takes priority — instant tiles, no GEE needed.
+    # Only used for layer="all" since the visualized TIF has all classes pre-colored.
+    if layer == "all":
+        local_url = _local_tile_url(year, period)
+        if local_url:
+            return {"tile_url": local_url, "from_cache": True, "source": "local"}
+
     cache_key = f"sar:{year}:{period}:{layer}"
 
     cached = _get_cached_tile(db, cache_key)
