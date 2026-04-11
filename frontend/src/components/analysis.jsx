@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { MapContainer, TileLayer, useMap, useMapEvents, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents, Polygon, Pane } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -529,6 +529,28 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
 // ────────────────────────────────────────────────────────────────
 //  SLIDER COMPARE – one map with a draggable before/after divider
 // ────────────────────────────────────────────────────────────────
+
+// Updates the custom left pane's clip so only the left portion is visible.
+// Runs inside MapContainer so it can access the Leaflet map instance.
+function LeftPaneClipper({ sliderPct }) {
+  const map = useMap();
+  useEffect(() => {
+    const apply = () => {
+      const pane = map.getPane('leftCompare');
+      if (!pane) return;
+      const w = map.getSize().x;
+      const clipW = Math.round(w * sliderPct / 100);
+      pane.style.clipPath = `inset(0 ${w - clipW}px 0 0)`;
+    };
+    // Try immediately, then again once the map fires 'load' in case pane isn't ready yet
+    apply();
+    map.whenReady(apply);
+    map.on('resize', apply);
+    return () => map.off('resize', apply);
+  }, [sliderPct, map]);
+  return null;
+}
+
 function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
                          rightYear, setRightYear, rightPeriod, setRightPeriod,
                          leftTile, rightTile, basemapUrl, opacity,
@@ -536,9 +558,6 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
   const [sliderPct, setSliderPct] = useState(50);
   const containerRef = useRef(null);
   const isDragging   = useRef(false);
-  const leftMapRef   = useRef(null);
-  const rightMapRef  = useRef(null);
-  const syncLock     = useRef(false);
 
   const startDrag = (e) => {
     isDragging.current = true;
@@ -586,34 +605,29 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
         </div>
       </div>
 
-      {/* ── Map + slider ── */}
+      {/* ── Single map with clipped left pane ── */}
       <div
         ref={containerRef}
         className="relative h-[420px] rounded-b-xl overflow-hidden border border-zinc-200 shadow-sm select-none"
-        onPointerMove={onPointerMove}
-        onPointerUp={stopDrag}
-        onPointerLeave={stopDrag}
       >
-        {/* Right (After) map – full width, sits at back */}
         <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
           className="absolute inset-0 h-full w-full" style={{ backgroundColor: '#172229' }}>
-          <CaptureMap mapRef={rightMapRef} />
-          <SyncMapView otherRef={leftMapRef} lockRef={syncLock} />
+
+          {/* Shared basemap — full width, bottom of stack */}
           {baseTile}
+
+          {/* Right (After) tile — full width in default tile pane */}
           {rightTile && <TileLayer key={rightTile + opacity} url={rightTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+
+          {/* Left (Before) tile — in elevated custom pane, clipped to left side */}
+          <Pane name="leftCompare" style={{ zIndex: 450 }}>
+            {leftTile && <TileLayer key={leftTile + opacity} url={leftTile} pane="leftCompare" opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
+          </Pane>
+
+          {/* Updates the clip on the leftCompare pane whenever sliderPct changes */}
+          <LeftPaneClipper sliderPct={sliderPct} />
           <MapControls bounds={compareBounds} />
         </MapContainer>
-
-        {/* Left (Before) map – clipped to slider, floats on top */}
-        <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - sliderPct}% 0 0)` }}>
-          <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
-            className="h-full w-full" style={{ backgroundColor: '#172229' }}>
-            <CaptureMap mapRef={leftMapRef} />
-            <SyncMapView otherRef={rightMapRef} lockRef={syncLock} />
-            {baseTile}
-            {leftTile && <TileLayer key={leftTile + opacity} url={leftTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
-          </MapContainer>
-        </div>
 
         {/* Divider line */}
         <div className="absolute inset-y-0 z-[2000] pointer-events-none"
@@ -621,11 +635,14 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
           <div className="w-0.5 h-full bg-white/90 shadow-[0_0_12px_rgba(0,0,0,0.6)]" />
         </div>
 
-        {/* Drag handle */}
+        {/* Drag handle — pointer events live here so setPointerCapture delivers moves directly */}
         <div
           className="absolute z-[2001] w-9 h-9 bg-white rounded-full shadow-xl flex items-center justify-center cursor-col-resize touch-none"
           style={{ left: `${sliderPct}%`, top: '50%', transform: 'translate(-50%, -50%)' }}
           onPointerDown={startDrag}
+          onPointerMove={onPointerMove}
+          onPointerUp={stopDrag}
+          onPointerCancel={stopDrag}
         >
           <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
