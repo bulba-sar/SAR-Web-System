@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { MapContainer, TileLayer, useMap, useMapEvents, Polygon, Pane } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -530,24 +530,61 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
 //  SLIDER COMPARE – one map with a draggable before/after divider
 // ────────────────────────────────────────────────────────────────
 
-// Updates the custom left pane's clip so only the left portion is visible.
-// Runs inside MapContainer so it can access the Leaflet map instance.
-function LeftPaneClipper({ sliderPct }) {
+// Manages both LULC tile layers imperatively (so we own the refs) and applies
+// CSS rect() clipping — the same technique as the official leaflet-side-by-side plugin.
+function SliderLayers({ leftUrl, rightUrl, opacity, sliderPct }) {
   const map = useMap();
+  const leftRef  = useRef(null);
+  const rightRef = useRef(null);
+
+  // Left layer — set ref BEFORE addTo so layeradd fires after ref is ready
   useEffect(() => {
-    const apply = () => {
-      const pane = map.getPane('leftCompare');
-      if (!pane) return;
-      const w = map.getSize().x;
-      const clipW = Math.round(w * sliderPct / 100);
-      pane.style.clipPath = `inset(0 ${w - clipW}px 0 0)`;
+    const layer = L.tileLayer(leftUrl ?? '', {
+      opacity, maxNativeZoom: 15, maxZoom: 18,
+      keepBuffer: 4, updateWhenZooming: false,
+    });
+    leftRef.current = layer;           // ref first
+    if (leftUrl) layer.addTo(map);     // addTo fires layeradd; ref already set
+    return () => { layer.remove(); leftRef.current = null; };
+  }, [leftUrl, map]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Right layer — same pattern
+  useEffect(() => {
+    const layer = L.tileLayer(rightUrl ?? '', {
+      opacity, maxNativeZoom: 15, maxZoom: 18,
+      keepBuffer: 4, updateWhenZooming: false,
+    });
+    rightRef.current = layer;
+    if (rightUrl) layer.addTo(map);
+    return () => { layer.remove(); rightRef.current = null; };
+  }, [rightUrl, map]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync opacity separately so it doesn't recreate the layers
+  useEffect(() => {
+    leftRef.current?.setOpacity(opacity);
+    rightRef.current?.setOpacity(opacity);
+  }, [opacity]);
+
+  // Apply clip — convert divider from viewport px to layer coordinates so the
+  // clip stays correct while Leaflet pans (same technique as leaflet-side-by-side).
+  useEffect(() => {
+    const update = () => {
+      const size = map.getSize();
+      const divX = Math.round(size.x * sliderPct / 100);
+      const nw   = map.containerPointToLayerPoint([0, 0]);
+      const se   = map.containerPointToLayerPoint([size.x, size.y]);
+      const clipX = nw.x + divX;   // divider in layer coordinate space
+
+      const lc = leftRef.current?.getContainer?.();
+      const rc = rightRef.current?.getContainer?.();
+      if (lc) lc.style.clip = `rect(${nw.y}px, ${clipX}px, ${se.y}px, ${nw.x}px)`;
+      if (rc) rc.style.clip = `rect(${nw.y}px, ${se.x}px, ${se.y}px, ${clipX}px)`;
     };
-    // Try immediately, then again once the map fires 'load' in case pane isn't ready yet
-    apply();
-    map.whenReady(apply);
-    map.on('resize', apply);
-    return () => map.off('resize', apply);
+    update();
+    map.on('move zoom resize layeradd', update);
+    return () => map.off('move zoom resize layeradd', update);
   }, [sliderPct, map]);
+
   return null;
 }
 
@@ -613,19 +650,17 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
         <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
           className="absolute inset-0 h-full w-full" style={{ backgroundColor: '#172229' }}>
 
-          {/* Shared basemap — full width, bottom of stack */}
+          {/* Shared basemap — full width, no clip */}
           {baseTile}
 
-          {/* Right (After) tile — full width in default tile pane */}
-          {rightTile && <TileLayer key={rightTile + opacity} url={rightTile} opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
-
-          {/* Left (Before) tile — in elevated custom pane, clipped to left side */}
-          <Pane name="leftCompare" style={{ zIndex: 450 }}>
-            {leftTile && <TileLayer key={leftTile + opacity} url={leftTile} pane="leftCompare" opacity={opacity} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
-          </Pane>
-
-          {/* Updates the clip on the leftCompare pane whenever sliderPct changes */}
-          <LeftPaneClipper sliderPct={sliderPct} />
+          {/* Both LULC layers managed imperatively; SliderLayers owns the L.tileLayer refs
+              and clips each container with CSS rect() as the slider moves */}
+          <SliderLayers
+            leftUrl={leftTile}
+            rightUrl={rightTile}
+            opacity={opacity}
+            sliderPct={sliderPct}
+          />
           <MapControls bounds={compareBounds} />
         </MapContainer>
 
@@ -678,27 +713,33 @@ const ALL_PERIODS = [
 ];
 
 function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  // Cache all tile URLs keyed by "year-period" — pre-fetched in parallel on mount/filter change
+  const [selectedIdx, setSelectedIdx] = useState(0);  // debounced — controls tile
+  const [draftIdx,    setDraftIdx]    = useState(0);  // immediate — controls badge + dot highlight
   const [tileCache, setTileCache]     = useState({});
   const [loadedCount, setLoadedCount] = useState(0);
-  const [isPlaying, setIsPlaying]     = useState(false);
-  const playRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  // Cleanup debounce on unmount
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
+
+  const handleScrub = (i) => {
+    setDraftIdx(i);                                         // badge updates instantly
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setSelectedIdx(i), 80); // tile updates after pause
+  };
 
   const cacheKey = ({ year, period }) => `${year}-${period}`;
-  const current  = ALL_PERIODS[selectedIdx];
+  const current        = ALL_PERIODS[selectedIdx];   // for tile URL (debounced)
+  const displayCurrent = ALL_PERIODS[draftIdx];      // for badge (immediate)
   const allReady = loadedCount >= ALL_PERIODS.length;
 
   // Pre-fetch ALL period tile URLs in parallel whenever classFilter changes.
-  // AbortController cancels the previous batch if React StrictMode (or a fast
-  // classFilter change) re-triggers this effect before the first batch finishes.
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
     setTileCache({});
     setLoadedCount(0);
-    setIsPlaying(false);
 
     ALL_PERIODS.forEach(({ year, period }) => {
       fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${classFilter}`, { signal })
@@ -718,27 +759,13 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
     return () => controller.abort();
   }, [classFilter]);
 
-  // Auto-play: 1.2 s per step (faster since no fetch delay)
-  useEffect(() => {
-    clearInterval(playRef.current);
-    if (isPlaying) {
-      playRef.current = setInterval(() => {
-        setSelectedIdx(i => {
-          if (i >= ALL_PERIODS.length - 1) { setIsPlaying(false); return i; }
-          return i + 1;
-        });
-      }, 1200);
-    }
-    return () => clearInterval(playRef.current);
-  }, [isPlaying]);
-
   const currentTile  = tileCache[cacheKey(current)] ?? null;
   const isPeriodReady = (i) => cacheKey(ALL_PERIODS[i]) in tileCache;
 
   return (
     <div className="space-y-3">
 
-      {/* ── Pre-load progress banner (disappears when all ready) ── */}
+      {/* ── Pre-load progress banner ── */}
       {!allReady && (
         <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800 rounded-xl">
           <div className="w-3.5 h-3.5 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin shrink-0" />
@@ -753,8 +780,8 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
         </div>
       )}
 
-      {/* ── Map ── */}
-      <div className="relative h-[360px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
+      {/* ── Map (taller) ── */}
+      <div className="relative h-[520px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
         <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
           className="h-full w-full" style={{ backgroundColor: '#172229' }}>
           {basemapUrl
@@ -766,57 +793,71 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
 
         {/* Period badge */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-2 bg-zinc-900/85 backdrop-blur-sm text-white text-sm font-black px-4 py-1.5 rounded-full pointer-events-none">
-          {current.year} · {current.period}
-          {!isPeriodReady(selectedIdx) && (
+          {displayCurrent.year} · {displayCurrent.period}
+          {!isPeriodReady(draftIdx) && (
             <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           )}
         </div>
-
-        {/* Timeline progress bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800/60 z-[1001]">
-          <div className="h-full bg-[#4ade80] transition-all duration-300"
-            style={{ width: `${((selectedIdx + 1) / ALL_PERIODS.length) * 100}%` }} />
-        </div>
       </div>
 
-      {/* ── Timeline controls ── */}
-      <div className="flex items-center gap-3">
-        {/* Play/Pause — disabled until all periods are cached */}
-        <button
-          onClick={() => setIsPlaying(p => !p)}
-          disabled={!allReady}
-          className="flex items-center gap-1.5 px-3 py-2 bg-[#305d3d] hover:bg-[#254a30] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-all shrink-0"
-        >
-          {isPlaying
-            ? <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            : <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-          }
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
+      {/* ── Scrubber ── */}
+      <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 space-y-3">
+        {/* Range slider */}
+        <input
+          type="range"
+          min={0}
+          max={ALL_PERIODS.length - 1}
+          value={draftIdx}
+          onChange={e => handleScrub(Number(e.target.value))}
+          className="w-full h-2 rounded-full appearance-none cursor-pointer"
+          style={{ accentColor: '#305d3d' }}
+        />
 
-        {/* Period buttons — green dot = URL ready, pulsing dot = still loading */}
-        <div className="flex flex-1 gap-1 overflow-x-auto pb-1">
-          {ALL_PERIODS.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => { setSelectedIdx(i); setIsPlaying(false); }}
-              className={`relative flex flex-col items-center px-2.5 py-1.5 rounded-lg text-[9px] font-bold whitespace-nowrap flex-shrink-0 transition-all ${
-                i === selectedIdx
-                  ? 'bg-[#305d3d] text-white shadow-sm'
-                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-              }`}
-            >
-              <span className="text-[11px]">{p.year}</span>
-              <span className="opacity-80">{p.period === 'Jan-Jun' ? 'S1' : 'S2'}</span>
-              {/* Cache-ready indicator */}
-              <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${
-                isPeriodReady(i) ? 'bg-[#4ade80]' : 'bg-zinc-400 animate-pulse'
-              }`} />
-            </button>
-          ))}
+        {/* Period dots — one group per year, spread evenly */}
+        <div className="flex justify-between items-start select-none">
+          {COMPARE_YEARS.map(y => {
+            const firstIdx = ALL_PERIODS.findIndex(p => p.year === y);
+            const isYearActive = draftIdx >= firstIdx && draftIdx < firstIdx + 2;
+            return (
+              <div key={y} className="flex flex-col items-center gap-2">
+                {/* S1 + S2 dots with more breathing room */}
+                <div className="flex gap-4">
+                  {['Jan-Jun', 'Jul-Dec'].map((period, pi) => {
+                    const idx = ALL_PERIODS.findIndex(p => p.year === y && p.period === period);
+                    const isSelected = idx === draftIdx;
+                    const isReady = isPeriodReady(idx);
+                    return (
+                      <button
+                        key={pi}
+                        onClick={() => { setDraftIdx(idx); setSelectedIdx(idx); }}
+                        title={`${y} · ${period}`}
+                        className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+                          isSelected
+                            ? 'bg-[#305d3d] border-[#305d3d] scale-125 shadow-md'
+                            : isReady
+                              ? 'bg-[#4ade80] border-[#4ade80] hover:scale-110'
+                              : 'bg-zinc-300 border-zinc-300 animate-pulse'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                {/* Year label */}
+                <span className={`text-[9px] font-bold transition-colors duration-150 ${
+                  isYearActive ? 'text-[#305d3d]' : 'text-zinc-400'
+                }`}>
+                  {y}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        <span className="text-[10px] text-zinc-400 font-mono shrink-0">{selectedIdx + 1} / {ALL_PERIODS.length}</span>
+        {/* Current label + counter */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black text-[#305d3d]">{displayCurrent.year} · {displayCurrent.period}</span>
+          <span className="text-[10px] text-zinc-400 font-mono">{draftIdx + 1} / {ALL_PERIODS.length}</span>
+        </div>
       </div>
     </div>
   );
@@ -961,32 +1002,30 @@ function CompareView({ basemapUrl }) {
         </div>
       </div>
 
-      {/* ── Class filter + Swap (hidden in time-series) ── */}
-      {compareMode !== 'timeseries' && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 shrink-0">Show:</span>
-          {COMPARE_CLASSES.map(cls => (
-            <button key={cls.value} onClick={() => setClassFilter(cls.value)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
-                classFilter === cls.value
-                  ? 'bg-[#305d3d] text-white border-[#305d3d]'
-                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
-              }`}>
-              {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
-              {cls.label}
-            </button>
-          ))}
-          {compareMode === 'sidebyside' && (
-            <button onClick={handleSwap}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              Swap
-            </button>
-          )}
-        </div>
-      )}
+      {/* ── Class filter (always visible) + Swap (side-by-side only) ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 shrink-0">Show:</span>
+        {COMPARE_CLASSES.map(cls => (
+          <button key={cls.value} onClick={() => setClassFilter(cls.value)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+              classFilter === cls.value
+                ? 'bg-[#305d3d] text-white border-[#305d3d]'
+                : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+            }`}>
+            {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
+            {cls.label}
+          </button>
+        ))}
+        {compareMode === 'sidebyside' && (
+          <button onClick={handleSwap}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Swap
+          </button>
+        )}
+      </div>
 
       {/* ── Map view (switches by mode) ── */}
       {compareMode === 'sidebyside' && (
@@ -1050,7 +1089,7 @@ function CompareView({ basemapUrl }) {
 // ============================================================
 
 export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon }) {
-  const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'suitability'
+  const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
   const [startYear, setStartYear] = useState('2022');
   const [endYear, setEndYear] = useState('2023');
   const [selectedSeason, setSelectedSeason] = useState('all');
@@ -1068,12 +1107,6 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   // Crop Area Coverage state (bar chart — both-semester Agriculture pixels)
   const [cropAreaData, setCropAreaData] = useState(null);
   const [cropAreaError, setCropAreaError] = useState(null);
-
-  // Crop Suitability state
-  const [suitabilityData, setSuitabilityData] = useState(null);
-  const [isSuitabilityAnalyzing, setIsSuitabilityAnalyzing] = useState(false);
-  const [suitabilityError, setSuitabilityError] = useState(null);
-  const [suitabilityMonth, setSuitabilityMonth] = useState(0); // 0 = all months
 
   // ── LULC Computed Values ──
   const overallSummary = useMemo(() => {
@@ -1131,35 +1164,30 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     setAnalyticsData(null); setAnalysisError(null);
     setCropData(null); setCropError(null);
     setCropAreaData(null); setCropAreaError(null);
-    setSuitabilityData(null); setSuitabilityError(null); setSuitabilityMonth(0);
   };
 
-  // ── Run Crop Suitability (centroid of drawn polygon) ──
-  const handleRunSuitability = async () => {
-    if (!drawnPolygon) { alert("Please draw your study area first."); return; }
-    setIsSuitabilityAnalyzing(true);
-    setSuitabilityError(null);
-    setSuitabilityData(null);
-
-    // Compute centroid
-    const avgLat = drawnPolygon.reduce((s, p) => s + p.lat, 0) / drawnPolygon.length;
-    const avgLng = drawnPolygon.reduce((s, p) => s + p.lng, 0) / drawnPolygon.length;
-
-    try {
-      const monthParam = suitabilityMonth > 0 ? `&month=${suitabilityMonth}` : '';
-      const res = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${avgLat}&lng=${avgLng}${monthParam}`);
-      const data = await res.json();
-      if (data.found) setSuitabilityData(data);
-      else setSuitabilityError("No terrain or suitability data found for this area.");
-    } catch {
-      setSuitabilityError("Could not connect to the backend. Is FastAPI running on port 8000?");
-    }
-    setIsSuitabilityAnalyzing(false);
+  // ── Export analysis results as CSV ──
+  const handleDownloadCSV = () => {
+    if (!analyticsData || analyticsData.length === 0) return;
+    const rows = [['Period', 'Class', 'Pixel Count', 'Percentage (%)']];
+    analyticsData.forEach(entry => {
+      Object.entries(entry.classes).forEach(([cls, d]) => {
+        rows.push([entry.label, cls, d.pixel_count, d.percentage]);
+      });
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `LULC_Analysis_${startYear}-${endYear}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // ── Run LULC Analysis ──
   const handleRunLULC = async () => {
-    if (!drawnPolygon) { alert("Please draw your study area first."); return; }
+    if (!drawnPolygon) { setAnalysisError("Please draw your study area on the map first."); return; }
     setIsAnalyzing(true); setAnalysisError(null); setAnalyticsData(null);
     try {
       const response = await fetch('http://127.0.0.1:8000/api/v1/analytics/lulc-change', {
@@ -1226,7 +1254,6 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const handleRunAnalysis = () => {
     if (activeTab === 'lulc') handleRunLULC();
     else if (activeTab === 'crop') handleRunCropIntensity();
-    else handleRunSuitability();
   };
 
   return (
@@ -1246,16 +1273,13 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
               Crop Intensity
             </button>
-            <button onClick={() => setActiveTab('suitability')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'suitability' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-              Crop Suitability
-            </button>
             <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
               Compare
             </button>
           </div>
-          <button onClick={() => { if (analyticsData || cropData) window.print(); }} disabled={!analyticsData && !cropData} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
+          <button onClick={handleDownloadCSV} disabled={!analyticsData || analyticsData.length === 0} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Export Report
+            Download CSV
           </button>
         </div>
       </div>
@@ -1291,27 +1315,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           </div>
         )}
 
-        {activeTab === 'suitability' && (
-          <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 px-3 lg:px-4 flex-shrink-0">
-            <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider">Month</span>
-            <select
-              value={suitabilityMonth}
-              onChange={e => setSuitabilityMonth(Number(e.target.value))}
-              className="text-xs font-bold text-zinc-800 bg-white px-2 py-1 rounded-lg border border-zinc-200 outline-none cursor-pointer"
-            >
-              <option value={0}>All Months</option>
-              {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
-                <option key={m} value={i + 1}>{m}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
           <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] bg-white border border-[#23432f] px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 transition whitespace-nowrap">Clear</button>
-          <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
-            {(isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-            {(isAnalyzing || isCropAnalyzing || isSuitabilityAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
+          <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
+            {(isAnalyzing || isCropAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+            {(isAnalyzing || isCropAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
           </button>
         </div>
       </div>}
@@ -1371,61 +1379,6 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                       <ClassBar key={cls} label={cls} percentage={overallSummary.classes[cls].percentage} color={CLASS_COLORS[cls]} pixelCount={overallSummary.classes[cls].pixel_count} />
                     ))}
                   </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* ════════ CROP SUITABILITY TAB ════════ */}
-          {activeTab === 'suitability' && (
-            <>
-              {!suitabilityData && !isSuitabilityAnalyzing && !suitabilityError && <EmptyState message="No suitability results yet" sub="Draw a study area and click Run Analysis" />}
-              {isSuitabilityAnalyzing && <LoadingState message="Querying terrain, soil, and crop success data..." />}
-              {suitabilityError && <ErrorState message={suitabilityError} />}
-
-              {suitabilityData && (
-                <div className="space-y-4">
-
-                  {/* Location + LULC */}
-                  <div className="border-2 border-amber-200/50 rounded-xl p-4 lg:p-5 bg-gradient-to-br from-amber-50/50 to-white space-y-3">
-                    {suitabilityData.location && (
-                      <div>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Location (centroid)</p>
-                        <p className="text-sm font-black text-zinc-800 mt-0.5">
-                          {suitabilityData.location.barangay}, {suitabilityData.location.municipality}
-                        </p>
-                        <p className="text-xs text-zinc-500">{suitabilityData.location.province}</p>
-                      </div>
-                    )}
-                    <div className={`px-3 py-2 rounded-lg text-xs font-bold ${suitabilityData.lulc?.is_non_agri ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
-                      {suitabilityData.lulc?.is_non_agri ? '⚠ ' : ''}Land Use: {suitabilityData.lulc?.label ?? '—'}
-                      {suitabilityData.lulc?.is_non_agri && <span className="block font-normal text-[10px] mt-0.5">This area is not classified as cropland.</span>}
-                    </div>
-                  </div>
-
-                  {/* Terrain metrics */}
-                  <div className="border border-zinc-200 rounded-xl p-4 lg:p-5 bg-white space-y-3">
-                    <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide">Terrain Profile</h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[['Elevation', `${suitabilityData.elevation} m`], ['Slope', `${suitabilityData.slope?.toFixed(1)}°`], ['NDVI', suitabilityData.ndvi?.toFixed(3) ?? '—']].map(([label, val]) => (
-                        <div key={label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-center">
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase">{label}</p>
-                          <p className="text-base lg:text-xl font-black text-zinc-900 mt-1">{val}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3">
-                      <div>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Soil Series</p>
-                        <p className="text-sm font-bold text-zinc-800">{suitabilityData.soil}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase mb-1">Terrain Recommendation</p>
-                      <p className="text-sm font-black text-[#1d5e3a]">{(suitabilityData.terrain_recommendation || []).join(', ')}</p>
-                    </div>
-                  </div>
-
                 </div>
               )}
             </>
@@ -1550,40 +1503,6 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           )}
         </div>
       </div>
-
-      {/* ═══════════════════════════════════════════
-          BELOW THE GRID: CROP SUITABILITY top crops
-         ═══════════════════════════════════════════ */}
-      {activeTab === 'suitability' && suitabilityData && !suitabilityData.lulc?.is_non_agri && suitabilityData.top_crops && (
-        <div className="border border-zinc-200 rounded-xl p-4 lg:p-6 bg-white space-y-3">
-          <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
-            Top Crops — {suitabilityData.location?.province}
-            {suitabilityMonth > 0 && (
-              <span className="text-amber-600 font-normal normal-case text-xs">
-                ({['January','February','March','April','May','June','July','August','September','October','November','December'][suitabilityMonth - 1]})
-              </span>
-            )}
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[['Major Crops', 'major', '#1d5e3a'], ['Fruits', 'fruit', '#b45309'], ['Vegetables', 'vegetable', '#1d4ed8']].map(([title, key, color]) => {
-              const list = suitabilityData.top_crops[key] || [];
-              if (!list.length) return null;
-              return (
-                <div key={key} className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-wider pb-1 border-b" style={{ color, borderColor: `${color}30` }}>{title}</p>
-                  {list.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2.5 bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2">
-                      <span className="w-5 h-5 rounded-full text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ backgroundColor: color }}>{i + 1}</span>
-                      <span className="text-sm font-bold text-zinc-800 flex-1">{item.crop}</span>
-                      <span className="text-xs font-black text-zinc-500">{item.rate}%</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ═══════════════════════════════════════════
           BELOW THE GRID: LULC sections

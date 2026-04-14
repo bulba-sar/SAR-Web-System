@@ -19,12 +19,14 @@ export default function FilterPanel({
 }) {
   const [searchInput, setSearchInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   const handleSearch = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (!searchInput.trim()) return;
 
     setIsSearching(true);
+    setSearchError('');
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchInput}, CALABARZON, Philippines`);
       const data = await response.json();
@@ -33,10 +35,10 @@ export default function FilterPanel({
         const { lat, lon } = data[0];
         setTargetLocation({ lat: parseFloat(lat), lng: parseFloat(lon), zoom: 13 });
       } else {
-        alert("Location not found. Please try a different municipality or barangay.");
+        setSearchError('Location not found. Try a municipality or barangay name.');
       }
     } catch (error) {
-      console.error("Search failed:", error);
+      setSearchError('Search failed. Check your connection.');
     }
     setIsSearching(false);
   };
@@ -65,13 +67,13 @@ export default function FilterPanel({
         <div className="space-y-2 lg:space-y-3">
           <h3 className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase tracking-wider">Search Location</h3>
           <form onSubmit={handleSearch} className="relative">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={isSearching ? "Searching..." : "Find municipality..."} 
+              onChange={(e) => { setSearchInput(e.target.value); setSearchError(''); }}
+              placeholder={isSearching ? "Searching..." : "Find municipality..."}
               disabled={isSearching}
-              className="w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-2 lg:py-2.5 bg-white border border-zinc-200 rounded-lg text-xs lg:text-sm font-medium text-zinc-900 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm disabled:opacity-50 transition-all"
+              className={`w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-2 lg:py-2.5 bg-white border rounded-lg text-xs lg:text-sm font-medium text-zinc-900 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm disabled:opacity-50 transition-all ${searchError ? 'border-red-300' : 'border-zinc-200'}`}
             />
             <button type="submit" className="absolute left-2.5 lg:left-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-green-500">
               <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,6 +81,9 @@ export default function FilterPanel({
               </svg>
             </button>
           </form>
+          {searchError && (
+            <p className="text-[10px] lg:text-xs text-red-500 font-medium mt-1 px-1">{searchError}</p>
+          )}
         </div>
 
         {/* === GROUPED: Year & Season Container === */}

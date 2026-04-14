@@ -108,16 +108,6 @@ CLASS_MAP = {
 
 CLASS_PALETTE = ['#1d4ed8', '#dc2626', '#15803d', '#ca8a04']
 
-
-# ============================================================
-#  TILE CACHE HELPERS  (Supabase-backed, permanent rows)
-#
-#  GEE tile tokens expire in ~6-7 hours, so we refresh URLs
-#  that are older than REFRESH_AFTER_HOURS.  Supabase rows are
-#  NEVER deleted — they persist forever and are simply updated
-#  with a fresh URL when the old one is about to expire.
-# ============================================================
-
 REFRESH_AFTER_HOURS = 5  # refresh URL before GEE token expires (~6-7 h)
 
 
@@ -198,6 +188,37 @@ def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
         return Response(content=_EMPTY_PNG, media_type="image/png")
     except Exception:
         return Response(content=_EMPTY_PNG, media_type="image/png")
+
+
+@app.get("/api/v1/analytics/calabarzon-stats/{year}/{period}")
+def get_calabarzon_stats(year: int, period: str):
+    """Return pixel-count stats per LULC class for the full CALABARZON TIF.
+    Reads the local TIF directly with numpy — no GEE call needed.
+    """
+    import numpy as np
+    import rasterio
+
+    tif_path = _TIF_DIR / f"{year}-{period}.tif"
+    if not tif_path.exists():
+        raise HTTPException(status_code=404, detail=f"TIF not found: {year}-{period}.tif")
+
+    with rasterio.open(str(tif_path)) as src:
+        data = src.read(1)
+
+    class_names = {0: "Water", 1: "Urban", 2: "Forest", 3: "Agriculture"}
+    counts = {name: int(np.sum(data == val)) for val, name in class_names.items()}
+    total = sum(counts.values())
+
+    if total == 0:
+        raise HTTPException(status_code=404, detail="No valid pixels in TIF")
+
+    return {
+        "year": year, "period": period, "total_pixels": total,
+        "classes": {
+            name: {"pixel_count": cnt, "percentage": round(cnt / total * 100, 1)}
+            for name, cnt in counts.items()
+        }
+    }
 
 
 # ============================================================

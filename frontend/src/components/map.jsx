@@ -40,10 +40,66 @@ function ReactLegend({ showCropSuitability }) {
   );
 }
 
+// CALABARZON STATS CARD
+const CLASS_COLORS = { Water: '#1d4ed8', Urban: '#dc2626', Forest: '#15803d', Agriculture: '#ca8a04' };
+const CLASS_ORDER  = ['Forest', 'Agriculture', 'Urban', 'Water'];
+
+function CalabarzonStatsCard({ year, period }) {
+  const [stats, setStats]     = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!year || !period) return;
+    let cancelled = false;
+    setLoading(true);
+    setStats(null);
+    fetch(`http://127.0.0.1:8000/api/v1/analytics/calabarzon-stats/${year}/${period}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d) { setStats(d); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [year, period]);
+
+  return (
+    <div className="absolute bottom-8 left-3 lg:left-4 z-[1000] bg-zinc-900/85 backdrop-blur-sm rounded-xl border border-white/10 p-3 min-w-[170px] transition-all">
+      <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+        CALABARZON · {year} {period}
+      </p>
+      {loading && (
+        <div className="flex items-center gap-2 text-zinc-400 text-xs py-1">
+          <div className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+          Loading stats...
+        </div>
+      )}
+      {stats && CLASS_ORDER.map(cls => {
+        const d = stats.classes[cls];
+        if (!d) return null;
+        return (
+          <div key={cls} className="mb-1.5">
+            <div className="flex justify-between items-center mb-0.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS[cls] }} />
+                <span className="text-[10px] font-bold text-zinc-300">{cls}</span>
+              </div>
+              <span className="text-[10px] font-black text-white">{d.percentage}%</span>
+            </div>
+            <div className="w-full h-1 bg-zinc-700 rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${d.percentage}%`, backgroundColor: CLASS_COLORS[cls] }} />
+            </div>
+          </div>
+        );
+      })}
+      {!loading && !stats && (
+        <p className="text-[10px] text-zinc-500">No TIF for this period</p>
+      )}
+    </div>
+  );
+}
+
 // GEE TILE LAYER
 function GEELayer({ url, opacity }) {
-  if (!url) return null; 
-  return <TileLayer url={url} attribution="Google Earth Engine" opacity={opacity || 1.0} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />;
+  if (!url) return null;
+  return <TileLayer url={url} attribution="Google Earth Engine" opacity={opacity ?? 1.0} updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />;
 }
 
 // CLICK LISTENER 
@@ -51,6 +107,10 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
   useMapEvents({
     click: async (e) => {
       const { lat, lng } = e.latlng;
+
+      // Neither layer is active — ignore click entirely
+      if (!showProtected && !showCropSuitability) return;
+
       setPopupInfo({ lat, lng, loading: true });
 
       // Get Location Name via OpenStreetMap
@@ -163,7 +223,7 @@ export default function Map({
         {basemapUrl && (
           <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
         )}
-        
+
         {sarUrl && !showCropSuitability && <GEELayer url={sarUrl} key={`sar-${sarUrl}`} opacity={sarOpacity} />}
         {cropSuitabilityUrl && showCropSuitability && <GEELayer url={cropSuitabilityUrl} key={`crop-${cropSuitabilityUrl}`} opacity={sarOpacity} />}
         {protectedUrl && <GEELayer url={protectedUrl} key={`pa-${protectedUrl}`} opacity={1.0} />}
@@ -259,6 +319,8 @@ export default function Map({
         )}
 
       </MapContainer>
+
+      <CalabarzonStatsCard year={year} period={period} />
     </div>
   );
 }
