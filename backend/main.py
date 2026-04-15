@@ -190,14 +190,53 @@ def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
         return Response(content=_EMPTY_PNG, media_type="image/png")
 
 
+@app.get("/api/v1/analytics/model-performance")
+def get_model_performance():
+    """Return pre-computed RF model performance metrics from model_metrics.json."""
+    import json
+    metrics_path = pathlib.Path(__file__).parent / "model_metrics.json"
+    if not metrics_path.exists():
+        raise HTTPException(status_code=404, detail="model_metrics.json not found in backend/")
+    with open(metrics_path, "r") as f:
+        data = json.load(f)
+    # Strip internal _note keys from response
+    def strip_notes(obj):
+        if isinstance(obj, dict):
+            return {k: strip_notes(v) for k, v in obj.items() if not k.startswith("_")}
+        return obj
+    return strip_notes(data)
+
+
 @app.get("/api/v1/analytics/calabarzon-stats/{year}/{period}")
-def get_calabarzon_stats(year: int, period: str):
+def get_calabarzon_stats(year: int, period: str, db: Session = Depends(get_db)):
     """Return pixel-count stats per LULC class for the full CALABARZON TIF.
-    Reads the local TIF directly with numpy — no GEE call needed.
+    Results are cached in Supabase (lulc_stats_cache) after the first computation,
+    so subsequent requests for the same year/period are instant DB reads.
+    Falls back to TIF-only computation if the DB is unavailable.
     """
+    import json
     import numpy as np
     import rasterio
 
+    cache_key = f"{year}-{period}"
+
+    # ── 1. Try cache hit ──────────────────────────────────────────────────────
+    try:
+        cached = db.query(models.LulcStatsCache).filter(
+            models.LulcStatsCache.cache_key == cache_key
+        ).first()
+        if cached:
+            return {
+                "year": year,
+                "period": period,
+                "total_pixels": cached.total_pixels,
+                "classes": json.loads(cached.stats_json),
+                "cached": True,
+            }
+    except Exception:
+        pass  # DB unavailable — fall through to TIF computation
+
+    # ── 2. Compute from TIF ───────────────────────────────────────────────────
     tif_path = _TIF_DIR / f"{year}-{period}.tif"
     if not tif_path.exists():
         raise HTTPException(status_code=404, detail=f"TIF not found: {year}-{period}.tif")
@@ -212,12 +251,31 @@ def get_calabarzon_stats(year: int, period: str):
     if total == 0:
         raise HTTPException(status_code=404, detail="No valid pixels in TIF")
 
+    classes_payload = {
+        name: {"pixel_count": cnt, "percentage": round(cnt / total * 100, 1)}
+        for name, cnt in counts.items()
+    }
+
+    # ── 3. Store result in cache ──────────────────────────────────────────────
+    try:
+        entry = models.LulcStatsCache(
+            cache_key=cache_key,
+            year=year,
+            period=period,
+            total_pixels=total,
+            stats_json=json.dumps(classes_payload),
+        )
+        db.add(entry)
+        db.commit()
+    except Exception:
+        db.rollback()  # Cache write failed — still return the computed result
+
     return {
-        "year": year, "period": period, "total_pixels": total,
-        "classes": {
-            name: {"pixel_count": cnt, "percentage": round(cnt / total * 100, 1)}
-            for name, cnt in counts.items()
-        }
+        "year": year,
+        "period": period,
+        "total_pixels": total,
+        "classes": classes_payload,
+        "cached": False,
     }
 
 

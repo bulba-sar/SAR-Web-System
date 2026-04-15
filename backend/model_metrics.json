@@ -1,0 +1,142 @@
+{
+  "_note": "Fill each period's values from your GEE console output. Run the script for each YEAR+SEMESTER combo and copy the printed numbers here.",
+  "model": {
+    "type": "Random Forest",
+    "n_estimators": 250,
+    "train_ratio": 0.7,
+    "test_ratio": 0.3,
+    "features": ["B2", "B3", "B4", "B8", "B11", "B12", "NDVI", "NDWI", "NDVI_std", "VV_std", "VV", "VH", "slope"]
+  },
+  "periods": {
+    "2021-Jan-Jun": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2021-Jul-Dec": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2022-Jan-Jun": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2022-Jul-Dec": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2023-Jan-Jun": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2023-Jul-Dec": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2024-Jan-Jun": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2024-Jul-Dec": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2025-Jan-Jun": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    },
+    "2025-Jul-Dec": {
+      "overall": { "accuracy": 0.0, "kappa": 0.0, "mse": 0.0 },
+      "per_class": {
+        "Water":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Urban":       { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Forest":      { "precision": 0.0, "recall": 0.0, "f1": 0.0 },
+        "Agriculture": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      },
+      "confusion_matrix": {
+        "classes": ["Water", "Urban", "Forest", "Agriculture"],
+        "matrix": [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+      }
+    }
+  }
+}
