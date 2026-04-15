@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
@@ -21,6 +21,22 @@ class TileCache(Base):
     cache_key  = Column(String(300), unique=True, index=True, nullable=False)
     tile_url   = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
+
+
+class LulcStatsCache(Base):
+    """Persistent cache for CALABARZON-wide LULC pixel stats.
+    Computed once from the local TIF (rasterio + numpy), then stored here.
+    Subsequent requests for the same year/period return instantly from DB.
+    """
+    __tablename__ = "lulc_stats_cache"
+
+    id           = Column(Integer, primary_key=True, index=True)
+    cache_key    = Column(String(50), unique=True, index=True, nullable=False)  # e.g. "2024-Jan-Jun"
+    year         = Column(Integer, nullable=False)
+    period       = Column(String(20), nullable=False)
+    total_pixels = Column(Integer, nullable=False)
+    stats_json   = Column(Text, nullable=False)   # full classes dict as JSON string
+    created_at   = Column(DateTime, default=_utcnow)
 
 
 class User(Base):

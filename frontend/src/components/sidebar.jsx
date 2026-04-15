@@ -30,9 +30,28 @@ function AboutModal({ onClose }) {
             <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">About</h3>
             <p className="text-xs leading-relaxed text-zinc-600">
               This web system maps Land Use and Land Cover (LULC) across the CALABARZON region of the Philippines
-              using Synthetic Aperture Radar (SAR) imagery from the Sentinel-1 satellite. It was developed as a
-              thesis project to support agricultural monitoring and land management decisions.
+              using a fusion of <strong>Sentinel-1 SAR</strong> (Synthetic Aperture Radar) and <strong>Sentinel-2
+              multispectral</strong> satellite imagery. Developed as a thesis project, it supports agricultural
+              monitoring and land management decisions through bi-annual classification powered by a supervised
+              Random Forest model running on Google Earth Engine.
             </p>
+            {/* Satellite highlight pills */}
+            <div className="flex gap-2 pt-1">
+              <div className="flex-1 bg-[#1d4ed8]/8 border border-[#1d4ed8]/20 rounded-xl p-3 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#1d4ed8]" />
+                  <span className="text-[10px] font-black text-[#1d4ed8]">Sentinel-1 SAR</span>
+                </div>
+                <p className="text-[10px] text-zinc-500 leading-relaxed">C-band radar · IW mode · VV + VH polarizations · all-weather, day &amp; night imaging</p>
+              </div>
+              <div className="flex-1 bg-[#15803d]/8 border border-[#15803d]/20 rounded-xl p-3 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#15803d]" />
+                  <span className="text-[10px] font-black text-[#15803d]">Sentinel-2 MSI</span>
+                </div>
+                <p className="text-[10px] text-zinc-500 leading-relaxed">Multispectral · 10m resolution · 6 bands · cloud-masked · NDVI &amp; NDWI indices</p>
+              </div>
+            </div>
           </section>
 
           {/* Study Area */}
@@ -49,10 +68,13 @@ function AboutModal({ onClose }) {
           <section className="space-y-2">
             <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Data Sources</h3>
             <ul className="text-xs text-zinc-600 space-y-1.5">
-              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Sentinel-1 SAR</strong> — C-band SAR imagery from ESA, acquired bi-annually (Jan–Jun and Jul–Dec).</span></li>
-              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Google Earth Engine (GEE)</strong> — Used for SAR processing, classification, and tile generation.</span></li>
-              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>FAO GAUL / GADM</strong> — Administrative boundary data for CALABARZON.</span></li>
-              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Philippine Soil Series</strong> — Soil classification shapefile for crop suitability context.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Sentinel-1 GRD</strong> — C-band SAR (IW mode, VV+VH polarizations) from ESA/Copernicus. Bi-annual median composites filtered to &lt;40% cloud cover.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Sentinel-2 SR Harmonized</strong> — Multispectral optical imagery (10m). Cloud-masked via QA60 band. Bands: B2, B3, B4, B8, B11, B12.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Google Dynamic World V1</strong> — Near-real-time land cover, used as primary gap-fill for unclassified pixels.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>ESA WorldCover v100</strong> — 10m global land cover map; secondary gap-fill fallback after Dynamic World.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>JRC Global Surface Water v1.4</strong> — Permanent water occurrence layer used to enforce water body boundaries and correct mountain shadows.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>USGS SRTMGL1 (30m DEM)</strong> — Elevation data for computing terrain slope, used to identify and correct SAR shadow artifacts.</span></li>
+              <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>GADM Level 3 (gadm41_PHL_3)</strong> — Administrative boundary asset hosted in GEE for clipping and regional analysis.</span></li>
             </ul>
           </section>
 
@@ -80,20 +102,39 @@ function AboutModal({ onClose }) {
           {/* Methodology */}
           <section className="space-y-2">
             <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Methodology</h3>
-            <ol className="text-xs text-zinc-600 space-y-1.5 list-none">
+            <ol className="text-xs text-zinc-600 space-y-2 list-none">
               {[
-                'Sentinel-1 SAR images are composited bi-annually (dry: Jan–Jun, wet: Jul–Dec) using GEE.',
-                'Backscatter intensity features (VV, VH polarizations) are extracted and normalized.',
-                'A supervised classification model assigns each pixel to one of four LULC classes.',
-                'Classified rasters are exported as GeoTIFFs and served locally via rio-tiler.',
-                'Change detection is computed by comparing pixel distributions across periods.',
-              ].map((step, i) => (
+                { title: 'Data Acquisition & Compositing', body: 'Sentinel-1 (VV, VH) and Sentinel-2 (optical) collections are filtered bi-annually and reduced to median composites. Sentinel-2 images are cloud-masked using the QA60 bitmask before compositing.' },
+                { title: 'Feature Engineering (13-band composite)', body: 'The input stack includes 6 Sentinel-2 bands, NDVI, NDWI, NDVI temporal std dev, VV temporal std dev, VV, VH, and terrain slope. Temporal std dev features help distinguish agriculture (high variance) from permanent water (near-zero variance).' },
+                { title: 'Supervised RF Classification', body: 'A 250-tree Random Forest classifier is trained on 200+ manually labeled points split 70% train / 30% test. Each pixel is classified into Water, Urban, Forest, or Agriculture based on its 13 feature values.' },
+                { title: 'Spatial Post-Processing Pipeline', body: 'Gap pixels are filled first with Dynamic World, then ESA WorldCover. A majority filter (1.2-pixel circle kernel) smooths class edges. A sieve filter removes isolated patches smaller than 8 pixels, reclassifying them as Forest.' },
+                { title: 'Water & Shadow Correction', body: 'Mountain shadows (SAR often misreads them as water) are corrected using SRTM slope > 5° combined with JRC permanent water absence. True permanent water bodies are enforced from the JRC occurrence layer.' },
+                { title: 'Export & Tile Serving', body: 'Final maps are exported from GEE as single-band uint8 GeoTIFFs (class values 0–3; 255 = outside CALABARZON). Files are stored in the backend and served as 256×256 XYZ PNG tiles via FastAPI + rio-tiler with the LULC colormap applied at render time.' },
+              ].map(({ title, body }, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#1d5e3a] font-black shrink-0">{i + 1}.</span>
-                  <span>{step}</span>
+                  <span className="text-[#1d5e3a] font-black shrink-0 mt-px">{i + 1}.</span>
+                  <span><strong className="text-zinc-800">{title}:</strong> {body}</span>
                 </li>
               ))}
             </ol>
+          </section>
+
+          {/* Tech Stack */}
+          <section className="space-y-2">
+            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Technology Stack</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { name: 'Google Earth Engine', desc: 'Cloud geospatial processing — compositing, classification, export' },
+                { name: 'FastAPI + rio-tiler', desc: 'Python backend serving local GeoTIFFs as XYZ map tiles' },
+                { name: 'React + Leaflet', desc: 'Interactive frontend map with overlays and polygon analysis' },
+                { name: 'Random Forest (GEE)', desc: '250-tree ensemble classifier with 13-band SAR/optical features' },
+              ].map(({ name, desc }) => (
+                <div key={name} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 space-y-1">
+                  <span className="text-[10px] font-black text-[#1d5e3a]">{name}</span>
+                  <p className="text-[10px] text-zinc-500 leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
           </section>
 
           {/* Coverage */}

@@ -863,6 +863,277 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODEL PERFORMANCE VIEW
+// ─────────────────────────────────────────────────────────────────────────────
+const CLASS_ORDER_MODEL = ['Water', 'Urban', 'Forest', 'Agriculture'];
+const CLASS_COLORS_MODEL = {
+  Water:       '#1d4ed8',
+  Urban:       '#dc2626',
+  Forest:      '#15803d',
+  Agriculture: '#ca8a04',
+};
+
+function ConfusionMatrixView({ confusion_matrix }) {
+  const classes = confusion_matrix?.classes ?? CLASS_ORDER_MODEL;
+  const matrix  = confusion_matrix?.matrix  ?? [];
+  const maxVal  = Math.max(1, ...matrix.flat());
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-xs border-collapse">
+        <thead>
+          <tr>
+            <th className="w-28 text-[10px] text-zinc-400 font-bold text-right pr-3 pb-1">Actual ↓ / Pred →</th>
+            {classes.map(cls => (
+              <th key={cls} className="px-2 pb-1 text-center">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
+                  <span className="text-[10px] font-black text-zinc-600">{cls}</span>
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {matrix.map((row, ri) => (
+            <tr key={ri}>
+              <td className="text-right pr-3 py-1">
+                <div className="flex items-center justify-end gap-1.5">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[classes[ri]] }} />
+                  <span className="text-[10px] font-black text-zinc-600">{classes[ri]}</span>
+                </div>
+              </td>
+              {row.map((val, ci) => {
+                const intensity = val / maxVal;
+                const isDiag = ri === ci;
+                const bg = isDiag
+                  ? `rgba(29,94,58,${0.15 + intensity * 0.75})`
+                  : `rgba(220,38,38,${intensity * 0.5})`;
+                const textColor = intensity > 0.5 ? '#fff' : isDiag ? '#14532d' : '#7f1d1d';
+                return (
+                  <td key={ci} className="px-1.5 py-1 text-center">
+                    <div className="w-14 h-9 rounded-lg flex items-center justify-center font-mono font-black text-xs"
+                      style={{ backgroundColor: bg, color: val > 0 ? textColor : '#d1d5db' }}>
+                      {val.toLocaleString()}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="text-[10px] text-zinc-400 mt-2">Green diagonal = correct · Red off-diagonal = misclassified</p>
+    </div>
+  );
+}
+
+function ModelPerformanceView() {
+  const [data, setData]         = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('http://127.0.0.1:8000/api/v1/analytics/model-performance')
+      .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+      .then(d => {
+        setData(d);
+        // Default to first period
+        const first = Object.keys(d.periods ?? {})[0];
+        if (first) setSelectedPeriod(first);
+        setLoading(false);
+      })
+      .catch(e => { setError(String(e)); setLoading(false); });
+  }, []);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48 text-zinc-400 text-sm gap-2">
+      <div className="w-4 h-4 border-2 border-zinc-300 border-t-[#1d5e3a] rounded-full animate-spin" />
+      Loading model metrics…
+    </div>
+  );
+  if (error) return (
+    <div className="flex items-center justify-center h-48 text-red-500 text-xs text-center px-6">
+      Could not load model metrics. Make sure the backend is running and{' '}
+      <code className="mx-1 bg-red-50 px-1 rounded">backend/model_metrics.json</code> exists.
+    </div>
+  );
+
+  const { model, periods } = data;
+  const periodKeys = Object.keys(periods ?? {});
+  const pct = v => `${(v * 100).toFixed(1)}%`;
+
+  // Compute averages across all periods that have been filled in (accuracy > 0)
+  const filledPeriods = periodKeys.filter(k => (periods[k]?.overall?.accuracy ?? 0) > 0);
+  const avgAccuracy = filledPeriods.length
+    ? filledPeriods.reduce((s, k) => s + periods[k].overall.accuracy, 0) / filledPeriods.length : 0;
+  const avgKappa = filledPeriods.length
+    ? filledPeriods.reduce((s, k) => s + periods[k].overall.kappa, 0) / filledPeriods.length : 0;
+  const avgMse = filledPeriods.length
+    ? filledPeriods.reduce((s, k) => s + periods[k].overall.mse, 0) / filledPeriods.length : 0;
+
+  const activePeriod = selectedPeriod ? periods[selectedPeriod] : null;
+
+  return (
+    <div className="space-y-6">
+
+      {/* Model Config */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-[10px] font-black text-[#1d5e3a] uppercase tracking-wider">Model:</span>
+        {[
+          `${model?.type ?? 'Random Forest'}`,
+          `${model?.n_estimators ?? 250} trees`,
+          `${((model?.train_ratio ?? 0.7) * 100).toFixed(0)}% train / ${((model?.test_ratio ?? 0.3) * 100).toFixed(0)}% test`,
+          `${model?.features?.length ?? 13} input features`,
+        ].map(tag => (
+          <span key={tag} className="bg-green-50 border border-green-100 text-[#1d5e3a] text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
+        ))}
+        {filledPeriods.length > 0 && (
+          <span className="ml-auto text-[10px] text-zinc-400">{filledPeriods.length}/{periodKeys.length} periods recorded</span>
+        )}
+      </div>
+
+      {/* Average overall stats */}
+      <div>
+        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-3">
+          Average Performance
+          <span className="ml-2 text-[10px] font-normal normal-case text-zinc-400">across all {filledPeriods.length || '—'} completed runs</span>
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Avg Accuracy',  value: filledPeriods.length ? pct(avgAccuracy)          : '—', sub: 'Correctly classified pixels' },
+            { label: 'Avg Kappa',     value: filledPeriods.length ? avgKappa.toFixed(4)        : '—', sub: 'Agreement beyond chance' },
+            { label: 'Avg MSE',       value: filledPeriods.length ? avgMse.toFixed(4)          : '—', sub: 'Avg squared class error' },
+          ].map(({ label, value, sub }) => (
+            <div key={label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 text-center">
+              <div className="text-2xl lg:text-3xl font-black text-zinc-900">{value}</div>
+              <div className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase tracking-wider mt-1">{label}</div>
+              <div className="text-[9px] text-zinc-400 mt-0.5">{sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* All-periods summary table */}
+      <div>
+        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-3">Per-Period Summary</h3>
+        <div className="overflow-x-auto rounded-xl border border-zinc-100">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-100">
+                <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5">Period</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Accuracy</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Kappa</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">MSE</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {periodKeys.map((key, i) => {
+                const p = periods[key];
+                const filled = (p?.overall?.accuracy ?? 0) > 0;
+                const isActive = selectedPeriod === key;
+                return (
+                  <tr key={key} className={`border-b border-zinc-100 last:border-0 transition ${isActive ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'}`}>
+                    <td className="px-4 py-2.5 font-bold text-zinc-800">{key}</td>
+                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700">
+                      {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                      {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                      {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      {filled ? (
+                        <button
+                          onClick={() => setSelectedPeriod(isActive ? null : key)}
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition ${isActive ? 'bg-[#1d5e3a] text-white border-[#1d5e3a]' : 'text-[#1d5e3a] border-[#1d5e3a]/30 hover:bg-green-50'}`}
+                        >
+                          {isActive ? 'Hide' : 'View'}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-zinc-300 italic">not yet</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detailed drill-down for selected period */}
+      {activePeriod && selectedPeriod && (
+        <div className="border border-green-100 bg-green-50/30 rounded-2xl p-4 lg:p-6 space-y-5">
+          <h3 className="text-sm font-black text-zinc-800">
+            {selectedPeriod}
+            <span className="ml-2 text-xs font-normal text-zinc-500">— detailed metrics</span>
+          </h3>
+
+          {/* Per-class table */}
+          <div>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
+            <div className="overflow-x-auto rounded-xl border border-zinc-100 bg-white">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-zinc-50 border-b border-zinc-100">
+                    <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">F1 Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CLASS_ORDER_MODEL.map((cls, i) => {
+                    const m = activePeriod.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
+                    return (
+                      <tr key={cls} className={i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/60'}>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
+                            <span className="font-bold text-zinc-800">{cls}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.precision)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.recall)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.f1)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Confusion matrix */}
+          <div>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Confusion Matrix</p>
+            <ConfusionMatrixView confusion_matrix={activePeriod.confusion_matrix} />
+          </div>
+        </div>
+      )}
+
+      {/* Input features */}
+      {model?.features && (
+        <div>
+          <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-2">Input Features ({model.features.length})</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {model.features.map(f => (
+              <span key={f} className="bg-zinc-100 border border-zinc-200 text-zinc-600 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 function CompareView({ basemapUrl }) {
   const [compareMode, setCompareMode] = useState('sidebyside'); // 'sidebyside' | 'slider' | 'timeseries'
   const [leftYear, setLeftYear]       = useState(2021);
@@ -1276,6 +1547,9 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
               Compare
             </button>
+            <button onClick={() => setActiveTab('model')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'model' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              Model
+            </button>
           </div>
           <button onClick={handleDownloadCSV} disabled={!analyticsData || analyticsData.length === 0} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -1287,8 +1561,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       {/* ── Compare View (full-width, replaces the normal grid) ── */}
       {activeTab === 'compare' && <CompareView basemapUrl={basemapUrl} />}
 
-      {/* ── Control Row (hidden on Compare tab) ── */}
-      {activeTab !== 'compare' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
+      {/* ── Model Performance View ── */}
+      {activeTab === 'model' && <ModelPerformanceView />}
+
+      {/* ── Control Row (hidden on Compare / Model tabs) ── */}
+      {activeTab !== 'compare' && activeTab !== 'model' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
         <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
           <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
@@ -1324,8 +1601,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         </div>
       </div>}
 
-      {/* ── Main Grid: Map + Results (hidden on Compare tab) ── */}
-      {activeTab !== 'compare' && <>
+      {/* ── Main Grid: Map + Results (hidden on Compare / Model tabs) ── */}
+      {activeTab !== 'compare' && activeTab !== 'model' && <>
       <div className="grid grid-cols-1 xl:grid-cols-[1fr,1fr] gap-4 lg:gap-6">
         {/* Left: Mini Map */}
         <div className="space-y-3">
