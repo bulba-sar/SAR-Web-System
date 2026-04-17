@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
@@ -47,8 +47,9 @@ class User(Base):
     email = Column(String(200), unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     institution = Column(String(200), nullable=True)
-    role = Column(String(50), default="Researcher")
-    created_at = Column(DateTime, default=_utcnow)
+    role        = Column(String(50), default="Researcher")
+    permissions = Column(Text, nullable=True)  # JSON override; NULL = use role defaults
+    created_at  = Column(DateTime, default=_utcnow)
 
     aois = relationship("SavedAOI", back_populates="user", cascade="all, delete-orphan")
 
@@ -64,3 +65,35 @@ class SavedAOI(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     user = relationship("User", back_populates="aois")
+
+
+class RolePermission(Base):
+    """Per-role feature flags controlled by admins.
+    permissions is a JSON string: { "analysis_tab": true, "save_aois": false, ... }
+    """
+    __tablename__ = "role_permissions"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    role        = Column(String(50), unique=True, nullable=False, index=True)
+    permissions = Column(Text, nullable=False)  # JSON string
+    updated_at  = Column(DateTime, default=_utcnow)
+
+
+class AdminAOI(Base):
+    """System-level Areas of Interest managed by admin users.
+    Stored separately from user-saved AOIs so they can be shared
+    across all sessions and serve as reference datasets.
+    source: 'manual' | 'geojson' | 'shapefile'
+    """
+    __tablename__ = "admin_aois"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    name        = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    geojson     = Column(Text, nullable=False)  # Full GeoJSON string (Feature, FeatureCollection, or Geometry)
+    source      = Column(String(50), default="manual")  # 'manual' | 'geojson' | 'shapefile'
+    created_by  = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at  = Column(DateTime, default=_utcnow)
+
+
+

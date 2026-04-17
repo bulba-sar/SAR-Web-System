@@ -1359,7 +1359,8 @@ function CompareView({ basemapUrl }) {
 //  MAIN ANALYSIS COMPONENT
 // ============================================================
 
-export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon }) {
+export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null }) {
+  const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
   const [startYear, setStartYear] = useState('2022');
   const [endYear, setEndYear] = useState('2023');
@@ -1538,18 +1539,21 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5 p-1.5 bg-zinc-50 rounded-xl border border-zinc-100">
-            <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-              LULC Change
-            </button>
-            <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-              Crop Intensity
-            </button>
-            <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-              Compare
-            </button>
-            <button onClick={() => setActiveTab('model')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'model' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
-              Model
-            </button>
+            {can('lulc_analysis') && (
+              <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+                LULC Change
+              </button>
+            )}
+            {can('crop_intensity') && (
+              <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+                Crop Intensity
+              </button>
+            )}
+            {can('compare_view') && (
+              <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+                Compare
+              </button>
+            )}
           </div>
           <button onClick={handleDownloadCSV} disabled={!analyticsData || analyticsData.length === 0} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -1559,7 +1563,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       </div>
 
       {/* ── Compare View (full-width, replaces the normal grid) ── */}
-      {activeTab === 'compare' && <CompareView basemapUrl={basemapUrl} />}
+      {activeTab === 'compare' && can('compare_view') && <CompareView basemapUrl={basemapUrl} />}
 
       {/* ── Model Performance View ── */}
       {activeTab === 'model' && <ModelPerformanceView />}
@@ -1624,7 +1628,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         <div className="space-y-4 lg:space-y-6">
 
           {/* ════════ LULC TAB ════════ */}
-          {activeTab === 'lulc' && (
+          {activeTab === 'lulc' && can('lulc_analysis') && (
             <>
               {!analyticsData && !isAnalyzing && !analysisError && <EmptyState message="No LULC results yet" sub="Draw a study area and click Run Analysis" />}
               {isAnalyzing && <LoadingState message="Processing LULC data in Google Earth Engine..." />}
@@ -1662,7 +1666,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           )}
 
           {/* ════════ CROP INTENSITY TAB ════════ */}
-          {activeTab === 'crop' && (
+          {activeTab === 'crop' && can('crop_intensity') && (
             <>
               {!cropData && !isCropAnalyzing && !cropError && <EmptyState message="No crop intensity results yet" sub="Draw a study area and click Run Analysis" />}
               {isCropAnalyzing && <LoadingState message="Analyzing SAR & NDVI timelines for crop cycles..." />}
@@ -1852,7 +1856,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       {/* ═══════════════════════════════════════════
           BELOW THE GRID: CROP INTENSITY yearly cards
          ═══════════════════════════════════════════ */}
-      {activeTab === 'crop' && cropData?.yearly && cropData.yearly.length > 0 && (
+      {activeTab === 'crop' && can('crop_intensity') && cropData?.yearly && cropData.yearly.length > 0 && (
         <div className="space-y-4">
           <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
             <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

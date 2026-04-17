@@ -15,30 +15,30 @@ function MapMover({ targetLocation }) {
   return null;
 }
 
-// DYNAMIC LEGEND 
-function ReactLegend({ showCropSuitability }) {
-  return (
-    <div className="legend absolute top-3 right-3 lg:top-4 lg:right-4 z-[2000] bg-zinc-900/80 backdrop-blur-sm p-3 lg:p-4 min-w-[140px] lg:min-w-[160px] rounded-lg border border-white/10 transition-all">
-        <>
-          <h4 className="text-white text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-2 lg:mb-3 border-b border-white/30 pb-1 lg:pb-2 m-0 shadow-sm transition-all">
-            Legend
-          </h4>
-          <div className="legend-item flex items-center mb-1.5 lg:mb-2">
-            <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-yellow-500 mr-2 lg:mr-3 shadow-md transition-all"></i>
-            <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all">Agriculture</span>
-          </div>
-          <div className="legend-item flex items-center mb-1.5 lg:mb-2">
-            <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-green-700 mr-2 lg:mr-3 shadow-md transition-all"></i>
-            <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all">Forest Cover</span>
-          </div>
-          <div className="legend-item flex items-center">
-            <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-red-600 mr-2 lg:mr-3 shadow-md transition-all"></i>
-            <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all"> Urban</span>
-          </div>
-        </>
-    </div>
-  );
-}
+// // DYNAMIC LEGEND 
+// function ReactLegend({ showCropSuitability }) {
+//   return (
+//     <div className="legend absolute top-3 right-3 lg:top-4 lg:right-4 z-[2000] bg-zinc-900/80 backdrop-blur-sm p-3 lg:p-4 min-w-[140px] lg:min-w-[160px] rounded-lg border border-white/10 transition-all">
+//         <>
+//           <h4 className="text-white text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-2 lg:mb-3 border-b border-white/30 pb-1 lg:pb-2 m-0 shadow-sm transition-all">
+//             Legend
+//           </h4>
+//           <div className="legend-item flex items-center mb-1.5 lg:mb-2">
+//             <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-yellow-500 mr-2 lg:mr-3 shadow-md transition-all"></i>
+//             <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all">Agriculture</span>
+//           </div>
+//           <div className="legend-item flex items-center mb-1.5 lg:mb-2">
+//             <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-green-700 mr-2 lg:mr-3 shadow-md transition-all"></i>
+//             <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all">Forest Cover</span>
+//           </div>
+//           <div className="legend-item flex items-center">
+//             <i className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-red-600 mr-2 lg:mr-3 shadow-md transition-all"></i>
+//             <span className="text-white drop-shadow-md text-xs lg:text-sm font-bold transition-all"> Urban</span>
+//           </div>
+//         </>
+//     </div>
+//   );
+// }
 
 // CALABARZON STATS CARD
 const CLASS_COLORS = { Water: '#1d4ed8', Urban: '#dc2626', Forest: '#15803d', Agriculture: '#ca8a04' };
@@ -203,7 +203,7 @@ export default function Map({
         </div>
       )}
 
-      <ReactLegend showCropSuitability={showCropSuitability} />
+      {/* <ReactLegend showCropSuitability={showCropSuitability} /> */}
 
       <MapContainer 
         bounds={calabarzonBounds} 
@@ -221,7 +221,7 @@ export default function Map({
 
         {/* RENDER LAYERS */}
         {basemapUrl && (
-          <TileLayer key={`base-${year}-${period}`} url={basemapUrl} attribution="&copy; Copernicus" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
+          <TileLayer url={basemapUrl} attribution="&copy; Copernicus" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
         )}
 
         {sarUrl && !showCropSuitability && <GEELayer url={sarUrl} key={`sar-${sarUrl}`} opacity={sarOpacity} />}

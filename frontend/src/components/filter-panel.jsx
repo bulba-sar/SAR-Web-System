@@ -14,9 +14,11 @@ export default function FilterPanel({
   sarOpacity, 
   setSarOpacity,
   // === NEW PROPS ===
-  showCropSuitability, 
-  setShowCropSuitability 
+  showCropSuitability,
+  setShowCropSuitability,
+  permissions = null,
 }) {
+  const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [searchInput, setSearchInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -177,45 +179,49 @@ export default function FilterPanel({
         </div>
 
         {/* === TOGGLE GROUP: Protected Areas & Crop Suitability === */}
-        <div className="pt-3 lg:pt-4 border-t border-zinc-100 space-y-3 lg:space-y-4">
-          
-          {/* Protected Areas Toggle */}
-          <label className="flex items-center justify-between cursor-pointer group">
-            <div className="flex flex-col">
-              <span className="text-xs lg:text-sm font-bold text-zinc-900">Protected Areas</span>
-              <span className="text-[10px] lg:text-xs text-zinc-500">Overlay national parks</span>
-            </div>
-            <div className="relative">
-              <input 
-                type="checkbox" 
-                className="sr-only" 
-                checked={showProtected}
-                onChange={(e) => setShowProtected(e.target.checked)}
-              />
-              <div className={`block w-9 h-5 lg:w-10 lg:h-6 rounded-full transition-colors ${showProtected ? 'bg-green-500' : 'bg-zinc-200'}`}></div>
-              <div className={`absolute left-0.5 top-0.5 lg:left-1 lg:top-1 bg-white w-4 h-4 rounded-full transition-transform ${showProtected ? 'translate-x-4' : ''}`}></div>
-            </div>
-          </label>
+        {(can('protected_areas') || can('crop_suitability')) && (
+          <div className="pt-3 lg:pt-4 border-t border-zinc-100 space-y-3 lg:space-y-4">
 
-          {/* === NEW: Crop Suitability Toggle === */}
-          <label className="flex items-center justify-between cursor-pointer group">
-            <div className="flex flex-col">
-              <span className="text-xs lg:text-sm font-bold text-zinc-900">Crop Suitability</span>
-              <span className="text-[10px] lg:text-xs text-zinc-500">View optimal farming zones</span>
-            </div>
-            <div className="relative">
-              <input 
-                type="checkbox" 
-                className="sr-only" 
-                checked={showCropSuitability}
-                onChange={(e) => setShowCropSuitability(e.target.checked)}
-              />
-              <div className={`block w-9 h-5 lg:w-10 lg:h-6 rounded-full transition-colors ${showCropSuitability ? 'bg-green-500' : 'bg-zinc-200'}`}></div>
-              <div className={`absolute left-0.5 top-0.5 lg:left-1 lg:top-1 bg-white w-4 h-4 rounded-full transition-transform ${showCropSuitability ? 'translate-x-4' : ''}`}></div>
-            </div>
-          </label>
+            {can('protected_areas') && (
+              <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex flex-col">
+                  <span className="text-xs lg:text-sm font-bold text-zinc-900">Protected Areas</span>
+                  <span className="text-[10px] lg:text-xs text-zinc-500">Overlay national parks</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={showProtected}
+                    onChange={(e) => setShowProtected(e.target.checked)}
+                  />
+                  <div className={`block w-9 h-5 lg:w-10 lg:h-6 rounded-full transition-colors ${showProtected ? 'bg-green-500' : 'bg-zinc-200'}`}></div>
+                  <div className={`absolute left-0.5 top-0.5 lg:left-1 lg:top-1 bg-white w-4 h-4 rounded-full transition-transform ${showProtected ? 'translate-x-4' : ''}`}></div>
+                </div>
+              </label>
+            )}
 
-        </div>
+            {can('crop_suitability') && (
+              <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex flex-col">
+                  <span className="text-xs lg:text-sm font-bold text-zinc-900">Crop Suitability</span>
+                  <span className="text-[10px] lg:text-xs text-zinc-500">View optimal farming zones</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={showCropSuitability}
+                    onChange={(e) => setShowCropSuitability(e.target.checked)}
+                  />
+                  <div className={`block w-9 h-5 lg:w-10 lg:h-6 rounded-full transition-colors ${showCropSuitability ? 'bg-green-500' : 'bg-zinc-200'}`}></div>
+                  <div className={`absolute left-0.5 top-0.5 lg:left-1 lg:top-1 bg-white w-4 h-4 rounded-full transition-transform ${showCropSuitability ? 'translate-x-4' : ''}`}></div>
+                </div>
+              </label>
+            )}
+
+          </div>
+        )}
       </div>
     </div>
   );

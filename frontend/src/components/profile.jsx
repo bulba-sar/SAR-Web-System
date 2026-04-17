@@ -266,7 +266,44 @@ function AOICard({ aoi, onLoad, onDelete }) {
 //  MAIN PROFILE COMPONENT
 // ============================================================
 
-export default function Profile({ drawnPolygon, onLoadAOI }) {
+// ============================================================
+//  CONFIRMATION MODAL
+// ============================================================
+
+function ConfirmModal({ title, message, confirmLabel, confirmClass, onConfirm, onCancel }) {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6 space-y-4">
+        <div>
+          <p className="text-sm font-black text-zinc-900">{title}</p>
+          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{message}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 border border-zinc-200 text-zinc-600 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 text-white font-bold text-sm py-2 rounded-lg transition ${confirmClass}`}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+//  MAIN PROFILE COMPONENT
+// ============================================================
+
+export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, onAuthChange }) {
+  const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [token, setToken] = useState(localStorage.getItem('sar_token'));
   const [user, setUser] = useState(null);
   const [aois, setAois] = useState([]);
@@ -276,6 +313,11 @@ export default function Profile({ drawnPolygon, onLoadAOI }) {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [editSaving, setEditSaving] = useState(false);
+
+  // Confirmation modals
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch user + AOIs when token is present
   useEffect(() => {
@@ -302,12 +344,25 @@ export default function Profile({ drawnPolygon, onLoadAOI }) {
     setToken(null);
     setUser(null);
     setAois([]);
+    onAuthChange?.();
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await fetch(`${API}/profile/me`, { method: 'DELETE', headers: authHeaders(token) });
+      handleLogout();
+    } catch {
+      alert('Failed to delete account. Please try again.');
+      setDeleting(false);
+    }
   };
 
   const handleAuthSuccess = (newToken, newUser) => {
     setToken(newToken);
     setUser(newUser);
     setEditForm({ name: newUser.name, institution: newUser.institution || '', role: newUser.role });
+    onAuthChange?.();
     // Fetch AOIs after login
     fetch(`${API}/profile/aois`, { headers: authHeaders(newToken) })
       .then(r => r.json())
@@ -382,7 +437,7 @@ export default function Profile({ drawnPolygon, onLoadAOI }) {
             <p className="text-xs text-zinc-400">{user?.email}</p>
           </div>
         </div>
-        <button onClick={handleLogout}
+        <button onClick={() => setShowSignOutConfirm(true)}
           className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -418,13 +473,6 @@ export default function Profile({ drawnPolygon, onLoadAOI }) {
                     placeholder="e.g. UPLB, DA-CALABARZON"
                     className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Role</label>
-                  <select value={editForm.role || 'Researcher'} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white">
-                    {ROLES.map(r => <option key={r}>{r}</option>)}
-                  </select>
-                </div>
                 <button onClick={handleSaveProfile} disabled={editSaving}
                   className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2 rounded-lg transition-all disabled:opacity-60">
                   {editSaving ? 'Saving…' : 'Save Changes'}
@@ -441,35 +489,80 @@ export default function Profile({ drawnPolygon, onLoadAOI }) {
           </div>
 
           {/* ── Saved Areas of Interest ── */}
+          {can('save_aois') && (
+            <div>
+              <SectionHeader title={`Saved Areas (${aois.length})`} />
+
+              {/* Save current drawing */}
+              <SaveAOIForm token={token} drawnPolygon={drawnPolygon} onSaved={handleAOISaved} />
+
+              {/* No drawing hint when list is empty */}
+              {aois.length === 0 && !drawnPolygon && (
+                <div className="border border-dashed border-zinc-200 rounded-xl p-8 text-center">
+                  <svg className="w-10 h-10 text-zinc-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  <p className="text-sm font-bold text-zinc-400">No saved areas yet</p>
+                  <p className="text-xs text-zinc-400 mt-1">Go to <strong>Analysis</strong>, draw a polygon on the map, then come back here to save it.</p>
+                </div>
+              )}
+
+              {/* AOI list */}
+              {aois.length > 0 && (
+                <div className="space-y-3">
+                  {aois.map(aoi => (
+                    <AOICard key={aoi.id} aoi={aoi} onLoad={handleLoadAOI} onDelete={handleDeleteAOI} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Danger Zone ── */}
           <div>
-            <SectionHeader title={`Saved Areas (${aois.length})`} />
-
-            {/* Save current drawing */}
-            <SaveAOIForm token={token} drawnPolygon={drawnPolygon} onSaved={handleAOISaved} />
-
-            {/* No drawing hint when list is empty */}
-            {aois.length === 0 && !drawnPolygon && (
-              <div className="border border-dashed border-zinc-200 rounded-xl p-8 text-center">
-                <svg className="w-10 h-10 text-zinc-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                <p className="text-sm font-bold text-zinc-400">No saved areas yet</p>
-                <p className="text-xs text-zinc-400 mt-1">Go to <strong>Analysis</strong>, draw a polygon on the map, then come back here to save it.</p>
+            <SectionHeader title="Danger Zone" />
+            <div className="border border-red-200 bg-red-50/50 rounded-xl p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-zinc-900">Delete Account</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Permanently remove your account and all saved areas. This cannot be undone.</p>
               </div>
-            )}
-
-            {/* AOI list */}
-            {aois.length > 0 && (
-              <div className="space-y-3">
-                {aois.map(aoi => (
-                  <AOICard key={aoi.id} aoi={aoi} onLoad={handleLoadAOI} onDelete={handleDeleteAOI} />
-                ))}
-              </div>
-            )}
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={deleting}
+                className="shrink-0 px-4 py-2 text-xs font-bold text-red-600 border border-red-300 rounded-lg hover:bg-red-100 transition disabled:opacity-60"
+              >
+                {deleting ? 'Deleting…' : 'Delete Account'}
+              </button>
+            </div>
           </div>
 
         </div>
       </div>
+
+      {/* ── Sign Out Confirmation ── */}
+      {showSignOutConfirm && (
+        <ConfirmModal
+          title="Sign out?"
+          message="You will be returned to the login screen. Your saved areas will remain in your account."
+          confirmLabel="Sign Out"
+          confirmClass="bg-zinc-800 hover:bg-zinc-900"
+          onConfirm={() => { setShowSignOutConfirm(false); handleLogout(); }}
+          onCancel={() => setShowSignOutConfirm(false)}
+        />
+      )}
+
+      {/* ── Delete Account Confirmation ── */}
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="Delete your account?"
+          message={`This will permanently delete your account (${user?.email}) and all your saved areas. This action cannot be undone.`}
+          confirmLabel="Yes, Delete My Account"
+          confirmClass="bg-red-600 hover:bg-red-700"
+          onConfirm={() => { setShowDeleteConfirm(false); handleDeleteAccount(); }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
     </div>
   );
 }

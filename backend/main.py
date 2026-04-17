@@ -12,9 +12,11 @@ from datetime import datetime, timedelta, timezone
 import database
 import models
 import auth as auth_module
+import admin as admin_module
 from database import get_db
 
 app = FastAPI(title="Thesis Backend")
+app.include_router(admin_module.router)
 
 # --- LOCAL TIF TILE SERVER (rio-tiler, no GEE dependency) ---
 # Drop exported GeoTIFFs into backend/tif/ named as:  2021-Jan-Jun.tif, 2021-Jul-Dec.tif, etc.
@@ -58,6 +60,19 @@ try:
 except Exception as e:
     print(f"WARNING: Could not connect to database on startup: {e}")
     print("Backend will still serve map/GEE endpoints. Login/profile features will be unavailable.")
+
+# --- COLUMN MIGRATIONS (add new columns to existing tables safely) ---
+_COLUMN_MIGRATIONS = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions TEXT;",
+]
+
+try:
+    with database.engine.connect() as _conn:
+        for _stmt in _COLUMN_MIGRATIONS:
+            _conn.execute(database.text(_stmt))
+        _conn.commit()
+except Exception as e:
+    print(f"WARNING: Column migration failed: {e}")
 
 # --- CORS ---
 app.add_middleware(
@@ -326,29 +341,25 @@ def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depend
         return {"error": str(e)}
 
 
-@app.get("/get-satellite-basemap/{year}/{period}")
-def get_satellite_basemap(year: int, period: str, db: Session = Depends(get_db)):
-    cache_key = f"basemap:{year}:{period}"
+@app.get("/get-satellite-basemap")
+def get_satellite_basemap(db: Session = Depends(get_db)):
+    """Single shared basemap — 2-year cloud-free Sentinel-2 median composite.
+    Fetched once from GEE and cached permanently; does not change per year/period.
+    """
+    cache_key = "basemap:latest"
 
     cached = _get_cached_tile(db, cache_key)
     if cached:
         return {"tile_url": cached, "from_cache": True}
 
     try:
-        if period == "Jan-Jun":
-            start_date, end_date = f'{year}-01-01', f'{year}-06-30'
-        elif period == "Jul-Dec":
-            start_date, end_date = f'{year}-07-01', f'{year}-12-31'
-        else:
-            return {"error": "Invalid period selected"}
-
         def mask_s2_clouds_and_shadows(image):
             scl = image.select('SCL')
             mask = scl.neq(3).And(scl.neq(8)).And(scl.neq(9)).And(scl.neq(10))
             return image.updateMask(mask)
 
         dataset = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
-            .filterDate(start_date, end_date) \
+            .filterDate('2023-01-01', '2024-12-31') \
             .map(mask_s2_clouds_and_shadows) \
             .median() \
             .clip(calabarzon)
@@ -1240,6 +1251,28 @@ async def get_crop_area(request: CropAreaRequest):
 
 
 # ============================================================
+#  ROLE PERMISSIONS  (public read — no auth required)
+# ============================================================
+
+@app.get("/role-permissions/{role}")
+def get_role_permissions(role: str, db: Session = Depends(get_db)):
+    """Return feature flags for a given role.
+    Used by the frontend after login to gate UI features.
+    Falls back to all-enabled defaults if no row exists yet.
+    """
+    import json as _json
+    row = db.query(models.RolePermission).filter(models.RolePermission.role == role).first()
+    if row is None:
+        from admin import ALL_FEATURES, DEFAULT_PERMISSIONS
+        return {"role": role, "permissions": DEFAULT_PERMISSIONS}
+    perms = _json.loads(row.permissions)
+    from admin import ALL_FEATURES
+    for f in ALL_FEATURES:
+        perms.setdefault(f, True)
+    return {"role": role, "permissions": perms}
+
+
+# ============================================================
 #  HEALTH CHECK
 # ============================================================
 
@@ -1268,7 +1301,6 @@ class LoginRequest(BaseModel):
 class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
     institution: Optional[str] = None
-    role: Optional[str] = None
 
 
 class SaveAOIRequest(BaseModel):
@@ -1286,6 +1318,25 @@ def user_to_dict(user: models.User) -> dict:
         "role": user.role,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
+
+
+def _resolve_permissions(user: models.User, db) -> dict:
+    """Return the effective permissions for a user.
+    User-specific overrides take priority; falls back to role defaults."""
+    import json as _json
+    from admin import ALL_FEATURES, DEFAULT_PERMISSIONS
+
+    if user.permissions:
+        perms = _json.loads(user.permissions)
+    else:
+        row = db.query(models.RolePermission).filter(
+            models.RolePermission.role == user.role
+        ).first()
+        perms = _json.loads(row.permissions) if row else dict(DEFAULT_PERMISSIONS)
+
+    for f in ALL_FEATURES:
+        perms.setdefault(f, True)
+    return perms
 
 
 @app.post("/auth/register")
@@ -1325,6 +1376,17 @@ def get_me(current_user: models.User = Depends(auth_module.get_current_user)):
     return user_to_dict(current_user)
 
 
+@app.get("/profile/permissions")
+def get_my_permissions(
+    current_user: models.User = Depends(auth_module.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the effective feature permissions for the authenticated user.
+    User-specific overrides take priority over role defaults.
+    """
+    return {"role": current_user.role, "permissions": _resolve_permissions(current_user, db)}
+
+
 @app.put("/profile/me")
 def update_me(
     req: UpdateProfileRequest,
@@ -1335,11 +1397,19 @@ def update_me(
         current_user.name = req.name
     if req.institution is not None:
         current_user.institution = req.institution
-    if req.role is not None:
-        current_user.role = req.role
     db.commit()
     db.refresh(current_user)
     return user_to_dict(current_user)
+
+
+@app.delete("/profile/me")
+def delete_me(
+    current_user: models.User = Depends(auth_module.get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account deleted"}
 
 
 # ============================================================
