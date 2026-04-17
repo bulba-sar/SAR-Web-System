@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON as LeafletGeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -227,6 +227,235 @@ function EditModal({ aoi, token, onSaved, onClose }) {
     </div>
   );
 }
+
+// ── Dataset Section ───────────────────────────────────────────────────────────
+
+const DATASET_YEARS   = [2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+const DATASET_PERIODS = ['Jan-Jun', 'Jul-Dec'];
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function DatasetSection({ token }) {
+  const [datasets, setDatasets]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [year, setYear]               = useState(2021);
+  const [period, setPeriod]           = useState('Jan-Jun');
+  const [customName, setCustomName]   = useState('');
+  const [file, setFile]               = useState(null);
+  const [uploading, setUploading]     = useState(false);
+  const [deleting, setDeleting]       = useState(null);
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
+  const fileRef = useRef(null);
+
+  const computedFilename = customName.trim()
+    ? customName.trim().replace(/[^\w-]/g, '_').replace(/\.tif+$/i, '') + '.tif'
+    : `${year}-${period}.tif`;
+
+  const fetchDatasets = useCallback(() => {
+    setLoading(true);
+    fetch(`${API}/admin/datasets`, { headers: authHeaders(token) })
+      .then(r => r.json())
+      .then(data => { setDatasets(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => { fetchDatasets(); }, [fetchDatasets]);
+
+  const handleUpload = async () => {
+    if (!file) { setError('Please select a .tif file'); return; }
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext !== 'tif' && ext !== 'tiff') { setError('File must be a GeoTIFF (.tif or .tiff)'); return; }
+
+    setUploading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const fd = new FormData();
+      fd.append('year', year);
+      fd.append('period', period);
+      if (customName.trim()) fd.append('custom_name', customName.trim());
+      fd.append('file', file);
+      const res = await fetch(`${API}/admin/datasets/upload`, {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+      setSuccess(data.message);
+      setFile(null);
+      setCustomName('');
+      if (fileRef.current) fileRef.current.value = '';
+      fetchDatasets();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (filename) => {
+    if (!window.confirm(`Delete ${filename}? This cannot be undone.`)) return;
+    setDeleting(filename);
+    try {
+      const res = await fetch(`${API}/admin/datasets/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Delete failed'); }
+      setDatasets(prev => prev.filter(d => d.filename !== filename));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Upload card */}
+      <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-4">
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Upload LULC Dataset</h3>
+        <p className="text-xs text-zinc-500">
+          Upload a GeoTIFF exported from GEE. It will be saved as{' '}
+          <code className="bg-zinc-100 px-1 rounded text-[11px]">{computedFilename}</code>{' '}
+          and the nodata fix will run automatically.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Year</label>
+            <select
+              value={year}
+              onChange={e => setYear(Number(e.target.value))}
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white"
+            >
+              {DATASET_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Period</label>
+            <select
+              value={period}
+              onChange={e => setPeriod(e.target.value)}
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white"
+            >
+              {DATASET_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Optional custom filename */}
+        <div>
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+            Custom Filename <span className="text-zinc-400 normal-case font-normal">(optional — leave blank to use {year}-{period}.tif)</span>
+          </label>
+          <input
+            type="text"
+            value={customName}
+            onChange={e => setCustomName(e.target.value)}
+            placeholder={`${year}-${period}.tif`}
+            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white placeholder-zinc-300"
+          />
+          {customName.trim() && (
+            <p className="text-[10px] text-zinc-400 mt-1">
+              Will be saved as: <span className="font-bold text-zinc-600">{computedFilename}</span>
+              {' · '}
+              <span className="text-amber-500">Custom names won&apos;t appear on the main map — use the default {year}-{period}.tif format for that.</span>
+            </p>
+          )}
+        </div>
+
+        {/* File picker */}
+        <div>
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">GeoTIFF File (.tif)</label>
+          <div
+            className="border-2 border-dashed border-zinc-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#305d3d]/40 hover:bg-[#305d3d]/5 transition-all"
+            onClick={() => fileRef.current?.click()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
+          >
+            <svg className="w-8 h-8 text-zinc-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {file ? (
+              <p className="text-sm font-bold text-[#305d3d]">{file.name} ({formatBytes(file.size)})</p>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-zinc-500">Drag & drop or click to select</p>
+                <p className="text-xs text-zinc-400 mt-1">.tif · .tiff (GeoTIFF)</p>
+              </>
+            )}
+            <input ref={fileRef} type="file" accept=".tif,.tiff" className="hidden" onChange={e => setFile(e.target.files[0] || null)} />
+          </div>
+        </div>
+
+        {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-medium">{error}</div>}
+        {success && <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 font-medium">{success}</div>}
+
+        <button
+          onClick={handleUpload}
+          disabled={uploading}
+          className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2.5 rounded-lg transition disabled:opacity-60"
+        >
+          {uploading ? 'Uploading & fixing nodata…' : 'Upload Dataset'}
+        </button>
+      </div>
+
+      {/* Existing datasets table */}
+      <div>
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">
+          Stored Datasets ({datasets.length})
+        </h3>
+        {loading ? (
+          <div className="text-xs text-zinc-400 py-6 text-center">Loading…</div>
+        ) : datasets.length === 0 ? (
+          <div className="border border-dashed border-zinc-200 rounded-xl p-10 text-center">
+            <p className="text-sm font-bold text-zinc-400">No datasets yet</p>
+            <p className="text-xs text-zinc-400 mt-1">Upload a GeoTIFF above to get started.</p>
+          </div>
+        ) : (
+          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-200">
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Filename</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Size</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Last Modified</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {datasets.map((d, i) => (
+                  <tr key={d.filename} className={`border-b border-zinc-100 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'}`}>
+                    <td className="px-4 py-3 text-sm font-bold text-zinc-800 font-mono">{d.filename}</td>
+                    <td className="px-4 py-3 text-xs text-zinc-500">{formatBytes(d.size_bytes)}</td>
+                    <td className="px-4 py-3 text-xs text-zinc-500">{new Date(d.modified_at).toLocaleString('en-PH')}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDelete(d.filename)}
+                        disabled={deleting === d.filename}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 transition disabled:opacity-50"
+                      >
+                        {deleting === d.filename ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 // ── Upload Section ────────────────────────────────────────────────────────────
 
@@ -764,6 +993,360 @@ function EditUserModal({ user, token, onSaved, onClose }) {
 }
 
 
+// ── Model Performance ─────────────────────────────────────────────────────────
+
+const CLASS_ORDER_MODEL = ['Water', 'Urban', 'Forest', 'Agriculture'];
+const CLASS_COLORS_MODEL = {
+  Water:       '#1d4ed8',
+  Urban:       '#dc2626',
+  Forest:      '#15803d',
+  Agriculture: '#ca8a04',
+};
+
+function ConfusionMatrixView({ confusion_matrix }) {
+  const classes = confusion_matrix?.classes ?? CLASS_ORDER_MODEL;
+  const matrix  = confusion_matrix?.matrix  ?? [];
+  const maxVal  = Math.max(1, ...matrix.flat());
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-xs border-collapse">
+        <thead>
+          <tr>
+            <th className="w-28 text-[10px] text-zinc-400 font-bold text-right pr-3 pb-1">Actual ↓ / Pred →</th>
+            {classes.map(cls => (
+              <th key={cls} className="px-2 pb-1 text-center">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
+                  <span className="text-[10px] font-black text-zinc-600">{cls}</span>
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {matrix.map((row, ri) => (
+            <tr key={ri}>
+              <td className="text-right pr-3 py-1">
+                <div className="flex items-center justify-end gap-1.5">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[classes[ri]] }} />
+                  <span className="text-[10px] font-black text-zinc-600">{classes[ri]}</span>
+                </div>
+              </td>
+              {row.map((val, ci) => {
+                const intensity = val / maxVal;
+                const isDiag = ri === ci;
+                const bg = isDiag
+                  ? `rgba(29,94,58,${0.15 + intensity * 0.75})`
+                  : `rgba(220,38,38,${intensity * 0.5})`;
+                const textColor = intensity > 0.5 ? '#fff' : isDiag ? '#14532d' : '#7f1d1d';
+                return (
+                  <td key={ci} className="px-1.5 py-1 text-center">
+                    <div className="w-14 h-9 rounded-lg flex items-center justify-center font-mono font-black text-xs"
+                      style={{ backgroundColor: bg, color: val > 0 ? textColor : '#d1d5db' }}>
+                      {val.toLocaleString()}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="text-[10px] text-zinc-400 mt-2">Green diagonal = correct · Red off-diagonal = misclassified</p>
+    </div>
+  );
+}
+
+function ModelPerformanceSection() {
+  const [data, setData]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null); // null | 'running' | 'done' | 'error'
+  const [jobError, setJobError]   = useState(null);
+  const [jobLog, setJobLog]       = useState([]);
+  const pollRef = useRef(null);
+
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    fetch('http://127.0.0.1:8000/api/v1/analytics/model-performance')
+      .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+      .then(d => { setData(d); setLoading(false); })
+      .catch(e => { setError(String(e)); setLoading(false); });
+  };
+
+  const pollStatus = useCallback(() => {
+    const authH = { Authorization: `Bearer ${localStorage.getItem('sar_token')}` };
+    fetch('http://127.0.0.1:8000/api/v1/admin/run-model-metrics/status', { headers: authH })
+      .then(r => r.ok ? r.json() : null)
+      .then(s => {
+        if (!s) return;
+        setJobStatus(s.state);
+        setJobError(s.error ?? null);
+        setJobLog(s.log ?? []);
+        if (s.state === 'done') {
+          clearInterval(pollRef.current);
+          load();
+        } else if (s.state === 'error') {
+          clearInterval(pollRef.current);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleRun = () => {
+    const authH = { Authorization: `Bearer ${localStorage.getItem('sar_token')}` };
+    setJobStatus('starting');
+    setJobError(null);
+    fetch('http://127.0.0.1:8000/api/v1/admin/run-model-metrics', { method: 'POST', headers: authH })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(res => {
+        setJobStatus(res.status === 'already_running' ? 'running' : 'running');
+        clearInterval(pollRef.current);
+        pollRef.current = setInterval(pollStatus, 8000);
+      })
+      .catch(() => { setJobStatus('error'); setJobError('Failed to start script.'); });
+  };
+
+  useEffect(() => { load(); return () => clearInterval(pollRef.current); }, []);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48 text-zinc-400 text-sm gap-2">
+      <div className="w-4 h-4 border-2 border-zinc-300 border-t-[#305d3d] rounded-full animate-spin" />
+      Loading model metrics…
+    </div>
+  );
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-6">
+      <p className="text-red-500 text-xs">
+        Could not load model metrics. Make sure the backend is running and{' '}
+        <code className="mx-1 bg-red-50 px-1 rounded">backend/model_metrics.json</code> exists.
+      </p>
+      <button onClick={load} className="text-xs font-bold text-[#305d3d] underline">Retry</button>
+    </div>
+  );
+
+  const { model, periods } = data;
+  const periodKeys = Object.keys(periods ?? {});
+  const pct = v => `${(v * 100).toFixed(1)}%`;
+
+  const filledPeriods = periodKeys.filter(k => (periods[k]?.overall?.accuracy ?? 0) > 0);
+  const avg = key => filledPeriods.length
+    ? filledPeriods.reduce((s, k) => s + periods[k].overall[key], 0) / filledPeriods.length : 0;
+  const avgAccuracy = avg('accuracy');
+  const avgKappa    = avg('kappa');
+  const avgMse      = avg('mse');
+
+  const activePeriod = selectedPeriod ? periods[selectedPeriod] : null;
+
+  return (
+    <div className="space-y-6">
+
+      {/* Run controls */}
+      <div className="flex items-center gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+        <button
+          onClick={handleRun}
+          disabled={jobStatus === 'running' || jobStatus === 'starting'}
+          className="flex items-center gap-2 text-xs font-bold bg-[#305d3d] hover:bg-[#254a30] disabled:opacity-50 text-white px-4 py-2 rounded-lg transition shrink-0"
+        >
+          {(jobStatus === 'running' || jobStatus === 'starting') ? (
+            <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          {jobStatus === 'starting' ? 'Starting…' : jobStatus === 'running' ? 'Computing…' : 'Run Compute Script'}
+        </button>
+
+        {jobStatus === 'running' && (
+          <span className="text-xs text-zinc-500">Script is running (~10–20 min/period). Metrics refresh automatically when done.</span>
+        )}
+        {jobStatus === 'done' && (
+          <span className="text-xs font-bold text-green-700 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+            Done — metrics updated
+          </span>
+        )}
+        {jobStatus === 'error' && (
+          <span className="text-xs font-bold text-red-600">{jobError ?? 'Script failed'}</span>
+        )}
+        {!jobStatus && (
+          <span className="text-xs text-zinc-400">Loops all 10 periods and writes results to <code className="font-mono bg-zinc-100 px-1 rounded">model_metrics.json</code></span>
+        )}
+
+        <button onClick={load} className="ml-auto text-[10px] font-bold text-zinc-500 hover:text-zinc-800 border border-zinc-200 px-2.5 py-1.5 rounded-lg transition shrink-0">
+          Refresh
+        </button>
+      </div>
+
+      {/* Script log (shown while running or on error) */}
+      {(jobStatus === 'running' || jobStatus === 'error') && jobLog.length > 0 && (
+        <div className="bg-zinc-900 rounded-xl p-3 overflow-x-auto">
+          <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Script output</p>
+          <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap leading-relaxed">
+            {jobLog.join('\n')}
+          </pre>
+        </div>
+      )}
+
+      {/* Model config pills */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-[10px] font-black text-[#305d3d] uppercase tracking-wider">Model:</span>
+        {[
+          `${model?.type ?? 'Random Forest'}`,
+          `${model?.n_estimators ?? 250} trees`,
+          `${((model?.train_ratio ?? 0.7) * 100).toFixed(0)}% train / ${((model?.test_ratio ?? 0.3) * 100).toFixed(0)}% test`,
+          `${model?.features?.length ?? 26} input features`,
+        ].map(tag => (
+          <span key={tag} className="bg-green-50 border border-green-100 text-[#305d3d] text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
+        ))}
+        <span className="ml-auto text-[10px] text-zinc-400">{filledPeriods.length}/{periodKeys.length} periods recorded</span>
+      </div>
+
+      {/* Average stats */}
+      <div>
+        <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-3">
+          Average Performance
+          <span className="ml-2 font-normal normal-case text-zinc-400">
+            across {filledPeriods.length || '—'} completed periods
+          </span>
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Avg Accuracy', value: filledPeriods.length ? pct(avgAccuracy) : '—', sub: 'Correctly classified pixels' },
+            { label: 'Avg Kappa',    value: filledPeriods.length ? avgKappa.toFixed(4) : '—', sub: 'Agreement beyond chance' },
+            { label: 'Avg MSE',      value: filledPeriods.length ? avgMse.toFixed(4)  : '—', sub: 'Mean squared class error' },
+          ].map(({ label, value, sub }) => (
+            <div key={label} className="bg-white border border-zinc-100 rounded-xl p-4 text-center">
+              <div className="text-2xl font-black text-zinc-900">{value}</div>
+              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-1">{label}</div>
+              <div className="text-[9px] text-zinc-400 mt-0.5">{sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Per-period table */}
+      <div>
+        <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-3">Per-Period Summary</h3>
+        <div className="overflow-x-auto rounded-xl border border-zinc-100">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-100">
+                <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5">Period</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Accuracy</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Kappa</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">MSE</th>
+                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {periodKeys.map((key, i) => {
+                const p = periods[key];
+                const filled = (p?.overall?.accuracy ?? 0) > 0;
+                const isActive = selectedPeriod === key;
+                return (
+                  <tr
+                    key={key}
+                    onClick={() => filled && setSelectedPeriod(isActive ? null : key)}
+                    className={`border-b border-zinc-100 last:border-0 transition ${isActive ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'} ${filled ? 'cursor-pointer hover:bg-green-50/60' : ''}`}
+                  >
+                    <td className="px-4 py-2.5 font-bold text-zinc-800">{key}</td>
+                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700">
+                      {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                      {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                      {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      {filled ? (
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${isActive ? 'bg-[#305d3d] text-white border-[#305d3d]' : 'text-[#305d3d] border-[#305d3d]/30'}`}>
+                          {isActive ? 'Hide' : 'View'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-zinc-300 italic">pending</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Drill-down for selected period */}
+      {activePeriod && selectedPeriod && (
+        <div className="border border-green-100 bg-green-50/30 rounded-2xl p-4 space-y-5">
+          <h3 className="text-sm font-black text-zinc-800">
+            {selectedPeriod}
+            <span className="ml-2 text-xs font-normal text-zinc-500">— detailed metrics</span>
+          </h3>
+
+          <div>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
+            <div className="overflow-x-auto rounded-xl border border-zinc-100 bg-white">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-zinc-50 border-b border-zinc-100">
+                    <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
+                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">F1 Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CLASS_ORDER_MODEL.map((cls, i) => {
+                    const m = activePeriod.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
+                    return (
+                      <tr key={cls} className={i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/60'}>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
+                            <span className="font-bold text-zinc-800">{cls}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.precision)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.recall)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.f1)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Confusion Matrix</p>
+            <ConfusionMatrixView confusion_matrix={activePeriod.confusion_matrix} />
+          </div>
+        </div>
+      )}
+
+      {/* Input features */}
+      {model?.features && (
+        <div>
+          <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-2">
+            Input Features ({model.features.length})
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {model.features.map(f => (
+              <span key={f} className="bg-zinc-100 border border-zinc-200 text-zinc-600 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Admin Component ──────────────────────────────────────────────────────
 
 export default function Admin() {
@@ -773,7 +1356,7 @@ export default function Admin() {
 
   const [aois, setAois] = useState([]);
   const [aoiLoading, setAoiLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('aois'); // 'aois' | 'users'
+  const [activeTab, setActiveTab] = useState('aois'); // 'aois' | 'users' | 'datasets' | 'model'
 
   // ── Verify token and role ──────────────────────────────────────────────────
   useEffect(() => {
@@ -859,8 +1442,10 @@ export default function Admin() {
       {/* Tabs */}
       <div className="shrink-0 flex border-b border-zinc-200 bg-white px-6">
         {[
-          { id: 'aois',  label: 'Areas of Interest' },
-          { id: 'users', label: 'Users' },
+          { id: 'aois',     label: 'Areas of Interest' },
+          { id: 'datasets', label: 'Datasets' },
+          { id: 'users',    label: 'Users' },
+          { id: 'model',    label: 'Model Performance' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -879,6 +1464,14 @@ export default function Admin() {
       {/* Body */}
       <div className="flex-1 overflow-y-auto bg-zinc-50">
         <div className="max-w-5xl mx-auto p-6 space-y-6">
+
+          {activeTab === 'datasets' && (
+            <DatasetSection token={token} />
+          )}
+
+          {activeTab === 'model' && (
+            <ModelPerformanceSection />
+          )}
 
           {activeTab === 'aois' && (
             <>

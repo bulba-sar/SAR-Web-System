@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const API = 'http://127.0.0.1:8000';
 
@@ -319,6 +319,14 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('sar_token');
+    setToken(null);
+    setUser(null);
+    setAois([]);
+    onAuthChange?.();
+  }, [onAuthChange]);
+
   // Fetch user + AOIs when token is present
   useEffect(() => {
     if (!token) return;
@@ -337,15 +345,7 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
       })
       .catch(() => handleLogout())
       .finally(() => setLoadingUser(false));
-  }, [token]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('sar_token');
-    setToken(null);
-    setUser(null);
-    setAois([]);
-    onAuthChange?.();
-  };
+  }, [token, handleLogout]);
 
   const handleDeleteAccount = async () => {
     setDeleting(true);

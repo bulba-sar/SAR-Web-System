@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function FilterPanel({ 
   activeNav, 
@@ -22,6 +22,18 @@ export default function FilterPanel({
   const [searchInput, setSearchInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [availableDatasets, setAvailableDatasets] = useState([]);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/datasets/available')
+      .then(r => r.json())
+      .then(data => setAvailableDatasets(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  const hasDataset = (y, p) => availableDatasets.some(d => d.year === y && d.period === p);
+  const availableYears = [...new Set(availableDatasets.filter(d => d.year).map(d => d.year))].sort((a,b) => b - a);
+  const allYears = [...new Set([...availableYears, 2025, 2024, 2023, 2022, 2021])].sort((a,b) => b - a);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -94,16 +106,14 @@ export default function FilterPanel({
           {/* Year Selector */}
           <div className="space-y-1.5 lg:space-y-2">
             <h3 className="text-[9px] lg:text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Time Period (Year)</h3>
-            <select 
+            <select
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value))}
               className="w-full p-2 lg:p-2.5 bg-white border border-zinc-200 rounded-lg text-xs lg:text-sm font-medium text-zinc-900 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm transition-all"
             >
-              <option value={2025}>2025</option>
-              <option value={2024}>2024</option>
-              <option value={2023}>2023</option>
-              <option value={2022}>2022</option>
-              <option value={2021}>2021</option>
+              {allYears.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
             </select>
           </div>
 
@@ -111,35 +121,28 @@ export default function FilterPanel({
           <div className="space-y-1.5 lg:space-y-2 pt-1 lg:pt-2">
             <h3 className="text-[9px] lg:text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Season (Bi-annual)</h3>
             <div className="grid grid-cols-2 gap-2 lg:gap-3">
-              <label className="flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white border border-zinc-200 rounded-lg hover:border-green-400 transition-colors">
-                <input 
-                  type="radio" 
-                  name="season" 
-                  value="Jan-Jun"
-                  checked={period === "Jan-Jun"}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="mt-0.5 w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500 border-zinc-300 focus:ring-green-500 cursor-pointer accent-green-600"
-                />
-                <div className="flex flex-col">
-                  <span className="text-[10px] lg:text-xs font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">Jan - Jun</span>
-                  <span className="text-[9px] lg:text-[10px] text-zinc-400">Dry Season</span>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white border border-zinc-200 rounded-lg hover:border-green-400 transition-colors">
-                <input 
-                  type="radio" 
-                  name="season" 
-                  value="Jul-Dec"
-                  checked={period === "Jul-Dec"}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="mt-0.5 w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500 border-zinc-300 focus:ring-green-500 cursor-pointer accent-green-600"
-                />
-                <div className="flex flex-col">
-                  <span className="text-[10px] lg:text-xs font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">Jul - Dec</span>
-                  <span className="text-[9px] lg:text-[10px] text-zinc-400">Wet Season</span>
-                </div>
-              </label>
+              {[
+                { value: 'Jan-Jun', label: 'Jan - Jun', sub: 'Dry Season' },
+                { value: 'Jul-Dec', label: 'Jul - Dec', sub: 'Wet Season' },
+              ].map(({ value, label, sub }) => {
+                const available = hasDataset(year, value);
+                return (
+                  <label key={value} className={`flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white border rounded-lg hover:border-green-400 transition-colors ${available ? 'border-green-300' : 'border-zinc-200'}`}>
+                    <input
+                      type="radio"
+                      name="season"
+                      value={value}
+                      checked={period === value}
+                      onChange={(e) => setPeriod(e.target.value)}
+                      className="mt-0.5 w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500 border-zinc-300 focus:ring-green-500 cursor-pointer accent-green-600"
+                    />
+                    <div className="flex flex-col flex-1">
+                      <span className="text-[10px] lg:text-xs font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">{label}</span>
+                      <span className="text-[9px] lg:text-[10px] text-zinc-400">{sub}</span>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
           
