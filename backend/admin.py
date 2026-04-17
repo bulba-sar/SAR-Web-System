@@ -10,14 +10,69 @@ Endpoints (all require role == "Admin"):
   GET    /admin/users             — list all registered users
 """
 
+import asyncio
 import io
 import json
+import pathlib
+import re
 from datetime import datetime
+
+import ee
+import numpy as np
+import rasterio
+from rasterio.enums import Resampling
+from rasterio.features import geometry_mask
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
+
+_TIF_DIR = pathlib.Path(__file__).parent / "tif"
+_TIF_DIR.mkdir(exist_ok=True)
+
+VALID_PERIODS = ["Jan-Jun", "Jul-Dec"]
+VALID_YEARS   = list(range(2021, 2031))
+
+# ── Nodata fix helpers ────────────────────────────────────────────────────────
+
+_CALABARZON_BOUNDARY: dict | None = None  # fetched from GEE once, then cached
+
+def _get_calabarzon_boundary() -> dict:
+    global _CALABARZON_BOUNDARY
+    if _CALABARZON_BOUNDARY is None:
+        fc = (
+            ee.FeatureCollection("FAO/GAUL/2015/level2")
+            .filter(ee.Filter.inList("ADM2_NAME", ["Batangas", "Cavite", "Laguna", "Quezon", "Rizal"]))
+        )
+        _CALABARZON_BOUNDARY = fc.geometry().getInfo()
+    return _CALABARZON_BOUNDARY
+
+
+_NODATA = 255
+_OVERVIEW_LEVELS = [2, 4, 8, 16, 32, 64]
+
+
+def _fix_nodata_single(tif_path: pathlib.Path) -> str:
+    """Mask pixels outside CALABARZON to 255 (nodata) and rebuild overviews."""
+    boundary_geom = _get_calabarzon_boundary()
+    with rasterio.open(tif_path, "r+") as ds:
+        if ds.count != 1:
+            return f"skipped ({ds.count} bands)"
+        outside = geometry_mask(
+            [boundary_geom],
+            out_shape=(ds.height, ds.width),
+            transform=ds.transform,
+            invert=False,
+        )
+        data = ds.read(1)
+        data[outside] = _NODATA
+        ds.write(data, 1)
+        ds.nodata = _NODATA
+    with rasterio.open(tif_path, "r+") as ds:
+        ds.build_overviews(_OVERVIEW_LEVELS, Resampling.nearest)
+        ds.update_tags(ns="rio_overview", resampling="nearest")
+    return "ok"
 
 import auth as auth_module
 import models
@@ -531,3 +586,78 @@ def list_users(
         }
         for u in users
     ]
+
+
+# ── Dataset (TIF) management ──────────────────────────────────────────────────
+
+@router.get("/datasets")
+def list_datasets(admin: models.User = Depends(get_admin_user)):
+    """Return all TIF files present in backend/tif/."""
+    files = []
+    for f in sorted(_TIF_DIR.glob("*.tif")):
+        stat = f.stat()
+        files.append({
+            "filename": f.name,
+            "size_bytes": stat.st_size,
+            "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+        })
+    return files
+
+
+@router.post("/datasets/upload")
+async def upload_dataset(
+    year: int = Form(...),
+    period: str = Form(...),
+    custom_name: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    admin: models.User = Depends(get_admin_user),
+):
+    """Save an uploaded .tif to backend/tif/ and run the nodata fix automatically."""
+    if year not in VALID_YEARS:
+        raise HTTPException(status_code=400, detail=f"Invalid year: {year}. Must be 2021–2030.")
+    if period not in VALID_PERIODS:
+        raise HTTPException(status_code=400, detail=f"Invalid period. Must be one of: {VALID_PERIODS}")
+
+    fname = (file.filename or "").lower()
+    if not (fname.endswith(".tif") or fname.endswith(".tiff")):
+        raise HTTPException(status_code=400, detail="File must be a GeoTIFF (.tif or .tiff)")
+
+    # Determine final filename
+    if custom_name and custom_name.strip():
+        safe = re.sub(r"[^\w\-]", "_", custom_name.strip())
+        if not safe.lower().endswith(".tif"):
+            safe += ".tif"
+        dest_name = safe
+    else:
+        dest_name = f"{year}-{period}.tif"
+
+    dest = _TIF_DIR / dest_name
+    contents = await file.read()
+    dest.write_bytes(contents)
+
+    # Run the nodata fix in a thread (blocking rasterio + GEE boundary fetch)
+    try:
+        fix_status = await asyncio.to_thread(_fix_nodata_single, dest)
+    except Exception as exc:
+        fix_status = f"fix failed: {exc}"
+
+    return {
+        "message": f"{dest_name} uploaded and processed (nodata fix: {fix_status})",
+        "filename": dest_name,
+        "size_bytes": len(contents),
+        "nodata_fix": fix_status,
+    }
+
+
+@router.delete("/datasets/{filename:path}")
+def delete_dataset(
+    filename: str,
+    admin: models.User = Depends(get_admin_user),
+):
+    """Delete a TIF file from backend/tif/ by filename."""
+    safe = pathlib.Path(filename).name  # strip any path traversal
+    dest = _TIF_DIR / safe
+    if not dest.exists():
+        raise HTTPException(status_code=404, detail=f"{safe} not found")
+    dest.unlink()
+    return {"message": f"{safe} deleted"}

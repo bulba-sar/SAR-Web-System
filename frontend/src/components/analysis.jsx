@@ -440,7 +440,6 @@ const CropAreaTooltip = ({ active, payload }) => {
 //  COMPARE VIEW — side-by-side LULC maps
 // ============================================================
 
-const COMPARE_YEARS = [2021, 2022, 2023, 2024, 2025];
 const COMPARE_PERIODS = ['Jan-Jun', 'Jul-Dec'];
 const COMPARE_CLASSES = [
   { value: 'all',         label: 'All Classes' },
@@ -473,7 +472,7 @@ function SyncMapView({ otherRef, lockRef }) {
 
 const compareBounds = [[13.1, 119.5], [15.1, 122.8]];
 
-function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, tileUrl, basemapUrl, opacity, loading, mapRef, otherRef, lockRef }) {
+function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, tileUrl, basemapUrl, opacity, loading, mapRef, otherRef, lockRef, years }) {
   return (
     <div className="flex flex-col rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
       {/* Selector bar */}
@@ -484,7 +483,7 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
           onChange={e => setYear(Number(e.target.value))}
           className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer"
         >
-          {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
         <select
           value={period}
@@ -591,7 +590,7 @@ function SliderLayers({ leftUrl, rightUrl, opacity, sliderPct }) {
 function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
                          rightYear, setRightYear, rightPeriod, setRightPeriod,
                          leftTile, rightTile, basemapUrl, opacity,
-                         leftLoading, rightLoading }) {
+                         leftLoading, rightLoading, years }) {
   const [sliderPct, setSliderPct] = useState(50);
   const containerRef = useRef(null);
   const isDragging   = useRef(false);
@@ -620,7 +619,7 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
           <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 shrink-0">← Before</span>
           <select value={leftYear} onChange={e => setLeftYear(Number(e.target.value))}
             className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
-            {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <select value={leftPeriod} onChange={e => setLeftPeriod(e.target.value)}
             className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
@@ -636,7 +635,7 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
           </select>
           <select value={rightYear} onChange={e => setRightYear(Number(e.target.value))}
             className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
-            {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 shrink-0">After →</span>
         </div>
@@ -704,15 +703,9 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
 // ────────────────────────────────────────────────────────────────
 //  TIME-SERIES COMPARE – single map, scrub or play through all periods
 // ────────────────────────────────────────────────────────────────
-const ALL_PERIODS = [
-  { year: 2021, period: 'Jan-Jun' }, { year: 2021, period: 'Jul-Dec' },
-  { year: 2022, period: 'Jan-Jun' }, { year: 2022, period: 'Jul-Dec' },
-  { year: 2023, period: 'Jan-Jun' }, { year: 2023, period: 'Jul-Dec' },
-  { year: 2024, period: 'Jan-Jun' }, { year: 2024, period: 'Jul-Dec' },
-  { year: 2025, period: 'Jan-Jun' }, { year: 2025, period: 'Jul-Dec' },
-];
 
-function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
+function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
+  const allYears = useMemo(() => [...new Set(allPeriods.map(p => p.year))], [allPeriods]);
   const [selectedIdx, setSelectedIdx] = useState(0);  // debounced — controls tile
   const [draftIdx,    setDraftIdx]    = useState(0);  // immediate — controls badge + dot highlight
   const [tileCache, setTileCache]     = useState({});
@@ -729,9 +722,9 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
   };
 
   const cacheKey = ({ year, period }) => `${year}-${period}`;
-  const current        = ALL_PERIODS[selectedIdx];   // for tile URL (debounced)
-  const displayCurrent = ALL_PERIODS[draftIdx];      // for badge (immediate)
-  const allReady = loadedCount >= ALL_PERIODS.length;
+  const current        = allPeriods[selectedIdx];   // for tile URL (debounced)
+  const displayCurrent = allPeriods[draftIdx];      // for badge (immediate)
+  const allReady = loadedCount >= allPeriods.length;
 
   // Pre-fetch ALL period tile URLs in parallel whenever classFilter changes.
   useEffect(() => {
@@ -741,7 +734,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
     setTileCache({});
     setLoadedCount(0);
 
-    ALL_PERIODS.forEach(({ year, period }) => {
+    allPeriods.forEach(({ year, period }) => {
       fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${classFilter}`, { signal })
         .then(r => r.json())
         .then(d => {
@@ -757,10 +750,11 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
     });
 
     return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classFilter]);
 
   const currentTile  = tileCache[cacheKey(current)] ?? null;
-  const isPeriodReady = (i) => cacheKey(ALL_PERIODS[i]) in tileCache;
+  const isPeriodReady = (i) => cacheKey(allPeriods[i]) in tileCache;
 
   return (
     <div className="space-y-3">
@@ -771,11 +765,11 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
           <div className="w-3.5 h-3.5 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin shrink-0" />
           <span className="text-xs text-zinc-300">
             Pre-loading all periods…&nbsp;
-            <span className="font-black text-white">{loadedCount}/{ALL_PERIODS.length}</span> ready
+            <span className="font-black text-white">{loadedCount}/{allPeriods.length}</span> ready
           </span>
           <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
             <div className="h-full bg-[#4ade80] transition-all duration-300"
-              style={{ width: `${(loadedCount / ALL_PERIODS.length) * 100}%` }} />
+              style={{ width: `${(loadedCount / allPeriods.length) * 100}%` }} />
           </div>
         </div>
       )}
@@ -806,7 +800,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
         <input
           type="range"
           min={0}
-          max={ALL_PERIODS.length - 1}
+          max={allPeriods.length - 1}
           value={draftIdx}
           onChange={e => handleScrub(Number(e.target.value))}
           className="w-full h-2 rounded-full appearance-none cursor-pointer"
@@ -815,15 +809,15 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
 
         {/* Period dots — one group per year, spread evenly */}
         <div className="flex justify-between items-start select-none">
-          {COMPARE_YEARS.map(y => {
-            const firstIdx = ALL_PERIODS.findIndex(p => p.year === y);
+          {allYears.map(y => {
+            const firstIdx = allPeriods.findIndex(p => p.year === y);
             const isYearActive = draftIdx >= firstIdx && draftIdx < firstIdx + 2;
             return (
               <div key={y} className="flex flex-col items-center gap-2">
                 {/* S1 + S2 dots with more breathing room */}
                 <div className="flex gap-4">
                   {['Jan-Jun', 'Jul-Dec'].map((period, pi) => {
-                    const idx = ALL_PERIODS.findIndex(p => p.year === y && p.period === period);
+                    const idx = allPeriods.findIndex(p => p.year === y && p.period === period);
                     const isSelected = idx === draftIdx;
                     const isReady = isPeriodReady(idx);
                     return (
@@ -856,286 +850,35 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter }) {
         {/* Current label + counter */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-black text-[#305d3d]">{displayCurrent.year} · {displayCurrent.period}</span>
-          <span className="text-[10px] text-zinc-400 font-mono">{draftIdx + 1} / {ALL_PERIODS.length}</span>
+          <span className="text-[10px] text-zinc-400 font-mono">{draftIdx + 1} / {allPeriods.length}</span>
         </div>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  MODEL PERFORMANCE VIEW
-// ─────────────────────────────────────────────────────────────────────────────
-const CLASS_ORDER_MODEL = ['Water', 'Urban', 'Forest', 'Agriculture'];
-const CLASS_COLORS_MODEL = {
-  Water:       '#1d4ed8',
-  Urban:       '#dc2626',
-  Forest:      '#15803d',
-  Agriculture: '#ca8a04',
-};
-
-function ConfusionMatrixView({ confusion_matrix }) {
-  const classes = confusion_matrix?.classes ?? CLASS_ORDER_MODEL;
-  const matrix  = confusion_matrix?.matrix  ?? [];
-  const maxVal  = Math.max(1, ...matrix.flat());
-  return (
-    <div className="overflow-x-auto">
-      <table className="text-xs border-collapse">
-        <thead>
-          <tr>
-            <th className="w-28 text-[10px] text-zinc-400 font-bold text-right pr-3 pb-1">Actual ↓ / Pred →</th>
-            {classes.map(cls => (
-              <th key={cls} className="px-2 pb-1 text-center">
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
-                  <span className="text-[10px] font-black text-zinc-600">{cls}</span>
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {matrix.map((row, ri) => (
-            <tr key={ri}>
-              <td className="text-right pr-3 py-1">
-                <div className="flex items-center justify-end gap-1.5">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS_MODEL[classes[ri]] }} />
-                  <span className="text-[10px] font-black text-zinc-600">{classes[ri]}</span>
-                </div>
-              </td>
-              {row.map((val, ci) => {
-                const intensity = val / maxVal;
-                const isDiag = ri === ci;
-                const bg = isDiag
-                  ? `rgba(29,94,58,${0.15 + intensity * 0.75})`
-                  : `rgba(220,38,38,${intensity * 0.5})`;
-                const textColor = intensity > 0.5 ? '#fff' : isDiag ? '#14532d' : '#7f1d1d';
-                return (
-                  <td key={ci} className="px-1.5 py-1 text-center">
-                    <div className="w-14 h-9 rounded-lg flex items-center justify-center font-mono font-black text-xs"
-                      style={{ backgroundColor: bg, color: val > 0 ? textColor : '#d1d5db' }}>
-                      {val.toLocaleString()}
-                    </div>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="text-[10px] text-zinc-400 mt-2">Green diagonal = correct · Red off-diagonal = misclassified</p>
-    </div>
-  );
-}
-
-function ModelPerformanceView() {
-  const [data, setData]         = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch('http://127.0.0.1:8000/api/v1/analytics/model-performance')
-      .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-      .then(d => {
-        setData(d);
-        // Default to first period
-        const first = Object.keys(d.periods ?? {})[0];
-        if (first) setSelectedPeriod(first);
-        setLoading(false);
-      })
-      .catch(e => { setError(String(e)); setLoading(false); });
-  }, []);
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-48 text-zinc-400 text-sm gap-2">
-      <div className="w-4 h-4 border-2 border-zinc-300 border-t-[#1d5e3a] rounded-full animate-spin" />
-      Loading model metrics…
-    </div>
-  );
-  if (error) return (
-    <div className="flex items-center justify-center h-48 text-red-500 text-xs text-center px-6">
-      Could not load model metrics. Make sure the backend is running and{' '}
-      <code className="mx-1 bg-red-50 px-1 rounded">backend/model_metrics.json</code> exists.
-    </div>
-  );
-
-  const { model, periods } = data;
-  const periodKeys = Object.keys(periods ?? {});
-  const pct = v => `${(v * 100).toFixed(1)}%`;
-
-  // Compute averages across all periods that have been filled in (accuracy > 0)
-  const filledPeriods = periodKeys.filter(k => (periods[k]?.overall?.accuracy ?? 0) > 0);
-  const avgAccuracy = filledPeriods.length
-    ? filledPeriods.reduce((s, k) => s + periods[k].overall.accuracy, 0) / filledPeriods.length : 0;
-  const avgKappa = filledPeriods.length
-    ? filledPeriods.reduce((s, k) => s + periods[k].overall.kappa, 0) / filledPeriods.length : 0;
-  const avgMse = filledPeriods.length
-    ? filledPeriods.reduce((s, k) => s + periods[k].overall.mse, 0) / filledPeriods.length : 0;
-
-  const activePeriod = selectedPeriod ? periods[selectedPeriod] : null;
-
-  return (
-    <div className="space-y-6">
-
-      {/* Model Config */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-[10px] font-black text-[#1d5e3a] uppercase tracking-wider">Model:</span>
-        {[
-          `${model?.type ?? 'Random Forest'}`,
-          `${model?.n_estimators ?? 250} trees`,
-          `${((model?.train_ratio ?? 0.7) * 100).toFixed(0)}% train / ${((model?.test_ratio ?? 0.3) * 100).toFixed(0)}% test`,
-          `${model?.features?.length ?? 13} input features`,
-        ].map(tag => (
-          <span key={tag} className="bg-green-50 border border-green-100 text-[#1d5e3a] text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
-        ))}
-        {filledPeriods.length > 0 && (
-          <span className="ml-auto text-[10px] text-zinc-400">{filledPeriods.length}/{periodKeys.length} periods recorded</span>
-        )}
-      </div>
-
-      {/* Average overall stats */}
-      <div>
-        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-3">
-          Average Performance
-          <span className="ml-2 text-[10px] font-normal normal-case text-zinc-400">across all {filledPeriods.length || '—'} completed runs</span>
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Avg Accuracy',  value: filledPeriods.length ? pct(avgAccuracy)          : '—', sub: 'Correctly classified pixels' },
-            { label: 'Avg Kappa',     value: filledPeriods.length ? avgKappa.toFixed(4)        : '—', sub: 'Agreement beyond chance' },
-            { label: 'Avg MSE',       value: filledPeriods.length ? avgMse.toFixed(4)          : '—', sub: 'Avg squared class error' },
-          ].map(({ label, value, sub }) => (
-            <div key={label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 text-center">
-              <div className="text-2xl lg:text-3xl font-black text-zinc-900">{value}</div>
-              <div className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase tracking-wider mt-1">{label}</div>
-              <div className="text-[9px] text-zinc-400 mt-0.5">{sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* All-periods summary table */}
-      <div>
-        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-3">Per-Period Summary</h3>
-        <div className="overflow-x-auto rounded-xl border border-zinc-100">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-100">
-                <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5">Period</th>
-                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Accuracy</th>
-                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Kappa</th>
-                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">MSE</th>
-                <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {periodKeys.map((key, i) => {
-                const p = periods[key];
-                const filled = (p?.overall?.accuracy ?? 0) > 0;
-                const isActive = selectedPeriod === key;
-                return (
-                  <tr key={key} className={`border-b border-zinc-100 last:border-0 transition ${isActive ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'}`}>
-                    <td className="px-4 py-2.5 font-bold text-zinc-800">{key}</td>
-                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700">
-                      {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
-                      {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
-                      {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">
-                      {filled ? (
-                        <button
-                          onClick={() => setSelectedPeriod(isActive ? null : key)}
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition ${isActive ? 'bg-[#1d5e3a] text-white border-[#1d5e3a]' : 'text-[#1d5e3a] border-[#1d5e3a]/30 hover:bg-green-50'}`}
-                        >
-                          {isActive ? 'Hide' : 'View'}
-                        </button>
-                      ) : (
-                        <span className="text-[10px] text-zinc-300 italic">not yet</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Detailed drill-down for selected period */}
-      {activePeriod && selectedPeriod && (
-        <div className="border border-green-100 bg-green-50/30 rounded-2xl p-4 lg:p-6 space-y-5">
-          <h3 className="text-sm font-black text-zinc-800">
-            {selectedPeriod}
-            <span className="ml-2 text-xs font-normal text-zinc-500">— detailed metrics</span>
-          </h3>
-
-          {/* Per-class table */}
-          <div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
-            <div className="overflow-x-auto rounded-xl border border-zinc-100 bg-white">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-zinc-50 border-b border-zinc-100">
-                    <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">F1 Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CLASS_ORDER_MODEL.map((cls, i) => {
-                    const m = activePeriod.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
-                    return (
-                      <tr key={cls} className={i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/60'}>
-                        <td className="px-4 py-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
-                            <span className="font-bold text-zinc-800">{cls}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.precision)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.recall)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.f1)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Confusion matrix */}
-          <div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Confusion Matrix</p>
-            <ConfusionMatrixView confusion_matrix={activePeriod.confusion_matrix} />
-          </div>
-        </div>
-      )}
-
-      {/* Input features */}
-      {model?.features && (
-        <div>
-          <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-2">Input Features ({model.features.length})</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {model.features.map(f => (
-              <span key={f} className="bg-zinc-100 border border-zinc-200 text-zinc-600 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">{f}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+const BASE_YEARS = [2021, 2022, 2023, 2024, 2025];
 
 function CompareView({ basemapUrl }) {
   const [compareMode, setCompareMode] = useState('sidebyside'); // 'sidebyside' | 'slider' | 'timeseries'
+  const [compareYears, setCompareYears] = useState(BASE_YEARS);
+  const allPeriods = useMemo(
+    () => compareYears.flatMap(y => [{ year: y, period: 'Jan-Jun' }, { year: y, period: 'Jul-Dec' }]),
+    [compareYears]
+  );
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/datasets/available')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        const extra = data.filter(d => d.year).map(d => d.year);
+        const years = [...new Set([...BASE_YEARS, ...extra])].sort((a, b) => a - b);
+        setCompareYears(years);
+      })
+      .catch(() => {});
+  }, []);
+
   const [leftYear, setLeftYear]       = useState(2021);
   const [leftPeriod, setLeftPeriod]   = useState('Jan-Jun');
   const [rightYear, setRightYear]     = useState(2024);
@@ -1307,6 +1050,7 @@ function CompareView({ basemapUrl }) {
             period={leftPeriod} setPeriod={setLeftPeriod}
             tileUrl={leftTile}  basemapUrl={basemapUrl} opacity={opacity} loading={leftLoading}
             mapRef={leftMapRef}  otherRef={rightMapRef} lockRef={syncLock}
+            years={compareYears}
           />
           <ComparePanel
             label="After →"      accentClass="text-amber-400"
@@ -1314,6 +1058,7 @@ function CompareView({ basemapUrl }) {
             period={rightPeriod} setPeriod={setRightPeriod}
             tileUrl={rightTile}  basemapUrl={basemapUrl} opacity={opacity} loading={rightLoading}
             mapRef={rightMapRef} otherRef={leftMapRef}  lockRef={syncLock}
+            years={compareYears}
           />
         </div>
       )}
@@ -1327,6 +1072,7 @@ function CompareView({ basemapUrl }) {
           leftTile={leftTile}       rightTile={rightTile}
           basemapUrl={basemapUrl}   opacity={opacity}
           leftLoading={leftLoading} rightLoading={rightLoading}
+          years={compareYears}
         />
       )}
 
@@ -1335,6 +1081,7 @@ function CompareView({ basemapUrl }) {
           basemapUrl={basemapUrl}
           opacity={opacity}
           classFilter={classFilter}
+          allPeriods={allPeriods}
         />
       )}
 
@@ -1364,6 +1111,19 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
   const [startYear, setStartYear] = useState('2022');
   const [endYear, setEndYear] = useState('2023');
+  const [analysisYears, setAnalysisYears] = useState(BASE_YEARS);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/datasets/available')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        const extra = data.filter(d => d.year).map(d => d.year);
+        const years = [...new Set([...BASE_YEARS, ...extra])].sort((a, b) => a - b);
+        setAnalysisYears(years);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedSeason, setSelectedSeason] = useState('all');
   const [sarOpacity, setSarOpacity] = useState(0.8);
   // LULC state
@@ -1565,20 +1325,17 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       {/* ── Compare View (full-width, replaces the normal grid) ── */}
       {activeTab === 'compare' && can('compare_view') && <CompareView basemapUrl={basemapUrl} />}
 
-      {/* ── Model Performance View ── */}
-      {activeTab === 'model' && <ModelPerformanceView />}
-
-      {/* ── Control Row (hidden on Compare / Model tabs) ── */}
-      {activeTab !== 'compare' && activeTab !== 'model' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
+      {/* ── Control Row (hidden on Compare tab) ── */}
+      {activeTab !== 'compare' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
         <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
           <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
             <select value={startYear} onChange={(e) => setStartYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 bg-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 outline-none cursor-pointer">
-              {[2021, 2022, 2023, 2024, 2025].map(y => <option key={y} value={y}>{y}</option>)}
+              {analysisYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <span className="text-zinc-400 font-bold text-xs">—</span>
             <select value={endYear} onChange={(e) => setEndYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 bg-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 outline-none cursor-pointer">
-              {[2021, 2022, 2023, 2024, 2025].filter(y => y >= parseInt(startYear)).map(y => <option key={y} value={y}>{y}</option>)}
+              {analysisYears.filter(y => y >= parseInt(startYear)).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>

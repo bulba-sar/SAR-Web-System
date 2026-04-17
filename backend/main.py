@@ -205,6 +205,26 @@ def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
         return Response(content=_EMPTY_PNG, media_type="image/png")
 
 
+@app.get("/datasets/available")
+def list_available_datasets():
+    """Public endpoint — returns year/period pairs for which a local TIF exists."""
+    results = []
+    for tif in sorted(_TIF_DIR.glob("*.tif")):
+        stem = tif.stem  # e.g. "2024-Jan-Jun"
+        dash = stem.find("-")
+        if dash > 0:
+            try:
+                year = int(stem[:dash])
+                period = stem[dash + 1:]
+                results.append({"year": year, "period": period, "filename": tif.name})
+                continue
+            except ValueError:
+                pass
+        # custom / non-standard name
+        results.append({"year": None, "period": None, "filename": tif.name})
+    return results
+
+
 @app.get("/api/v1/analytics/model-performance")
 def get_model_performance():
     """Return pre-computed RF model performance metrics from model_metrics.json."""
@@ -214,12 +234,76 @@ def get_model_performance():
         raise HTTPException(status_code=404, detail="model_metrics.json not found in backend/")
     with open(metrics_path, "r") as f:
         data = json.load(f)
-    # Strip internal _note keys from response
     def strip_notes(obj):
         if isinstance(obj, dict):
             return {k: strip_notes(v) for k, v in obj.items() if not k.startswith("_")}
         return obj
     return strip_notes(data)
+
+
+# ── Model metrics compute job ─────────────────────────────────────────────────
+import subprocess, sys as _sys
+
+_metrics_proc: subprocess.Popen | None = None
+_metrics_stderr_buf: list = []
+_metrics_job = {"state": "idle", "started_at": None, "finished_at": None, "error": None}
+
+
+@app.post("/api/v1/admin/run-model-metrics")
+def trigger_model_metrics(current_user: models.User = Depends(auth_module.get_current_user)):
+    global _metrics_proc, _metrics_job, _metrics_stderr_buf
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    if _metrics_proc and _metrics_proc.poll() is None:
+        return {"status": "already_running"}
+    script = pathlib.Path(__file__).parent.parent / "compute_model_metrics.py"
+    if not script.exists():
+        raise HTTPException(status_code=404, detail="compute_model_metrics.py not found at project root")
+    _metrics_stderr_buf = []
+    _metrics_proc = subprocess.Popen(
+        [_sys.executable, "-u", str(script)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=str(script.parent),
+    )
+    _metrics_job = {"state": "running", "started_at": _now().isoformat(), "finished_at": None, "error": None}
+    return {"status": "started"}
+
+
+@app.get("/api/v1/admin/run-model-metrics/status")
+def get_metrics_job_status(current_user: models.User = Depends(auth_module.get_current_user)):
+    global _metrics_proc, _metrics_job, _metrics_stderr_buf
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    if _metrics_proc is not None:
+        # Drain any new output lines; only safe to read all when process has ended
+        if _metrics_proc.poll() is not None:
+            try:
+                remaining = _metrics_proc.stdout.read()
+                if remaining:
+                    for line in remaining.splitlines():
+                        _metrics_stderr_buf.append(line)
+                    if len(_metrics_stderr_buf) > 100:
+                        _metrics_stderr_buf = _metrics_stderr_buf[-100:]
+            except Exception:
+                pass
+
+        rc = _metrics_proc.poll()
+        if rc is None:
+            _metrics_job["state"] = "running"
+        elif rc == 0:
+            if _metrics_job["state"] != "done":
+                _metrics_job["state"] = "done"
+                _metrics_job["finished_at"] = _now().isoformat()
+        else:
+            if _metrics_job["state"] != "error":
+                _metrics_job["state"] = "error"
+                last_lines = "\n".join(_metrics_stderr_buf[-10:]) if _metrics_stderr_buf else f"Exit code {rc}"
+                _metrics_job["error"] = last_lines or f"Exit code {rc}"
+                _metrics_job["finished_at"] = _now().isoformat()
+
+    return {**_metrics_job, "log": _metrics_stderr_buf[-20:] if _metrics_stderr_buf else []}
 
 
 @app.get("/api/v1/analytics/calabarzon-stats/{year}/{period}")
