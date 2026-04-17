@@ -8,10 +8,10 @@ function AboutModal({ onClose }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto z-10">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col z-10 overflow-hidden">
 
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-6 py-4 rounded-t-2xl flex items-start justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-6 py-4 rounded-t-2xl flex items-start justify-between gap-4 shrink-0">
           <div>
             <h2 className="text-base font-black text-white leading-tight">SAR-LULC Web System</h2>
             <p className="text-[11px] text-green-200 mt-0.5">CALABARZON Land Use / Land Cover Monitoring</p>
@@ -23,7 +23,7 @@ function AboutModal({ onClose }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-6 text-sm text-zinc-700">
+        <div className="p-6 space-y-6 text-sm text-zinc-700 overflow-y-auto flex-1">
 
           {/* What is this */}
           <section className="space-y-2">
@@ -151,7 +151,10 @@ function AboutModal({ onClose }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
-export default function Sidebar({ activeNav, setActiveNav }) {
+// null permissions = guest, treat all features as enabled
+const can = (permissions, feature) => permissions === null || permissions?.[feature] !== false;
+
+export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, permissions = null }) {
   const [showAbout, setShowAbout] = useState(false);
 
   const NavItem = ({ id, label, icon }) => {
@@ -191,11 +194,13 @@ export default function Sidebar({ activeNav, setActiveNav }) {
             label="Filters"
             icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>}
           />
-          <NavItem
-            id="analysis"
-            label="Analysis"
-            icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>}
-          />
+          {can(permissions, 'analysis_tab') && (
+            <NavItem
+              id="analysis"
+              label="Analysis"
+              icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>}
+            />
+          )}
         </div>
 
         {/* Bottom Section */}
@@ -218,6 +223,13 @@ export default function Sidebar({ activeNav, setActiveNav }) {
             label="Profile"
             icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
           />
+          {isAdmin && (
+            <NavItem
+              id="admin"
+              label="Admin"
+              icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
+            />
+          )}
         </div>
 
       </div>

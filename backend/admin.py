@@ -1,0 +1,533 @@
+"""
+admin.py — Admin-only API routes for AOI content management.
+
+Endpoints (all require role == "Admin"):
+  GET    /admin/aois              — list all admin AOIs
+  POST   /admin/aois              — create AOI from raw GeoJSON body
+  PUT    /admin/aois/{id}         — update name / description / geojson
+  DELETE /admin/aois/{id}         — delete an AOI
+  POST   /admin/aois/upload       — upload .geojson/.json or .zip Shapefile
+  GET    /admin/users             — list all registered users
+"""
+
+import io
+import json
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from typing import Optional
+
+import auth as auth_module
+import models
+from database import get_db
+
+router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+# ── Permission helpers ────────────────────────────────────────────────────────
+
+def _get_or_create_permissions(role: str, db) -> models.RolePermission:
+    """Return the RolePermission row for a role, creating it with defaults if absent."""
+    row = db.query(models.RolePermission).filter(models.RolePermission.role == role).first()
+    if row is None:
+        row = models.RolePermission(
+            role=role,
+            permissions=json.dumps(DEFAULT_PERMISSIONS),
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+    return row
+
+
+def _row_to_dict(row: models.RolePermission) -> dict:
+    perms = json.loads(row.permissions)
+    # Ensure every known feature key is present (handles schema additions)
+    for f in ALL_FEATURES:
+        perms.setdefault(f, True)
+    return {
+        "role": row.role,
+        "permissions": perms,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+# ── Admin guard ───────────────────────────────────────────────────────────────
+
+ADMIN_ROLES = {"Admin", "Government Official"}
+
+# ── Feature / permission registry ────────────────────────────────────────────
+
+ALL_FEATURES = [
+    "analysis_tab",
+    "save_aois",
+    "protected_areas",
+    "crop_suitability",
+    "lulc_analysis",
+    "crop_intensity",
+    "compare_view",
+]
+
+# All features enabled by default for every role
+DEFAULT_PERMISSIONS: dict[str, bool] = {f: True for f in ALL_FEATURES}
+
+CONFIGURABLE_ROLES = ["Researcher", "Student", "Farmer", "Government Official", "Admin"]
+
+
+def get_admin_user(
+    current_user: models.User = Depends(auth_module.get_current_user),
+):
+    """Dependency: raises 403 unless the authenticated user has an admin-level role."""
+    if current_user.role not in ADMIN_ROLES:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+
+# ── Pydantic schemas ──────────────────────────────────────────────────────────
+
+class AdminAOICreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    geojson: str  # raw GeoJSON string
+
+
+class AdminAOIUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    geojson: Optional[str] = None
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _aoi_to_dict(aoi: models.AdminAOI) -> dict:
+    return {
+        "id": aoi.id,
+        "name": aoi.name,
+        "description": aoi.description,
+        "geojson": aoi.geojson,
+        "source": aoi.source,
+        "created_by": aoi.created_by,
+        "created_at": aoi.created_at.isoformat() if aoi.created_at else None,
+    }
+
+
+def _validate_geojson(raw: str) -> dict:
+    """Parse and return the GeoJSON dict, or raise 400."""
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid GeoJSON — not valid JSON")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Invalid GeoJSON — must be a JSON object")
+    if data.get("type") not in (
+        "Feature", "FeatureCollection",
+        "Polygon", "MultiPolygon", "Point", "LineString",
+        "MultiPoint", "MultiLineString", "GeometryCollection",
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid GeoJSON type: {data.get('type')}",
+        )
+    return data
+
+
+# ── List ──────────────────────────────────────────────────────────────────────
+
+@router.get("/aois")
+def list_admin_aois(
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Return all admin-managed AOIs, newest first."""
+    aois = (
+        db.query(models.AdminAOI)
+        .order_by(models.AdminAOI.created_at.desc())
+        .all()
+    )
+    return [_aoi_to_dict(a) for a in aois]
+
+
+# ── Create (JSON body) ────────────────────────────────────────────────────────
+
+@router.post("/aois")
+def create_admin_aoi(
+    req: AdminAOICreate,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Create a new admin AOI from a raw GeoJSON string in the request body."""
+    _validate_geojson(req.geojson)
+    aoi = models.AdminAOI(
+        name=req.name,
+        description=req.description,
+        geojson=req.geojson,
+        source="manual",
+        created_by=admin.id,
+    )
+    db.add(aoi)
+    db.commit()
+    db.refresh(aoi)
+    return _aoi_to_dict(aoi)
+
+
+# ── Update ────────────────────────────────────────────────────────────────────
+
+@router.put("/aois/{aoi_id}")
+def update_admin_aoi(
+    aoi_id: int,
+    req: AdminAOIUpdate,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    aoi = db.query(models.AdminAOI).filter(models.AdminAOI.id == aoi_id).first()
+    if not aoi:
+        raise HTTPException(status_code=404, detail="AOI not found")
+
+    if req.name is not None:
+        aoi.name = req.name
+    if req.description is not None:
+        aoi.description = req.description
+    if req.geojson is not None:
+        _validate_geojson(req.geojson)
+        aoi.geojson = req.geojson
+
+    db.commit()
+    db.refresh(aoi)
+    return _aoi_to_dict(aoi)
+
+
+# ── Delete ────────────────────────────────────────────────────────────────────
+
+@router.delete("/aois/{aoi_id}")
+def delete_admin_aoi(
+    aoi_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    aoi = db.query(models.AdminAOI).filter(models.AdminAOI.id == aoi_id).first()
+    if not aoi:
+        raise HTTPException(status_code=404, detail="AOI not found")
+    db.delete(aoi)
+    db.commit()
+    return {"message": "Deleted"}
+
+
+# ── Upload (GeoJSON file or Shapefile ZIP) ────────────────────────────────────
+
+@router.post("/aois/upload")
+async def upload_aoi_file(
+    name: str = Form(...),
+    description: str = Form(""),
+    file: UploadFile = File(...),
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Accept a .geojson / .json file or a .zip containing a Shapefile.
+    Parses the geometry and stores it as an AdminAOI.
+
+    For Shapefile ZIPs, geopandas must be installed:
+        pip install geopandas
+    """
+    filename = (file.filename or "").lower()
+    contents = await file.read()
+
+    if filename.endswith(".geojson") or filename.endswith(".json"):
+        try:
+            geojson_data = json.loads(contents)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Cannot parse GeoJSON file — not valid JSON")
+        _validate_geojson(json.dumps(geojson_data))
+        geojson_str = json.dumps(geojson_data)
+        source = "geojson"
+
+    elif filename.endswith(".zip"):
+        geojson_str, source = _parse_shapefile_zip(contents)
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Upload a .geojson, .json, or .zip (containing a Shapefile).",
+        )
+
+    aoi = models.AdminAOI(
+        name=name,
+        description=description or None,
+        geojson=geojson_str,
+        source=source,
+        created_by=admin.id,
+    )
+    db.add(aoi)
+    db.commit()
+    db.refresh(aoi)
+    return _aoi_to_dict(aoi)
+
+
+def _parse_shapefile_zip(contents: bytes) -> tuple[str, str]:
+    """Extract and parse a Shapefile from a ZIP archive.
+    Returns (geojson_str, source_label).
+    Requires geopandas.
+    """
+    try:
+        import geopandas as gpd
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="geopandas is not installed. Run: pip install geopandas",
+        )
+
+    import os
+    import tempfile
+    import zipfile
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with zipfile.ZipFile(io.BytesIO(contents)) as zf:
+                zf.extractall(tmpdir)
+
+            # Walk for the first .shp file (supports nested directories)
+            shp_path = None
+            for root, _dirs, files in os.walk(tmpdir):
+                for fname in files:
+                    if fname.lower().endswith(".shp"):
+                        shp_path = os.path.join(root, fname)
+                        break
+                if shp_path:
+                    break
+
+            if not shp_path:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No .shp file found inside the ZIP archive.",
+                )
+
+            gdf = gpd.read_file(shp_path)
+            gdf = gdf.to_crs(epsg=4326)  # ensure WGS-84
+
+            # Drop non-serialisable columns (e.g. date types that json can't encode)
+            for col in gdf.columns:
+                if col == "geometry":
+                    continue
+                try:
+                    json.dumps(gdf[col].iloc[0])
+                except Exception:
+                    gdf = gdf.drop(columns=[col])
+
+            geojson_str = gdf.to_json()
+            return geojson_str, "shapefile"
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to parse Shapefile: {exc}",
+        )
+
+
+# ── Users ────────────────────────────────────────────────────────────────────
+
+class UpdateUserRoleRequest(BaseModel):
+    role: str
+
+
+ALLOWED_ROLES = {"Researcher", "Student", "Farmer", "Government Official", "Admin"}
+
+
+@router.put("/users/{user_id}/role")
+def update_user_role(
+    user_id: int,
+    req: UpdateUserRoleRequest,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    if req.role not in ALLOWED_ROLES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid role. Allowed: {', '.join(sorted(ALLOWED_ROLES))}",
+        )
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = req.role
+    db.commit()
+    db.refresh(user)
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "institution": user.institution,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+@router.get("/users/{user_id}/permissions")
+def get_user_permissions(
+    user_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Return the effective permissions for a specific user."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.permissions:
+        perms = json.loads(user.permissions)
+    else:
+        row = db.query(models.RolePermission).filter(
+            models.RolePermission.role == user.role
+        ).first()
+        perms = json.loads(row.permissions) if row else dict(DEFAULT_PERMISSIONS)
+
+    for f in ALL_FEATURES:
+        perms.setdefault(f, True)
+
+    return {
+        "user_id": user_id,
+        "role": user.role,
+        "permissions": perms,
+        "is_custom": user.permissions is not None,
+    }
+
+
+@router.put("/users/{user_id}/permissions")
+def update_user_permissions(
+    user_id: int,
+    body: dict,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Update role and/or individual feature flags for a specific user.
+    Body: { "role": "Researcher", "lulc_analysis": false, ... }
+    Passing reset=true clears user-specific overrides and reverts to role defaults.
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if body.get("reset"):
+        user.permissions = None
+        if "role" in body and body["role"] in ALLOWED_ROLES:
+            user.role = body["role"]
+        db.commit()
+        db.refresh(user)
+        return {"id": user.id, "name": user.name, "role": user.role, "permissions": None}
+
+    if "role" in body:
+        if body["role"] not in ALLOWED_ROLES:
+            raise HTTPException(status_code=400, detail="Invalid role")
+        user.role = body["role"]
+
+    feature_updates = {f: body[f] for f in ALL_FEATURES if f in body}
+    if feature_updates:
+        if user.permissions:
+            current_perms = json.loads(user.permissions)
+        else:
+            row = db.query(models.RolePermission).filter(
+                models.RolePermission.role == user.role
+            ).first()
+            current_perms = json.loads(row.permissions) if row else dict(DEFAULT_PERMISSIONS)
+        for f in ALL_FEATURES:
+            current_perms.setdefault(f, True)
+        current_perms.update(feature_updates)
+        user.permissions = json.dumps(current_perms)
+
+    db.commit()
+    db.refresh(user)
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "institution": user.institution,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return {"message": "Deleted"}
+
+
+# ── Permissions CRUD ─────────────────────────────────────────────────────────
+
+@router.get("/permissions")
+def list_permissions(
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Return permissions for every configurable role, seeding defaults where missing."""
+    return [_row_to_dict(_get_or_create_permissions(role, db)) for role in CONFIGURABLE_ROLES]
+
+
+@router.put("/permissions/{role}")
+def update_permissions(
+    role: str,
+    body: dict,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Update the feature flags for a single role.
+    Body: { "analysis_tab": true, "save_aois": false, ... }
+    Unknown keys are ignored; missing keys keep their existing value.
+    """
+    if role not in CONFIGURABLE_ROLES:
+        raise HTTPException(status_code=400, detail=f"Unknown role: {role}")
+
+    row = _get_or_create_permissions(role, db)
+    current = json.loads(row.permissions)
+
+    for feature in ALL_FEATURES:
+        if feature in body:
+            value = body[feature]
+            if not isinstance(value, bool):
+                raise HTTPException(status_code=400, detail=f"Value for '{feature}' must be a boolean")
+            current[feature] = value
+
+    row.permissions = json.dumps(current)
+    row.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(row)
+    return _row_to_dict(row)
+
+
+
+# ── Users ─────────────────────────────────────────────────────────────────────
+
+@router.get("/users")
+def list_users(
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Return all registered users (passwords excluded)."""
+    users = (
+        db.query(models.User)
+        .order_by(models.User.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "institution": u.institution,
+            "role": u.role,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+        }
+        for u in users
+    ]

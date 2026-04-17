@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './components/sidebar';
 import Map from './components/map';
 import FilterPanel from './components/filter-panel';
 import Analysis from './components/analysis';
 import Profile from './components/profile';
+import Admin from './components/admin';
 
 export default function App() {
   const [activeNav, setActiveNav] = useState('filters');
@@ -30,6 +31,29 @@ export default function App() {
   // Drawn polygon — lifted here so Profile can save/load AOIs
   const [drawnPolygon, setDrawnPolygon] = useState(null);
 
+  // Auth-derived state: admin flag + role permissions
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [permissions, setPermissions] = useState(null); // null = all features on (guest/default)
+
+  const fetchAuthState = () => {
+    const token = localStorage.getItem('sar_token');
+    if (!token) { setIsAdmin(false); setPermissions(null); return; }
+    fetch('http://127.0.0.1:8000/profile/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(user => {
+        if (!user) { setIsAdmin(false); setPermissions(null); return; }
+        setIsAdmin(['Admin', 'Government Official'].includes(user.role));
+        return fetch('http://127.0.0.1:8000/profile/permissions', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      })
+      .then(r => r?.json())
+      .then(data => { if (data?.permissions) setPermissions(data.permissions); })
+      .catch(() => { setIsAdmin(false); setPermissions(null); });
+  };
+
+  useEffect(() => { fetchAuthState(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Load a saved AOI: populate polygon + switch to Analysis view
   const handleLoadAOI = (polygonPoints) => {
     setDrawnPolygon(polygonPoints);
@@ -51,33 +75,28 @@ export default function App() {
     fetchProtectedAreas();
   }, []);
 
-  // --- 2. Fetch Base Maps & SAR (ADDED DEBUG LOGS) ---
+  // --- 2a. Fetch Basemap once on mount (single shared composite, never changes) ---
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/get-satellite-basemap')
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) console.error("Basemap Backend Error:", data.error);
+        else console.log("Basemap Loaded:", data.tile_url);
+        setBasemapUrl(data.tile_url || null);
+      })
+      .catch(err => console.error("Cannot fetch basemap.", err));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- 2b. Fetch SAR layer whenever year / period / layer changes ---
   useEffect(() => {
     const fetchMaps = async () => {
       setLoading(true);
       try {
-        // Fetch SAR Layer
         const sarResponse = await fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${activeLayer}`);
         const sarData = await sarResponse.json();
-        
-        if (sarData.error) {
-          console.error("SAR Backend Error:", sarData.error);
-        } else {
-          console.log("SAR Map Loaded Successfully:", sarData.tile_url);
-        }
+        if (sarData.error) console.error("SAR Backend Error:", sarData.error);
+        else console.log("SAR Map Loaded Successfully:", sarData.tile_url);
         setSarUrl(sarData.tile_url || null);
-
-        // Fetch Clipped Calabarzon Basemap
-        const baseResponse = await fetch(`http://127.0.0.1:8000/get-satellite-basemap/${year}/${period}`);
-        const baseData = await baseResponse.json();
-        
-        if (baseData.error) {
-          console.error("Basemap Backend Error:", baseData.error);
-        } else {
-          console.log("Basemap Loaded Successfully:", baseData.tile_url);
-        }
-        setBasemapUrl(baseData.tile_url || null);
-
       } catch (error) {
         console.error("Cannot connect to FastAPI. Is your backend running on port 8000?", error);
       }
@@ -130,9 +149,11 @@ export default function App() {
     <div className="flex h-screen w-full bg-zinc-100 overflow-hidden">
       
       {/* 1. The Slim Icon Sidebar (Always Visible) */}
-      <Sidebar 
+      <Sidebar
         activeNav={activeNav}
         setActiveNav={setActiveNav}
+        isAdmin={isAdmin}
+        permissions={permissions}
       />
 
       {/* 2. DYNAMIC CONTENT AREA */}
@@ -140,21 +161,28 @@ export default function App() {
 
         // SHOW PROFILE DASHBOARD
         <div className="flex-1 h-full overflow-y-auto bg-zinc-50">
-          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} />
+          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} />
+        </div>
+
+      ) : activeNav === 'admin' ? (
+
+        // SHOW ADMIN PANEL
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50">
+          <Admin />
         </div>
 
       ) : activeNav === 'analysis' ? (
 
         // SHOW THIS WHEN "ANALYSIS" IS CLICKED
         <div className="flex-1 h-full overflow-hidden bg-white">
-          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} />
+          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} permissions={permissions} />
         </div>
 
       ) : (
 
         // SHOW THE MAP & FILTERS FOR EVERYTHING ELSE
         <>
-          <FilterPanel 
+          <FilterPanel
             activeNav={activeNav}
             year={year}
             setYear={setYear}
@@ -169,6 +197,7 @@ export default function App() {
             setSarOpacity={setSarOpacity}
             showCropSuitability={showCropSuitability}
             setShowCropSuitability={setShowCropSuitability}
+            permissions={permissions}
           />
           
           <div className="flex-1 relative z-0">
