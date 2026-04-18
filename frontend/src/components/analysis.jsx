@@ -168,7 +168,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
       if (d.points.length === 0) return;
       if (d.preview && map.hasLayer(d.preview)) map.removeLayer(d.preview);
       d.preview = L.polyline([d.points[d.points.length - 1], e.latlng], {
-        color: '#1d5e3a', weight: 1.5, dashArray: '4 4', opacity: 0.7,
+        color: '#1d5e3a', weight: 1.5, dashArray: '4 4', opacity: 0.5,
       }).addTo(map);
     };
 
@@ -254,7 +254,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
       </div>
 
       {/* ── Map ── */}
-      <div className="relative w-full h-[285px] lg:h-[400px] bg-[#172229] border border-zinc-200 rounded-xl overflow-hidden shadow-inner">
+      <div className="relative w-full h-[285px] lg:h-[400px] bg-black border border-zinc-200 rounded-xl overflow-hidden shadow-inner">
         {isDrawing && (
           <div className="absolute top-0 left-0 w-full bg-zinc-900/90 text-white text-[10px] font-semibold text-center py-1.5 z-[2000] backdrop-blur-sm">
             Click to add points &nbsp;·&nbsp; Double-click or <kbd className="bg-zinc-700 px-1 rounded text-[9px]">Enter</kbd> to finish &nbsp;·&nbsp; <kbd className="bg-zinc-700 px-1 rounded text-[9px]">ESC</kbd> to cancel
@@ -267,7 +267,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
           doubleClickZoom={false}
           className="h-full w-full z-0"
           zoomControl={false}
-          style={{ backgroundColor: '#172229' }}
+          style={{ backgroundColor: '#000000' }}
           ref={mapRef}
         >
           {basemapUrl && <TileLayer key={basemapUrl} url={basemapUrl} attribution="&copy; GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />}
@@ -476,7 +476,7 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
   return (
     <div className="flex flex-col rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
       {/* Selector bar */}
-      <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800">
+      <div className="flex items-center gap-3 px-4 py-2.5 bg-black">
         <span className={`text-[10px] font-black uppercase tracking-widest shrink-0 ${accentClass}`}>{label}</span>
         <select
           value={year}
@@ -496,14 +496,14 @@ function ComparePanel({ label, accentClass, year, setYear, period, setPeriod, ti
       </div>
 
       {/* Map */}
-      <div className="relative h-[340px] lg:h-[420px]">
+      <div className="relative h-[340px] lg:h-[420px] bg-black">
         <MapContainer
           bounds={compareBounds}
           scrollWheelZoom
           zoomControl={false}
           doubleClickZoom={false}
           className="h-full w-full"
-          style={{ backgroundColor: '#172229' }}
+          style={{ backgroundColor: '#000000' }}
         >
           <CaptureMap mapRef={mapRef} />
           <SyncMapView otherRef={otherRef} lockRef={lockRef} />
@@ -614,8 +614,8 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
   return (
     <div className="space-y-0">
       {/* ── Year/Period selectors ── */}
-      <div className="grid grid-cols-2 rounded-t-xl overflow-hidden border border-b-0 border-zinc-200">
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 border-r border-zinc-700">
+      <div className="grid grid-cols-2 rounded-t-xl overflow-hidden border border-b-0 border-black">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-black border-r border-black">
           <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 shrink-0">← Before</span>
           <select value={leftYear} onChange={e => setLeftYear(Number(e.target.value))}
             className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
@@ -627,7 +627,7 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
           </select>
           {leftLoading && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin ml-auto" />}
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 justify-end">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-black justify-end">
           {rightLoading && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-auto" />}
           <select value={rightPeriod} onChange={e => setRightPeriod(e.target.value)}
             className="bg-zinc-700 text-white text-xs font-bold px-2 py-1 rounded-lg border border-zinc-600 outline-none cursor-pointer">
@@ -644,10 +644,10 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
       {/* ── Single map with clipped left pane ── */}
       <div
         ref={containerRef}
-        className="relative h-[420px] rounded-b-xl overflow-hidden border border-zinc-200 shadow-sm select-none"
+        className="relative h-[420px] rounded-b-xl overflow-hidden border border-black shadow-sm select-none"
       >
         <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
-          className="absolute inset-0 h-full w-full" style={{ backgroundColor: '#172229' }}>
+          className="absolute inset-0 h-full w-full" style={{ backgroundColor: '#000000' }}>
 
           {/* Shared basemap — full width, no clip */}
           {baseTile}
@@ -681,14 +681,6 @@ function SliderCompare({ leftYear, setLeftYear, leftPeriod, setLeftPeriod,
           <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
           </svg>
-        </div>
-
-        {/* Labels */}
-        <div className="absolute top-2 left-3 z-[1001] bg-blue-600/90 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-md pointer-events-none">
-          ← BEFORE · {leftYear} · {leftPeriod}
-        </div>
-        <div className="absolute top-2 right-3 z-[1001] bg-amber-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-md pointer-events-none">
-          AFTER · {rightYear} · {rightPeriod} →
         </div>
 
         {/* Hint */}
@@ -761,14 +753,14 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
 
       {/* ── Pre-load progress banner ── */}
       {!allReady && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800 rounded-xl">
-          <div className="w-3.5 h-3.5 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin shrink-0" />
-          <span className="text-xs text-zinc-300">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl">
+          <div className="w-3.5 h-3.5 border-2 border-[#305d3d] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-xs text-green-800">
             Pre-loading all periods…&nbsp;
-            <span className="font-black text-white">{loadedCount}/{allPeriods.length}</span> ready
+            <span className="font-black text-[#305d3d]">{loadedCount}/{allPeriods.length}</span> ready
           </span>
-          <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-            <div className="h-full bg-[#4ade80] transition-all duration-300"
+          <div className="flex-1 h-1.5 bg-green-200 rounded-full overflow-hidden">
+            <div className="h-full bg-[#305d3d] transition-all duration-300"
               style={{ width: `${(loadedCount / allPeriods.length) * 100}%` }} />
           </div>
         </div>
@@ -777,7 +769,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
       {/* ── Map (taller) ── */}
       <div className="relative h-[520px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
         <MapContainer bounds={compareBounds} scrollWheelZoom zoomControl={false} doubleClickZoom={false}
-          className="h-full w-full" style={{ backgroundColor: '#172229' }}>
+          className="h-full w-full" style={{ backgroundColor: '#000000' }}>
           {basemapUrl
             ? <TileLayer url={basemapUrl} attribution="&copy; Copernicus / GEE" updateWhenZooming={false} keepBuffer={4} maxNativeZoom={15} maxZoom={18} />
             : <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CartoDB" />}
@@ -888,7 +880,7 @@ function CompareView({ basemapUrl }) {
   const [leftLoading, setLeftLoading]   = useState(false);
   const [rightLoading, setRightLoading] = useState(false);
   const [classFilter, setClassFilter]   = useState('all');
-  const [opacity, setOpacity]           = useState(0.85);
+  const [opacity, setOpacity]           = useState(0.5);
 
   // Location search
   const [searchQuery, setSearchQuery]     = useState('');
@@ -1032,7 +1024,7 @@ function CompareView({ basemapUrl }) {
         ))}
         {compareMode === 'sidebyside' && (
           <button onClick={handleSwap}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-all">
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#23432f] to-[#1d5e3a] hover:opacity-90 text-white text-xs font-bold rounded-lg transition-all shadow-sm">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
@@ -1106,7 +1098,7 @@ function CompareView({ basemapUrl }) {
 //  MAIN ANALYSIS COMPONENT
 // ============================================================
 
-export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null }) {
+export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null, isLoggedIn = false }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
   const [startYear, setStartYear] = useState('2022');
@@ -1125,7 +1117,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedSeason, setSelectedSeason] = useState('all');
-  const [sarOpacity, setSarOpacity] = useState(0.8);
+  const [sarOpacity, setSarOpacity] = useState(0.5);
   // LULC state
   const [analyticsData, setAnalyticsData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1192,7 +1184,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
   const handleClearFilters = () => {
     setStartYear('2022'); setEndYear('2023'); setSelectedSeason('all');
-    setSarOpacity(0.8); setDrawnPolygon(null);
+    setSarOpacity(0.5); setDrawnPolygon(null);
     setAnalyticsData(null); setAnalysisError(null);
     setCropData(null); setCropError(null);
     setCropAreaData(null); setCropAreaError(null);
@@ -1315,7 +1307,12 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
               </button>
             )}
           </div>
-          <button onClick={handleDownloadCSV} disabled={!analyticsData || analyticsData.length === 0} className="flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">
+          <button
+            onClick={isLoggedIn ? handleDownloadCSV : undefined}
+            disabled={isLoggedIn && (!analyticsData || analyticsData.length === 0)}
+            title={!isLoggedIn ? 'Login to download CSV' : undefined}
+            className={`flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg transition shadow-sm whitespace-nowrap ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed'}`}
+          >
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Download CSV
           </button>

@@ -19,9 +19,10 @@ export default function FilterPanel({
   permissions = null,
 }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
-  const [searchInput, setSearchInput] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState('');
+  const [searchInput, setSearchInput]     = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showResults, setShowResults]     = useState(false);
   const [availableDatasets, setAvailableDatasets] = useState([]);
 
   useEffect(() => {
@@ -35,26 +36,32 @@ export default function FilterPanel({
   const availableYears = [...new Set(availableDatasets.filter(d => d.year).map(d => d.year))].sort((a,b) => b - a);
   const allYears = [...new Set([...availableYears, 2025, 2024, 2023, 2022, 2021])].sort((a,b) => b - a);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchInput.trim()) return;
+  useEffect(() => {
+    if (!searchInput.trim()) { setShowResults(false); setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      setShowResults(true);
+      try {
+        const params = new URLSearchParams({
+          q: searchInput, format: 'json', limit: 5,
+          viewbox: '119.5,15.1,122.8,13.1', bounded: 1,
+        });
+        const res  = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
+        const data = await res.json();
+        setSearchResults(data);
+      } catch { setSearchResults([]); }
+      setSearchLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-    setIsSearching(true);
-    setSearchError('');
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchInput}, CALABARZON, Philippines`);
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        setTargetLocation({ lat: parseFloat(lat), lng: parseFloat(lon), zoom: 13 });
-      } else {
-        setSearchError('Location not found. Try a municipality or barangay name.');
-      }
-    } catch (error) {
-      setSearchError('Search failed. Check your connection.');
-    }
-    setIsSearching(false);
+  const selectResult = (result) => {
+    const [south, north, west, east] = result.boundingbox.map(Number);
+    const lat = (south + north) / 2;
+    const lng = (west + east) / 2;
+    setTargetLocation({ lat, lng, zoom: 13 });
+    setShowResults(false);
+    setSearchInput(result.display_name.split(',').slice(0, 2).join(','));
   };
 
   if (activeNav !== 'filters') return null;
@@ -80,24 +87,38 @@ export default function FilterPanel({
         {/* === Search Location Bar === */}
         <div className="space-y-2 lg:space-y-3">
           <h3 className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase tracking-wider">Search Location</h3>
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => { setSearchInput(e.target.value); setSearchError(''); }}
-              placeholder={isSearching ? "Searching..." : "Find municipality..."}
-              disabled={isSearching}
-              className={`w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-2 lg:py-2.5 bg-white border rounded-lg text-xs lg:text-sm font-medium text-zinc-900 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm disabled:opacity-50 transition-all ${searchError ? 'border-red-300' : 'border-zinc-200'}`}
-            />
-            <button type="submit" className="absolute left-2.5 lg:left-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-green-500">
-              <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="relative">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); setShowResults(false); }}
+                placeholder="Search a location in CALABARZON…"
+                className="w-full border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-[10px] lg:text-xs focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] font-normal text-zinc-500"
+              />
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-            </button>
-          </form>
-          {searchError && (
-            <p className="text-[10px] lg:text-xs text-red-500 font-medium mt-1 px-1">{searchError}</p>
-          )}
+              {showResults && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+                  {searchLoading && (
+                    <div className="px-4 py-3 text-xs text-zinc-500 flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-[#305d3d] border-t-transparent rounded-full animate-spin" />
+                      Searching…
+                    </div>
+                  )}
+                  {!searchLoading && searchResults.length === 0 && (
+                    <div className="px-4 py-3 text-xs text-zinc-500">No locations found in CALABARZON.</div>
+                  )}
+                  {!searchLoading && searchResults.map((r, i) => (
+                    <button key={i} type="button" onClick={() => selectResult(r)}
+                      className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors">
+                      <span className="font-bold text-zinc-800 block truncate">{r.display_name.split(',').slice(0, 2).join(',')}</span>
+                      <span className="text-zinc-400 text-[10px]">{r.type} · {r.display_name.split(',').slice(2, 4).join(',')}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+          </div>
         </div>
 
         {/* === GROUPED: Year & Season Container === */}
@@ -127,7 +148,7 @@ export default function FilterPanel({
               ].map(({ value, label, sub }) => {
                 const available = hasDataset(year, value);
                 return (
-                  <label key={value} className={`flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white border rounded-lg hover:border-green-400 transition-colors ${available ? 'border-green-300' : 'border-zinc-200'}`}>
+                  <label key={value} className={`flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white border rounded-lg hover:border-green-400 transition-colors ${period === value ? 'border-green-300' : 'border-zinc-200'}`}>
                     <input
                       type="radio"
                       name="season"
