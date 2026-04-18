@@ -157,8 +157,35 @@ def _set_cached_tile(db: Session, key: str, url: str) -> None:
 
 
 # ============================================================
-#  LOCAL TILE ENDPOINT  (rio-tiler, served from backend/tif/)
+#  LOCAL TILE ENDPOINTS  (rio-tiler, served from backend/tif/)
 # ============================================================
+
+_BASEMAP_TIF = _TIF_DIR / "basemap.tif"
+
+
+def _local_basemap_url() -> str | None:
+    """Return local basemap tile URL if basemap.tif exists, else None."""
+    if not _RIO_AVAILABLE or not _BASEMAP_TIF.exists():
+        return None
+    return "http://127.0.0.1:8000/basemap-tiles/{z}/{x}/{y}.png"
+
+
+@app.get("/basemap-tiles/{z}/{x}/{y}.png")
+def serve_basemap_tile(z: int, x: int, y: int):
+    """Serve a 256×256 JPEG tile from the local Sentinel-2 basemap GeoTIFF (RGB)."""
+    if not _RIO_AVAILABLE:
+        raise HTTPException(status_code=503, detail="rio-tiler not installed")
+    if not _BASEMAP_TIF.exists():
+        raise HTTPException(status_code=404, detail="basemap.tif not found in backend/tif/")
+    try:
+        with RioReader(str(_BASEMAP_TIF)) as src:
+            img = src.tile(x, y, z, tilesize=256)
+        return Response(content=img.render(img_format="JPEG", quality=85), media_type="image/jpeg")
+    except TileOutsideBounds:
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+    except Exception:
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+
 
 # LULC colormap: class value → RGBA (matches CLASS_PALETTE in GEE and frontend legend)
 # 0=Water(blue)  1=Urban(red)  2=Forest(green)  3=Agriculture(yellow)
@@ -428,8 +455,12 @@ def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depend
 @app.get("/get-satellite-basemap")
 def get_satellite_basemap(db: Session = Depends(get_db)):
     """Single shared basemap — 2-year cloud-free Sentinel-2 median composite.
-    Fetched once from GEE and cached permanently; does not change per year/period.
+    Uses local basemap.tif if present; falls back to GEE with Supabase caching.
     """
+    local_url = _local_basemap_url()
+    if local_url:
+        return {"tile_url": local_url, "from_cache": True, "source": "local"}
+
     cache_key = "basemap:latest"
 
     cached = _get_cached_tile(db, cache_key)

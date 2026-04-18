@@ -175,7 +175,7 @@ export default function App() {
 
         // SHOW THIS WHEN "ANALYSIS" IS CLICKED
         <div className="flex-1 h-full overflow-hidden bg-white">
-          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} permissions={permissions} />
+          <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} permissions={permissions} isLoggedIn={!!localStorage.getItem('sar_token')} />
         </div>
 
       ) : (
