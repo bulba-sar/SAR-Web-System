@@ -8,7 +8,7 @@ function AboutModal({ onClose }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col z-10 overflow-hidden">
+      <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col z-10 overflow-hidden">
 
         {/* Header */}
         <div className="bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-6 py-4 rounded-t-2xl flex items-start justify-between gap-4 shrink-0">
@@ -23,7 +23,7 @@ function AboutModal({ onClose }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-6 text-sm text-zinc-700 overflow-y-auto flex-1">
+        <div className="p-6 space-y-6 text-sm text-zinc-700 dark:text-zinc-300 overflow-y-auto flex-1">
 
           {/* What is this */}
           <section className="space-y-2">
@@ -154,7 +154,7 @@ function AboutModal({ onClose }) {
 // null permissions = guest, treat all features as enabled
 const can = (permissions, feature) => permissions === null || permissions?.[feature] !== false;
 
-export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, permissions = null }) {
+export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, permissions = null, darkMode = false, toggleDark = null }) {
   const [showAbout, setShowAbout] = useState(false);
 
   const NavItem = ({ id, label, icon }) => {
@@ -164,7 +164,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
         onClick={() => setActiveNav(id)}
         className={`w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 transition-all ${isActive
             ? 'border-[#305d3d] bg-[#305d3d]/10 text-[#305d3d]'
-            : 'border-transparent text-zinc-500 hover:bg-black/5 hover:text-zinc-900'
+            : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
       >
         {icon}
@@ -180,7 +180,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
         onClick={() => setActiveNav(id)}
         className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-all ${isActive
           ? 'text-[#305d3d] bg-[#305d3d]/10'
-          : 'text-zinc-500 hover:bg-black/5 hover:text-zinc-900'
+          : 'text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100'
         }`}
       >
         {icon}
@@ -192,7 +192,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
   return (
     <>
       {/* ── Desktop: vertical sidebar (hidden on mobile) ── */}
-      <div className="hidden md:flex w-20 lg:w-24 h-screen bg-[#f0f2f2] border-r border-zinc-200 flex-col justify-between py-4 lg:py-6 z-20 shadow-sm transition-all">
+      <div className="hidden md:flex w-20 lg:w-24 h-screen bg-[#f0f2f2] dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700 flex-col justify-between py-4 lg:py-6 z-20 shadow-sm transition-all">
 
         {/* Top Section */}
         <div className="flex flex-col w-full items-center space-y-2 lg:space-y-4">
@@ -215,19 +215,38 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
           {isAdmin && (
             <NavItem id="admin" label="Admin" icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} />
           )}
+          {toggleDark && (
+            <button onClick={toggleDark} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-full flex flex-col items-center justify-center py-3 lg:py-4 border-l-4 border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all">
+              {darkMode
+                ? <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                : <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              }
+              <span className="text-[9px] lg:text-[10px] mt-1 font-bold tracking-wider uppercase">{darkMode ? 'Light' : 'Dark'}</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── Mobile: fixed bottom navigation bar ── */}
-      <div className="flex md:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-[#f0f2f2] border-t border-zinc-200 shadow-lg">
+      <div className="flex md:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-[#f0f2f2] dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 shadow-lg">
         <MobileNavItem id="filters" label="Map" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>} />
         {can(permissions, 'analysis_tab') && (
           <MobileNavItem id="analysis" label="Analysis" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>} />
         )}
-        <button onClick={() => setShowAbout(true)} className="flex flex-col items-center justify-center flex-1 gap-0.5 text-zinc-500 hover:bg-black/5 transition-all">
+        <button onClick={() => setShowAbout(true)} className="flex flex-col items-center justify-center flex-1 gap-0.5 text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span className="text-[9px] font-bold tracking-wider uppercase">About</span>
         </button>
+        {toggleDark && (
+          <button onClick={toggleDark} className="flex flex-col items-center justify-center flex-1 gap-0.5 text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            {darkMode
+              ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            }
+            <span className="text-[9px] font-bold tracking-wider uppercase">{darkMode ? 'Light' : 'Dark'}</span>
+          </button>
+        )}
         <MobileNavItem id="profile" label="Profile" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} />
         {isAdmin && (
           <MobileNavItem id="admin" label="Admin" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} />

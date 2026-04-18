@@ -381,29 +381,29 @@ const TimelineChart = ({ data, dataKey, color, label, unit, minVal, maxVal }) =>
 
 // Empty / Loading / Error states
 const EmptyState = ({ message, sub }) => (
-  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-dashed border-zinc-200 rounded-xl bg-zinc-50 text-center px-6">
-    <svg className="w-12 h-12 lg:w-16 lg:h-16 text-zinc-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-    <p className="text-sm lg:text-base font-bold text-zinc-400">{message}</p>
-    {sub && <p className="text-xs lg:text-sm text-zinc-400 mt-1">{sub}</p>}
+  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-dashed border-zinc-200 dark:border-zinc-600 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-center px-6">
+    <svg className="w-12 h-12 lg:w-16 lg:h-16 text-zinc-300 dark:text-zinc-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    <p className="text-sm lg:text-base font-bold text-zinc-400 dark:text-zinc-500">{message}</p>
+    {sub && <p className="text-xs lg:text-sm text-zinc-400 dark:text-zinc-500 mt-1">{sub}</p>}
   </div>
 );
 
 const LoadingState = ({ message }) => (
-  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-zinc-200 rounded-xl bg-zinc-50">
+  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-zinc-200 dark:border-zinc-700 rounded-xl bg-zinc-50 dark:bg-zinc-800">
     <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p className="text-sm font-bold text-zinc-600">{message}</p>
-    <p className="text-xs text-zinc-400 mt-1">This may take 30-60 seconds depending on area size and year range</p>
+    <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300">{message}</p>
+    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">This may take 30-60 seconds depending on area size and year range</p>
   </div>
 );
 
 const ErrorState = ({ message }) => (
-  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-red-200 rounded-xl bg-red-50 text-center px-6">
+  <div className="flex flex-col items-center justify-center h-[300px] lg:h-[418px] border border-red-200 dark:border-red-900 rounded-xl bg-red-50 dark:bg-red-950/30 text-center px-6">
     <svg className="w-10 h-10 text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l4 4m0-4l-4 4" />
     </svg>
-    <p className="text-sm font-bold text-red-700">No Result Found</p>
-    <p className="text-xs text-red-600 mt-1 max-w-sm">{message}</p>
+    <p className="text-sm font-bold text-red-700 dark:text-red-400">No Result Found</p>
+    <p className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-sm">{message}</p>
   </div>
 );
 
@@ -1283,16 +1283,16 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   };
 
   return (
-    <div className="w-full h-full relative z-0 bg-white p-4 lg:p-8 space-y-4 lg:space-y-6 overflow-y-auto pb-20 md:pb-8">
+    <div className="w-full h-full relative z-0 bg-white dark:bg-zinc-900 p-4 lg:p-8 space-y-4 lg:space-y-6 overflow-y-auto pb-20 md:pb-8">
 
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-center justify-between border-b border-zinc-100 pb-4 lg:pb-6 gap-4">
+      <div className="flex flex-wrap items-center justify-between border-b border-zinc-100 dark:border-zinc-700 pb-4 lg:pb-6 gap-4">
         <div>
-          <h2 className="text-xl lg:text-2xl font-black text-zinc-900 leading-tight">Analysis Dashboard</h2>
-          <p className="text-xs lg:text-sm text-zinc-500 mt-1">Draw a study area and analyze land use or crop activity</p>
+          <h2 className="text-xl lg:text-2xl font-black text-zinc-900 dark:text-zinc-100 leading-tight">Analysis Dashboard</h2>
+          <p className="text-xs lg:text-sm text-zinc-500 dark:text-zinc-400 mt-1">Draw a study area and analyze land use or crop activity</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex gap-1.5 p-1.5 bg-zinc-50 rounded-xl border border-zinc-100">
+          <div className="flex gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700">
             {can('lulc_analysis') && (
               <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
                 LULC Change
@@ -1329,18 +1329,18 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
           <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
-            <select value={startYear} onChange={(e) => setStartYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 bg-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 outline-none cursor-pointer">
+            <select value={startYear} onChange={(e) => setStartYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
               {analysisYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <span className="text-zinc-400 font-bold text-xs">—</span>
-            <select value={endYear} onChange={(e) => setEndYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 bg-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 outline-none cursor-pointer">
+            <select value={endYear} onChange={(e) => setEndYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
               {analysisYears.filter(y => y >= parseInt(startYear)).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
 
         {activeTab === 'lulc' && (
-          <div className="flex items-center gap-2 lg:gap-4 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 px-3 lg:px-4 flex-shrink-0">
+          <div className="flex items-center gap-2 lg:gap-4 bg-zinc-50 dark:bg-zinc-800 p-1.5 lg:p-2 rounded-xl border border-zinc-100 dark:border-zinc-700 px-3 lg:px-4 flex-shrink-0">
             <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider">Season</span>
             <div className="flex items-center gap-3 lg:gap-4">
               {[{ value: 'all', label: 'All' }, { value: 'Jan-Jun', label: 'Dry' }, { value: 'Jul-Dec', label: 'Wet' }].map(opt => (
@@ -1353,7 +1353,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         )}
 
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
-          <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] bg-white border border-[#23432f] px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 transition whitespace-nowrap">Clear</button>
+          <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] dark:text-green-400 bg-white dark:bg-zinc-800 border border-[#23432f] dark:border-green-700 px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition whitespace-nowrap">Clear</button>
           <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
             {(isAnalyzing || isCropAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
             {(isAnalyzing || isCropAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
@@ -1403,7 +1403,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                       const data = overallSummary.classes[cls];
                       if (!data) return null;
                       return (
-                        <div key={cls} className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 space-y-1 shadow-sm">
+                        <div key={cls} className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 lg:p-4 space-y-1 shadow-sm">
                           <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-sm" style={{ backgroundColor: CLASS_COLORS[cls] }}></div><span className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">{cls}</span></div>
                           <p className="text-xl lg:text-3xl font-black text-zinc-900">{data.percentage}%</p>
                           <p className="text-[9px] lg:text-[10px] text-zinc-400 font-mono">{data.pixel_count.toLocaleString()} px</p>
