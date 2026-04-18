@@ -9,11 +9,16 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 
+import os, json as _json
+
 import database
 import models
 import auth as auth_module
 import admin as admin_module
 from database import get_db
+
+# Public URL of this backend (set BACKEND_BASE_URL env var in production)
+BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://127.0.0.1:8000")
 
 app = FastAPI(title="Thesis Backend")
 app.include_router(admin_module.router)
@@ -52,7 +57,7 @@ def _local_tile_url(year: int, period: str) -> str | None:
     tif = _TIF_DIR / f"{year}-{period}.tif"
     if not tif.exists():
         return None
-    return f"http://127.0.0.1:8000/lulc-tiles/{year}/{period}/{{z}}/{{x}}/{{y}}.png"
+    return f"{BACKEND_BASE_URL}/lulc-tiles/{year}/{period}/{{z}}/{{x}}/{{y}}.png"
 
 # --- CREATE TABLES ON STARTUP ---
 try:
@@ -92,8 +97,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 # --- AUTHENTICATE GEE (Single Init) ---
-KEY_FILE = 'credentials.json'
-credentials = service_account.Credentials.from_service_account_file(KEY_FILE)
+# In production set GEE_CREDENTIALS_JSON env var to the raw contents of credentials.json
+_gee_creds_str = os.environ.get("GEE_CREDENTIALS_JSON")
+if _gee_creds_str:
+    _creds_info = _json.loads(_gee_creds_str)
+    credentials = service_account.Credentials.from_service_account_info(_creds_info)
+else:
+    KEY_FILE = pathlib.Path(__file__).parent / 'credentials.json'
+    credentials = service_account.Credentials.from_service_account_file(str(KEY_FILE))
 scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/earthengine'])
 
 try:
