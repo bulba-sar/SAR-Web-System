@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// MAP MOVER 
+const API = process.env.REACT_APP_API_URL || '${API}';
+
+// MAP MOVER
 function MapMover({ targetLocation }) {
   const map = useMap();
   useEffect(() => {
@@ -53,7 +55,7 @@ function CalabarzonStatsCard({ year, period }) {
     let cancelled = false;
     setLoading(true);
     setStats(null);
-    fetch(`http://127.0.0.1:8000/api/v1/analytics/calabarzon-stats/${year}/${period}`)
+    fetch(`${API}/api/v1/analytics/calabarzon-stats/${year}/${period}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (!cancelled && d) { setStats(d); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });
@@ -130,7 +132,7 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
       if (showProtected) {
         // Check protected areas first
         try {
-          const response = await fetch(`http://127.0.0.1:8000/query-protected-area?lat=${lat}&lng=${lng}`);
+          const response = await fetch(`${API}/query-protected-area?lat=${lat}&lng=${lng}`);
           const data = await response.json();
           if (data.found) {
             setPopupInfo({ type: 'protected', lat, lng, location: locationText, name: data.name, desig: data.desig, loading: false });
@@ -141,7 +143,7 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
         // Not a protected area — check crop suitability if that layer is also on
         if (showCropSuitability) {
           try {
-            const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
+            const response = await fetch(`${API}/query-crop-suitability?lat=${lat}&lng=${lng}`);
             const data = await response.json();
             if (data.found) {
               setPopupInfo({ type: 'crop', lat, lng, ...data, loading: false });
@@ -158,7 +160,7 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
       } else if (showCropSuitability) {
         // Only crop suitability is on
         try {
-          const response = await fetch(`http://127.0.0.1:8000/query-crop-suitability?lat=${lat}&lng=${lng}`);
+          const response = await fetch(`${API}/query-crop-suitability?lat=${lat}&lng=${lng}`);
           const data = await response.json();
           if (data.found) {
             setPopupInfo({ type: 'crop', lat, lng, ...data, loading: false });

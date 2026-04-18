@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = 'http://127.0.0.1:8000';
+const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 const ROLES = ['Researcher', 'Student', 'Farmer', 'Government Official', 'NGO'];
 

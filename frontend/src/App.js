@@ -6,6 +6,8 @@ import Analysis from './components/analysis';
 import Profile from './components/profile';
 import Admin from './components/admin';
 
+const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+
 export default function App() {
   const [activeNav, setActiveNav] = useState('filters');
   const [targetLocation, setTargetLocation] = useState(null);
@@ -38,12 +40,12 @@ export default function App() {
   const fetchAuthState = () => {
     const token = localStorage.getItem('sar_token');
     if (!token) { setIsAdmin(false); setPermissions(null); return; }
-    fetch('http://127.0.0.1:8000/profile/me', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/profile/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(user => {
         if (!user) { setIsAdmin(false); setPermissions(null); return; }
         setIsAdmin(['Admin', 'Government Official'].includes(user.role));
-        return fetch('http://127.0.0.1:8000/profile/permissions', {
+        return fetch(`${API}/profile/permissions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       })
@@ -64,7 +66,7 @@ export default function App() {
   useEffect(() => {
     const fetchProtectedAreas = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/get-protected-areas');
+        const response = await fetch(`${API}/get-protected-areas`);
         const data = await response.json();
         setProtectedUrl(data.tile_url || null);
       } catch (error) {
@@ -77,7 +79,7 @@ export default function App() {
 
   // --- 2a. Fetch Basemap once on mount (single shared composite, never changes) ---
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/get-satellite-basemap')
+    fetch(`${API}/get-satellite-basemap`)
       .then(r => r.json())
       .then(data => {
         if (data.error) console.error("Basemap Backend Error:", data.error);
@@ -92,7 +94,7 @@ export default function App() {
     const fetchMaps = async () => {
       setLoading(true);
       try {
-        const sarResponse = await fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${activeLayer}`);
+        const sarResponse = await fetch(`${API}/get-sar-map/${year}/${period}?layer=${activeLayer}`);
         const sarData = await sarResponse.json();
         if (sarData.error) console.error("SAR Backend Error:", sarData.error);
         else console.log("SAR Map Loaded Successfully:", sarData.tile_url);
@@ -115,7 +117,7 @@ export default function App() {
       }
       
       try {
-        const response = await fetch(`http://127.0.0.1:8000/get-crop-suitability/${year}/${period}`);
+        const response = await fetch(`${API}/get-crop-suitability/${year}/${period}`);
         const data = await response.json();
         setCropSuitabilityUrl(data.tile_url || null);
       } catch (error) {
@@ -130,7 +132,7 @@ export default function App() {
   useEffect(() => {
     async function fetchAgriLayer() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/get-agri-layer");
+        const response = await fetch(`${API}/get-agri-layer`);
         const data = await response.json();
         
         if (data.status === "success") {
