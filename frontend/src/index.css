@@ -2,3 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+.leaflet-container {
+  background: #172229 !important;
+}
+
