@@ -33,6 +33,10 @@ export default function App() {
   // Drawn polygon — lifted here so Profile can save/load AOIs
   const [drawnPolygon, setDrawnPolygon] = useState(null);
 
+  // Filter panel visibility (desktop collapse + mobile overlay)
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
   // Auth-derived state: admin flag + role permissions
   const [isAdmin, setIsAdmin] = useState(false);
   const [permissions, setPermissions] = useState(null); // null = all features on (guest/default)
@@ -162,14 +166,14 @@ export default function App() {
       {activeNav === 'profile' ? (
 
         // SHOW PROFILE DASHBOARD
-        <div className="flex-1 h-full overflow-y-auto bg-zinc-50">
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 pb-16 md:pb-0">
           <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} />
         </div>
 
       ) : activeNav === 'admin' ? (
 
         // SHOW ADMIN PANEL
-        <div className="flex-1 h-full overflow-y-auto bg-zinc-50">
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 pb-16 md:pb-0">
           <Admin />
         </div>
 
@@ -184,39 +188,76 @@ export default function App() {
 
         // SHOW THE MAP & FILTERS FOR EVERYTHING ELSE
         <>
-          <FilterPanel
-            activeNav={activeNav}
-            year={year}
-            setYear={setYear}
-            period={period}
-            setPeriod={setPeriod}
-            activeLayer={activeLayer}
-            setActiveLayer={setActiveLayer}
-            setTargetLocation={setTargetLocation}
-            showProtected={showProtected}
-            setShowProtected={setShowProtected}
-            sarOpacity={sarOpacity}
-            setSarOpacity={setSarOpacity}
-            showCropSuitability={showCropSuitability}
-            setShowCropSuitability={setShowCropSuitability}
-            permissions={permissions}
-          />
-          
-          <div className="flex-1 relative z-0">
-            <Map 
-              basemapUrl={basemapUrl} 
-              sarUrl={sarUrl} 
-              year={year} 
-              period={period} 
+          {/* Desktop: collapsible inline filter panel */}
+          {panelOpen && (
+            <div className="hidden md:block">
+              <FilterPanel
+                activeNav={activeNav}
+                year={year} setYear={setYear}
+                period={period} setPeriod={setPeriod}
+                activeLayer={activeLayer} setActiveLayer={setActiveLayer}
+                setTargetLocation={setTargetLocation}
+                showProtected={showProtected} setShowProtected={setShowProtected}
+                sarOpacity={sarOpacity} setSarOpacity={setSarOpacity}
+                showCropSuitability={showCropSuitability} setShowCropSuitability={setShowCropSuitability}
+                permissions={permissions}
+                onTogglePanel={() => setPanelOpen(false)}
+              />
+            </div>
+          )}
+          {/* Desktop: collapsed strip with expand button */}
+          {!panelOpen && (
+            <div className="hidden md:flex w-8 h-screen bg-white border-r border-zinc-200 flex-col items-center pt-20 z-10 shrink-0">
+              <button onClick={() => setPanelOpen(true)} title="Show filters" className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+
+          {/* Mobile: filter slide-over overlay */}
+          {mobileFilterOpen && (
+            <div className="md:hidden fixed inset-0 z-50 bg-black/40" onClick={() => setMobileFilterOpen(false)}>
+              <div className="absolute inset-y-0 left-0 w-[85vw] max-w-xs shadow-2xl" onClick={e => e.stopPropagation()}>
+                <FilterPanel
+                  activeNav={activeNav}
+                  year={year} setYear={setYear}
+                  period={period} setPeriod={setPeriod}
+                  activeLayer={activeLayer} setActiveLayer={setActiveLayer}
+                  setTargetLocation={setTargetLocation}
+                  showProtected={showProtected} setShowProtected={setShowProtected}
+                  sarOpacity={sarOpacity} setSarOpacity={setSarOpacity}
+                  showCropSuitability={showCropSuitability} setShowCropSuitability={setShowCropSuitability}
+                  permissions={permissions}
+                  onTogglePanel={() => setMobileFilterOpen(false)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Map — full screen on mobile */}
+          <div className="flex-1 relative z-0 pb-16 md:pb-0">
+            <Map
+              basemapUrl={basemapUrl}
+              sarUrl={sarUrl}
+              year={year}
+              period={period}
               loading={loading}
               targetLocation={targetLocation}
-              protectedUrl={showProtected ? protectedUrl : null} 
+              protectedUrl={showProtected ? protectedUrl : null}
               showProtected={showProtected}
               sarOpacity={sarOpacity}
               agriUrl={agriLayerUrl}
               cropSuitabilityUrl={showCropSuitability ? cropSuitabilityUrl : null}
               showCropSuitability={showCropSuitability}
             />
+            {/* Mobile: floating filter button */}
+            <button
+              onClick={() => setMobileFilterOpen(true)}
+              className="md:hidden absolute top-4 left-4 z-[400] bg-white rounded-xl shadow-lg px-3 py-2 flex items-center gap-2 border border-zinc-200 text-xs font-bold text-zinc-700"
+            >
+              <svg className="w-4 h-4 text-[#305d3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+              Filters
+            </button>
           </div>
         </>
 

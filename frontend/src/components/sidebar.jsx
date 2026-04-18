@@ -173,65 +173,65 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
     );
   };
 
+  const MobileNavItem = ({ id, label, icon }) => {
+    const isActive = activeNav === id;
+    return (
+      <button
+        onClick={() => setActiveNav(id)}
+        className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-all ${isActive
+          ? 'text-[#305d3d] bg-[#305d3d]/10'
+          : 'text-zinc-500 hover:bg-black/5 hover:text-zinc-900'
+        }`}
+      >
+        {icon}
+        <span className="text-[9px] font-bold tracking-wider uppercase">{label}</span>
+      </button>
+    );
+  };
+
   return (
     <>
-      <div className="w-20 lg:w-24 h-screen bg-[#f0f2f2] border-r border-zinc-200 flex flex-col justify-between py-4 lg:py-6 z-20 shadow-sm transition-all">
+      {/* ── Desktop: vertical sidebar (hidden on mobile) ── */}
+      <div className="hidden md:flex w-20 lg:w-24 h-screen bg-[#f0f2f2] border-r border-zinc-200 flex-col justify-between py-4 lg:py-6 z-20 shadow-sm transition-all">
 
         {/* Top Section */}
         <div className="flex flex-col w-full items-center space-y-2 lg:space-y-4">
-
-          {/* Logo */}
           <div className="mb-2 lg:mb-4">
-            <img
-              src="/logo3.png"
-              alt="SAR CALABARZON Logo"
-              className="w-10 h-10 lg:w-12 lg:h-12 object-contain transition-all"
-            />
+            <img src="/logo3.png" alt="SAR CALABARZON Logo" className="w-10 h-10 lg:w-12 lg:h-12 object-contain transition-all" />
           </div>
-
-          <NavItem
-            id="filters"
-            label="Filters"
-            icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>}
-          />
+          <NavItem id="filters" label="Filters" icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>} />
           {can(permissions, 'analysis_tab') && (
-            <NavItem
-              id="analysis"
-              label="Analysis"
-              icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>}
-            />
+            <NavItem id="analysis" label="Analysis" icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>} />
           )}
         </div>
 
         {/* Bottom Section */}
         <div className="flex flex-col w-full items-center gap-2">
-
-          {/* About / Info button */}
-          <button
-            onClick={() => setShowAbout(true)}
-            className="w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 border-transparent text-zinc-500 hover:bg-black/5 hover:text-zinc-900 transition-all"
-            title="About & Methodology"
-          >
-            <svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <button onClick={() => setShowAbout(true)} className="w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 border-transparent text-zinc-500 hover:bg-black/5 hover:text-zinc-900 transition-all" title="About & Methodology">
+            <svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span className="text-[9px] lg:text-[10px] mt-1 lg:mt-1.5 font-bold tracking-wider uppercase transition-all">About</span>
           </button>
-
-          <NavItem
-            id="profile"
-            label="Profile"
-            icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
-          />
+          <NavItem id="profile" label="Profile" icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} />
           {isAdmin && (
-            <NavItem
-              id="admin"
-              label="Admin"
-              icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
-            />
+            <NavItem id="admin" label="Admin" icon={<svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} />
           )}
         </div>
+      </div>
 
+      {/* ── Mobile: fixed bottom navigation bar ── */}
+      <div className="flex md:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-[#f0f2f2] border-t border-zinc-200 shadow-lg">
+        <MobileNavItem id="filters" label="Map" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>} />
+        {can(permissions, 'analysis_tab') && (
+          <MobileNavItem id="analysis" label="Analysis" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 20V10H14V20H18ZM12 20V4H8V20H12ZM6 20V14H2V20H6Z" /></svg>} />
+        )}
+        <button onClick={() => setShowAbout(true)} className="flex flex-col items-center justify-center flex-1 gap-0.5 text-zinc-500 hover:bg-black/5 transition-all">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="text-[9px] font-bold tracking-wider uppercase">About</span>
+        </button>
+        <MobileNavItem id="profile" label="Profile" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} />
+        {isAdmin && (
+          <MobileNavItem id="admin" label="Admin" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} />
+        )}
       </div>
 
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
