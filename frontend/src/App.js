@@ -41,6 +41,21 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sar_dark') === '1');
   useEffect(() => { localStorage.setItem('sar_dark', darkMode ? '1' : '0'); }, [darkMode]);
 
+  // Backend wake-up detection — Render free tier sleeps when idle
+  const [backendReady, setBackendReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(8000) });
+        if (res.ok && !cancelled) { setBackendReady(true); return; }
+      } catch {}
+      if (!cancelled) setTimeout(ping, 4000);
+    };
+    ping();
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Auth-derived state: admin flag + role permissions
   const [isAdmin, setIsAdmin] = useState(false);
   const [permissions, setPermissions] = useState(null); // null = all features on (guest/default)
@@ -158,6 +173,14 @@ export default function App() {
   return (
     <div className={`flex h-screen w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden${darkMode ? ' dark' : ''}`}>
       
+      {/* Backend wake-up banner (Render free tier cold start) */}
+      {!backendReady && (
+        <div className="fixed top-0 inset-x-0 z-[9999] flex items-center justify-center gap-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-950/80 border-b border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-medium shadow-sm">
+          <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
+          <span>Backend is starting up — map data will load in a few seconds. Please wait…</span>
+        </div>
+      )}
+
       {/* 1. The Slim Icon Sidebar (Always Visible) */}
       <Sidebar
         activeNav={activeNav}

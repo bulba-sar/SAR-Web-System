@@ -168,6 +168,15 @@ def _set_cached_tile(db: Session, key: str, url: str) -> None:
 
 
 # ============================================================
+#  HEALTH CHECK
+# ============================================================
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# ============================================================
 #  LOCAL TILE ENDPOINTS  (rio-tiler, served from backend/tif/)
 # ============================================================
 
