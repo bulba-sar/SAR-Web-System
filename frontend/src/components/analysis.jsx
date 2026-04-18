@@ -862,7 +862,7 @@ function CompareView({ basemapUrl }) {
   );
 
   useEffect(() => {
-    fetch('${API}/datasets/available')
+    fetch(`${API}/datasets/available`)
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;
@@ -1108,7 +1108,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const [analysisYears, setAnalysisYears] = useState(BASE_YEARS);
 
   useEffect(() => {
-    fetch('${API}/datasets/available')
+    fetch(`${API}/datasets/available`)
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;
@@ -1216,7 +1216,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     if (!drawnPolygon) { setAnalysisError("Please draw your study area on the map first."); return; }
     setIsAnalyzing(true); setAnalysisError(null); setAnalyticsData(null);
     try {
-      const response = await fetch('${API}/api/v1/analytics/lulc-change', {
+      const response = await fetch(`${API}/api/v1/analytics/lulc-change`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildPayload())
       });
@@ -1247,11 +1247,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
     try {
       const [intensityResult, areaResult] = await Promise.allSettled([
-        fetch('${API}/api/v1/analytics/crop-intensity', {
+        fetch(`${API}/api/v1/analytics/crop-intensity`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(r => r.json()),
-        fetch('${API}/api/v1/analytics/crop-area', {
+        fetch(`${API}/api/v1/analytics/crop-area`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(r => r.json())
