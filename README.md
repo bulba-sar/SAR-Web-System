@@ -72,7 +72,7 @@ npm start
 ```
 
 ## Installing Git LFS (Large File Storage)
-<!-- This is for the basedmap since the file is 400mb -->
+This is for the basedmap since the file is 400mb
 **Download here:**  `git-lfs.com`
 
 ```bash
