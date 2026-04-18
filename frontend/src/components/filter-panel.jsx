@@ -72,26 +72,24 @@ export default function FilterPanel({
     <div className="w-72 lg:w-80 h-screen bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700 flex flex-col shadow-xl z-10 transition-all">
       
       {/* --- Panel Header --- */}
-      <div className="p-4 lg:p-6 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[#4e7a59]/10 flex items-center justify-center text-[#4e7a59]">
-            <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-xs lg:text-sm font-bold text-zinc-900 dark:text-zinc-100">Map Filters</h2>
-            <p className="text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">Customize LULC view</p>
-          </div>
+      <div className="p-3 lg:p-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-between gap-3">
+        <div className="flex flex-col leading-tight">
+          <h2 className="text-sm lg:text-base font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-[#1f602e] dark:text-[#a2df87]">Sakahang </span>
+            <span className="text-[#d4a017]">Lupa</span>
+          </h2>
+          <p className="text-[9px] lg:text-[10px] font-medium tracking-wide text-[#1f602e] dark:text-[#a2df87]" style={{ fontFamily: 'Georgia, serif' }}>
+            LAND MONITORING SYSTEM
+          </p>
         </div>
         {onTogglePanel && (
           <button
             onClick={onTogglePanel}
-            className="p-1.5 rounded-lg hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition"
+            className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition"
             title="Close panel"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}

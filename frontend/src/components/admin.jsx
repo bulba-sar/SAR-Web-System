@@ -66,17 +66,17 @@ function MapPreviewModal({ aoi, onClose }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
+      <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
           <div>
-            <p className="text-sm font-black text-zinc-900">{aoi.name}</p>
+            <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{aoi.name}</p>
             {aoi.description && (
-              <p className="text-xs text-zinc-500 mt-0.5">{aoi.description}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{aoi.description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-700 transition"
+            className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -153,10 +153,10 @@ function EditModal({ aoi, token, onSaved, onClose }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
-          <p className="text-sm font-black text-zinc-900">Edit AOI</p>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 transition">
+      <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
+          <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">Edit AOI</p>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -165,19 +165,19 @@ function EditModal({ aoi, token, onSaved, onClose }) {
 
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
               Name *
             </label>
             <input
               type="text"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
               Description
             </label>
             <input
@@ -185,24 +185,24 @@ function EditModal({ aoi, token, onSaved, onClose }) {
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Optional notes"
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
               GeoJSON
             </label>
             <textarea
               value={form.geojson}
               onChange={e => setForm(f => ({ ...f, geojson: e.target.value }))}
               rows={8}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] resize-y"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] resize-y"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-medium">
+            <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">
               {error}
             </div>
           )}
@@ -210,7 +210,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 border border-zinc-200 text-zinc-600 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 transition"
+              className="flex-1 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
             >
               Cancel
             </button>
@@ -319,7 +319,7 @@ function DatasetSection({ token }) {
   return (
     <div className="space-y-6">
       {/* Upload card */}
-      <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-4">
+      <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-5 space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Upload LULC Dataset</h3>
         <p className="text-xs text-zinc-500">
           Upload a GeoTIFF exported from GEE. It will be saved as{' '}
@@ -329,21 +329,21 @@ function DatasetSection({ token }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Year</label>
+            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Year</label>
             <select
               value={year}
               onChange={e => setYear(Number(e.target.value))}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {DATASET_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Period</label>
+            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Period</label>
             <select
               value={period}
               onChange={e => setPeriod(e.target.value)}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {DATASET_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -352,7 +352,7 @@ function DatasetSection({ token }) {
 
         {/* Optional custom filename */}
         <div>
-          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
             Custom Filename <span className="text-zinc-400 normal-case font-normal">(optional — leave blank to use {year}-{period}.tif)</span>
           </label>
           <input
@@ -360,7 +360,7 @@ function DatasetSection({ token }) {
             value={customName}
             onChange={e => setCustomName(e.target.value)}
             placeholder={`${year}-${period}.tif`}
-            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white placeholder-zinc-300"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-300 dark:placeholder-zinc-500"
           />
           {customName.trim() && (
             <p className="text-[10px] text-zinc-400 mt-1">
@@ -373,9 +373,9 @@ function DatasetSection({ token }) {
 
         {/* File picker */}
         <div>
-          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">GeoTIFF File (.tif)</label>
+          <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">GeoTIFF File (.tif)</label>
           <div
-            className="border-2 border-dashed border-zinc-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#305d3d]/40 hover:bg-[#305d3d]/5 transition-all"
+            className="border-2 border-dashed border-zinc-200 dark:border-zinc-600 rounded-xl p-5 text-center cursor-pointer hover:border-[#305d3d]/40 hover:bg-[#305d3d]/5 dark:hover:border-[#305d3d]/60 dark:hover:bg-[#305d3d]/10 transition-all"
             onClick={() => fileRef.current?.click()}
             onDragOver={e => e.preventDefault()}
             onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
@@ -395,8 +395,8 @@ function DatasetSection({ token }) {
           </div>
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-medium">{error}</div>}
-        {success && <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 font-medium">{success}</div>}
+        {error && <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">{error}</div>}
+        {success && <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 text-xs text-green-700 dark:text-green-300 font-medium">{success}</div>}
 
         <button
           onClick={handleUpload}
@@ -420,10 +420,10 @@ function DatasetSection({ token }) {
             <p className="text-xs text-zinc-400 mt-1">Upload a GeoTIFF above to get started.</p>
           </div>
         ) : (
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-200">
+                <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-200 dark:border-zinc-600">
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Filename</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Size</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Last Modified</th>
@@ -432,10 +432,10 @@ function DatasetSection({ token }) {
               </thead>
               <tbody>
                 {datasets.map((d, i) => (
-                  <tr key={d.filename} className={`border-b border-zinc-100 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'}`}>
-                    <td className="px-4 py-3 text-sm font-bold text-zinc-800 font-mono">{d.filename}</td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">{formatBytes(d.size_bytes)}</td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">{new Date(d.modified_at).toLocaleString('en-PH')}</td>
+                  <tr key={d.filename} className={`border-b border-zinc-100 dark:border-zinc-700 last:border-0 ${i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/40 dark:bg-zinc-700/40'}`}>
+                    <td className="px-4 py-3 text-sm font-bold text-zinc-800 dark:text-zinc-100 font-mono">{d.filename}</td>
+                    <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{formatBytes(d.size_bytes)}</td>
+                    <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{new Date(d.modified_at).toLocaleString('en-PH')}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleDelete(d.filename)}
@@ -508,14 +508,14 @@ function UploadSection({ token, onUploaded }) {
   };
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-4">
+    <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-5 space-y-4">
       <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
         Upload New AOI
       </h3>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
             Name *
           </label>
           <input
@@ -523,11 +523,11 @@ function UploadSection({ token, onUploaded }) {
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Laguna Wetlands"
-            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
             Description
           </label>
           <input
@@ -535,14 +535,14 @@ function UploadSection({ token, onUploaded }) {
             value={form.description}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             placeholder="Optional notes"
-            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
           />
         </div>
       </div>
 
       {/* File picker */}
       <div>
-        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+        <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
           File — .geojson / .json / .zip (Shapefile)
         </label>
         <div
@@ -578,12 +578,12 @@ function UploadSection({ token, onUploaded }) {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-medium">
+        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">
           {error}
         </div>
       )}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 font-medium">
+        <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 text-xs text-green-700 dark:text-green-300 font-medium">
           {success}
         </div>
       )}
@@ -627,17 +627,17 @@ function AOIRow({ aoi, token, onUpdated, onDeleted }) {
 
   return (
     <>
-      <tr className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+      <tr className="border-b border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
         <td className="px-4 py-3">
-          <p className="text-sm font-bold text-zinc-900">{aoi.name}</p>
+          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{aoi.name}</p>
           {aoi.description && (
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-xs">{aoi.description}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate max-w-xs">{aoi.description}</p>
           )}
         </td>
         <td className="px-4 py-3">
           <SourceBadge source={aoi.source} />
         </td>
-        <td className="px-4 py-3 text-xs text-zinc-500">{formatDate(aoi.created_at)}</td>
+        <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(aoi.created_at)}</td>
         <td className="px-4 py-3">
           <div className="flex items-center gap-1">
             {/* Preview */}
@@ -655,7 +655,7 @@ function AOIRow({ aoi, token, onUpdated, onDeleted }) {
             <button
               onClick={() => setEditOpen(true)}
               title="Edit"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -667,7 +667,7 @@ function AOIRow({ aoi, token, onUpdated, onDeleted }) {
               onClick={handleDelete}
               disabled={deleting}
               title="Delete"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -703,14 +703,14 @@ function UserRow({ user, token, onUpdated }) {
 
   return (
     <>
-      <tr className="border-b border-zinc-100 hover:bg-zinc-50">
+      <tr className="border-b border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700">
         <td className="px-4 py-3">
-          <p className="text-sm font-medium text-zinc-900">{user.name}</p>
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{user.name}</p>
           {user.institution && (
             <p className="text-xs text-zinc-400 mt-0.5">{user.institution}</p>
           )}
         </td>
-        <td className="px-4 py-3 text-xs text-zinc-500">{user.email}</td>
+        <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</td>
         <td className="px-4 py-3">
           <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider ${
             isPrivileged
@@ -764,10 +764,10 @@ function UsersPanel({ token }) {
   if (loading) return <div className="text-xs text-zinc-400 py-4">Loading users…</div>;
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
       <table className="w-full text-left">
         <thead>
-          <tr className="bg-zinc-50 border-b border-zinc-200">
+          <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-200 dark:border-zinc-600">
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Name</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Email</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Role</th>
@@ -905,15 +905,15 @@ function EditUserModal({ user, token, onSaved, onClose }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
           <div>
-            <p className="text-sm font-black text-zinc-900">{user.name}</p>
+            <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{user.name}</p>
             <p className="text-xs text-zinc-400 mt-0.5">{user.email}</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 transition mt-0.5">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition mt-0.5">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -929,7 +929,7 @@ function EditUserModal({ user, token, onSaved, onClose }) {
             <select
               value={role}
               onChange={e => setRole(e.target.value)}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
@@ -953,11 +953,11 @@ function EditUserModal({ user, token, onSaved, onClose }) {
             {loading ? (
               <div className="text-xs text-zinc-400 py-4 text-center">Loading…</div>
             ) : (
-              <div className="space-y-1 border border-zinc-100 rounded-xl overflow-hidden">
+              <div className="space-y-1 border border-zinc-100 dark:border-zinc-700 rounded-xl overflow-hidden">
                 {FEATURE_META.map(({ key, label, description }) => (
-                  <div key={key} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 transition">
+                  <div key={key} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition">
                     <div>
-                      <p className="text-sm font-bold text-zinc-800">{label}</p>
+                      <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{label}</p>
                       <p className="text-xs text-zinc-400">{description}</p>
                     </div>
                     <Toggle
@@ -972,15 +972,15 @@ function EditUserModal({ user, token, onSaved, onClose }) {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-medium">
+            <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">
               {error}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 px-5 py-4 border-t border-zinc-100 flex gap-2">
-          <button onClick={onClose} className="flex-1 border border-zinc-200 text-zinc-600 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 transition">
+        <div className="shrink-0 px-5 py-4 border-t border-zinc-100 dark:border-zinc-700 flex gap-2">
+          <button onClick={onClose} className="flex-1 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition">
             Cancel
           </button>
           <button onClick={handleSave} disabled={saving || loading} className="flex-1 bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2 rounded-lg transition disabled:opacity-60">
@@ -1144,7 +1144,7 @@ function ModelPerformanceSection() {
     <div className="space-y-6">
 
       {/* Run controls */}
-      <div className="flex items-center gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+      <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl">
         <button
           onClick={handleRun}
           disabled={jobStatus === 'running' || jobStatus === 'starting'}
@@ -1177,7 +1177,7 @@ function ModelPerformanceSection() {
           <span className="text-xs text-zinc-400">Loops all 10 periods and writes results to <code className="font-mono bg-zinc-100 px-1 rounded">model_metrics.json</code></span>
         )}
 
-        <button onClick={load} className="ml-auto text-[10px] font-bold text-zinc-500 hover:text-zinc-800 border border-zinc-200 px-2.5 py-1.5 rounded-lg transition shrink-0">
+        <button onClick={load} className="ml-auto text-[10px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 border border-zinc-200 dark:border-zinc-600 px-2.5 py-1.5 rounded-lg transition shrink-0">
           Refresh
         </button>
       </div>
@@ -1201,7 +1201,7 @@ function ModelPerformanceSection() {
           `${((model?.train_ratio ?? 0.7) * 100).toFixed(0)}% train / ${((model?.test_ratio ?? 0.3) * 100).toFixed(0)}% test`,
           `${model?.features?.length ?? 26} input features`,
         ].map(tag => (
-          <span key={tag} className="bg-green-50 border border-green-100 text-[#305d3d] text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
+          <span key={tag} className="bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-900 text-[#305d3d] dark:text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
         ))}
         <span className="ml-auto text-[10px] text-zinc-400">{filledPeriods.length}/{periodKeys.length} periods recorded</span>
       </div>
@@ -1220,8 +1220,8 @@ function ModelPerformanceSection() {
             { label: 'Avg Kappa',    value: filledPeriods.length ? avgKappa.toFixed(4) : '—', sub: 'Agreement beyond chance' },
             { label: 'Avg MSE',      value: filledPeriods.length ? avgMse.toFixed(4)  : '—', sub: 'Mean squared class error' },
           ].map(({ label, value, sub }) => (
-            <div key={label} className="bg-white border border-zinc-100 rounded-xl p-4 text-center">
-              <div className="text-2xl font-black text-zinc-900">{value}</div>
+            <div key={label} className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl p-4 text-center">
+              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{value}</div>
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-1">{label}</div>
               <div className="text-[9px] text-zinc-400 mt-0.5">{sub}</div>
             </div>
@@ -1232,10 +1232,10 @@ function ModelPerformanceSection() {
       {/* Per-period table */}
       <div>
         <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-3">Per-Period Summary</h3>
-        <div className="overflow-x-auto rounded-xl border border-zinc-100">
+        <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-700">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-100">
+              <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-600">
                 <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5">Period</th>
                 <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Accuracy</th>
                 <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2.5 text-center">Kappa</th>
@@ -1252,16 +1252,16 @@ function ModelPerformanceSection() {
                   <tr
                     key={key}
                     onClick={() => filled && setSelectedPeriod(isActive ? null : key)}
-                    className={`border-b border-zinc-100 last:border-0 transition ${isActive ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/40'} ${filled ? 'cursor-pointer hover:bg-green-50/60' : ''}`}
+                    className={`border-b border-zinc-100 dark:border-zinc-700 last:border-0 transition ${isActive ? 'bg-green-50 dark:bg-green-900/30' : i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/40 dark:bg-zinc-700/40'} ${filled ? 'cursor-pointer hover:bg-green-50/60 dark:hover:bg-green-900/20' : ''}`}
                   >
-                    <td className="px-4 py-2.5 font-bold text-zinc-800">{key}</td>
-                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700">
+                    <td className="px-4 py-2.5 font-bold text-zinc-800 dark:text-zinc-100">{key}</td>
+                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">
                       {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
                       {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700">
+                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
                       {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-center">
@@ -1283,18 +1283,18 @@ function ModelPerformanceSection() {
 
       {/* Drill-down for selected period */}
       {activePeriod && selectedPeriod && (
-        <div className="border border-green-100 bg-green-50/30 rounded-2xl p-4 space-y-5">
-          <h3 className="text-sm font-black text-zinc-800">
+        <div className="border border-green-100 dark:border-green-900 bg-green-50/30 dark:bg-green-900/10 rounded-2xl p-4 space-y-5">
+          <h3 className="text-sm font-black text-zinc-800 dark:text-zinc-100">
             {selectedPeriod}
             <span className="ml-2 text-xs font-normal text-zinc-500">— detailed metrics</span>
           </h3>
 
           <div>
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
-            <div className="overflow-x-auto rounded-xl border border-zinc-100 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-zinc-50 border-b border-zinc-100">
+                  <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-600">
                     <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
                     <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
                     <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
@@ -1305,16 +1305,16 @@ function ModelPerformanceSection() {
                   {CLASS_ORDER_MODEL.map((cls, i) => {
                     const m = activePeriod.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
                     return (
-                      <tr key={cls} className={i % 2 === 0 ? 'bg-white' : 'bg-zinc-50/60'}>
+                      <tr key={cls} className={i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/60 dark:bg-zinc-700/40'}>
                         <td className="px-4 py-2">
                           <div className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
-                            <span className="font-bold text-zinc-800">{cls}</span>
+                            <span className="font-bold text-zinc-800 dark:text-zinc-100">{cls}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.precision)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.recall)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700">{pct(m.f1)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.precision)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.recall)}</td>
+                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.f1)}</td>
                       </tr>
                     );
                   })}
@@ -1338,7 +1338,7 @@ function ModelPerformanceSection() {
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {model.features.map(f => (
-              <span key={f} className="bg-zinc-100 border border-zinc-200 text-zinc-600 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">{f}</span>
+              <span key={f} className="bg-zinc-100 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">{f}</span>
             ))}
           </div>
         </div>
@@ -1417,7 +1417,7 @@ export default function Admin() {
     <div className="h-full flex flex-col">
 
       {/* Header */}
-      <div className="shrink-0 border-b border-zinc-200 bg-white px-6 py-4 flex items-center justify-between">
+      <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#305d3d] flex items-center justify-center text-white">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1426,21 +1426,21 @@ export default function Admin() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-black text-zinc-900 leading-tight">Admin Panel</p>
+            <p className="text-sm font-black text-zinc-900 dark:text-zinc-100 leading-tight">Admin Panel</p>
             <p className="text-xs text-zinc-400">Content Manager · {user?.name}</p>
           </div>
         </div>
 
         {/* Stats pill */}
         <div className="hidden sm:flex items-center gap-3 text-xs text-zinc-500">
-          <span className="bg-zinc-100 px-3 py-1 rounded-full font-bold">
+          <span className="bg-zinc-100 dark:bg-zinc-700 dark:text-zinc-300 px-3 py-1 rounded-full font-bold">
             {aois.length} AOI{aois.length !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 flex border-b border-zinc-200 bg-white px-6">
+      <div className="shrink-0 flex border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6">
         {[
           { id: 'aois',     label: 'Areas of Interest' },
           { id: 'datasets', label: 'Datasets' },
@@ -1453,7 +1453,7 @@ export default function Admin() {
             className={`px-4 py-3 text-xs font-bold border-b-2 transition-colors ${
               activeTab === tab.id
                 ? 'border-[#305d3d] text-[#305d3d]'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+                : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
             }`}
           >
             {tab.label}
@@ -1462,7 +1462,7 @@ export default function Admin() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto bg-zinc-50">
+      <div className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950">
         <div className="max-w-5xl mx-auto p-6 space-y-6">
 
           {activeTab === 'datasets' && (
@@ -1487,7 +1487,7 @@ export default function Admin() {
                 {aoiLoading ? (
                   <div className="text-xs text-zinc-400 py-6 text-center">Loading…</div>
                 ) : aois.length === 0 ? (
-                  <div className="border border-dashed border-zinc-200 rounded-xl p-10 text-center">
+                  <div className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-10 text-center">
                     <svg className="w-10 h-10 text-zinc-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                         d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -1496,10 +1496,10 @@ export default function Admin() {
                     <p className="text-xs text-zinc-400 mt-1">Upload a GeoJSON or Shapefile above to get started.</p>
                   </div>
                 ) : (
-                  <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+                  <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-zinc-50 border-b border-zinc-200">
+                        <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-200 dark:border-zinc-600">
                           <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Name</th>
                           <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Source</th>
                           <th className="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">Created</th>
