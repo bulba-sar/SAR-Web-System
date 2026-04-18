@@ -37,6 +37,10 @@ export default function App() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
+  // Dark mode — persisted to localStorage
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sar_dark') === '1');
+  useEffect(() => { localStorage.setItem('sar_dark', darkMode ? '1' : '0'); }, [darkMode]);
+
   // Auth-derived state: admin flag + role permissions
   const [isAdmin, setIsAdmin] = useState(false);
   const [permissions, setPermissions] = useState(null); // null = all features on (guest/default)
@@ -152,7 +156,7 @@ export default function App() {
 
 // --- 5. Render UI ---
   return (
-    <div className="flex h-screen w-full bg-zinc-100 overflow-hidden">
+    <div className={`flex h-screen w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden${darkMode ? ' dark' : ''}`}>
       
       {/* 1. The Slim Icon Sidebar (Always Visible) */}
       <Sidebar
@@ -160,27 +164,29 @@ export default function App() {
         setActiveNav={setActiveNav}
         isAdmin={isAdmin}
         permissions={permissions}
+        darkMode={darkMode}
+        toggleDark={() => setDarkMode(d => !d)}
       />
 
       {/* 2. DYNAMIC CONTENT AREA */}
       {activeNav === 'profile' ? (
 
         // SHOW PROFILE DASHBOARD
-        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 pb-16 md:pb-0">
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 pb-16 md:pb-0">
           <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} />
         </div>
 
       ) : activeNav === 'admin' ? (
 
         // SHOW ADMIN PANEL
-        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 pb-16 md:pb-0">
+        <div className="flex-1 h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 pb-16 md:pb-0">
           <Admin />
         </div>
 
       ) : activeNav === 'analysis' ? (
 
         // SHOW THIS WHEN "ANALYSIS" IS CLICKED
-        <div className="flex-1 h-full overflow-hidden bg-white">
+        <div className="flex-1 h-full overflow-hidden bg-white dark:bg-zinc-900">
           <Analysis sarUrl={sarUrl} basemapUrl={basemapUrl} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} permissions={permissions} isLoggedIn={!!localStorage.getItem('sar_token')} />
         </div>
 
