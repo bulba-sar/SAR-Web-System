@@ -7,6 +7,8 @@ import { MapContainer, TileLayer, useMap, useMapEvents, Polygon } from 'react-le
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+const API = process.env.REACT_APP_API_URL || '${API}';
+
 const calabarzonBounds = [
   [13.1000, 119.5000],
   [15.1000, 122.8000]
@@ -727,7 +729,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
     setLoadedCount(0);
 
     allPeriods.forEach(({ year, period }) => {
-      fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${classFilter}`, { signal })
+      fetch(`${API}/get-sar-map/${year}/${period}?layer=${classFilter}`, { signal })
         .then(r => r.json())
         .then(d => {
           if (signal.aborted) return;
@@ -860,7 +862,7 @@ function CompareView({ basemapUrl }) {
   );
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/datasets/available')
+    fetch('${API}/datasets/available')
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;
@@ -897,7 +899,7 @@ function CompareView({ basemapUrl }) {
     const setTile    = side === 'left' ? setLeftTile    : setRightTile;
     setLoading(true);
     try {
-      const res  = await fetch(`http://127.0.0.1:8000/get-sar-map/${year}/${period}?layer=${filter}`);
+      const res  = await fetch(`${API}/get-sar-map/${year}/${period}?layer=${filter}`);
       const data = await res.json();
       setTile(data.tile_url || null);
     } catch { setTile(null); }
@@ -1106,7 +1108,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const [analysisYears, setAnalysisYears] = useState(BASE_YEARS);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/datasets/available')
+    fetch('${API}/datasets/available')
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;
@@ -1214,7 +1216,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     if (!drawnPolygon) { setAnalysisError("Please draw your study area on the map first."); return; }
     setIsAnalyzing(true); setAnalysisError(null); setAnalyticsData(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/analytics/lulc-change', {
+      const response = await fetch('${API}/api/v1/analytics/lulc-change', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildPayload())
       });
@@ -1245,11 +1247,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
     try {
       const [intensityResult, areaResult] = await Promise.allSettled([
-        fetch('http://127.0.0.1:8000/api/v1/analytics/crop-intensity', {
+        fetch('${API}/api/v1/analytics/crop-intensity', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(r => r.json()),
-        fetch('http://127.0.0.1:8000/api/v1/analytics/crop-area', {
+        fetch('${API}/api/v1/analytics/crop-area', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(r => r.json())

@@ -25,8 +25,10 @@ export default function FilterPanel({
   const [showResults, setShowResults]     = useState(false);
   const [availableDatasets, setAvailableDatasets] = useState([]);
 
+  const API = process.env.REACT_APP_API_URL || '${API}';
+
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/datasets/available')
+    fetch(`${API}/datasets/available`)
       .then(r => r.json())
       .then(data => setAvailableDatasets(Array.isArray(data) ? data : []))
       .catch(() => {});
