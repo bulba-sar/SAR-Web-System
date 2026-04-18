@@ -144,8 +144,13 @@ def get_mega_composite(calabarzon, year, semester):
 def main():
     print("Initializing GEE …")
     try:
-        _key = pathlib.Path(__file__).parent / "backend" / "credentials.json"
-        _creds = service_account.Credentials.from_service_account_file(str(_key))
+        import os as _os
+        _gee_creds_str = _os.environ.get("GEE_CREDENTIALS_JSON")
+        if _gee_creds_str:
+            _creds = service_account.Credentials.from_service_account_info(json.loads(_gee_creds_str))
+        else:
+            _key = pathlib.Path(__file__).parent / "backend" / "credentials.json"
+            _creds = service_account.Credentials.from_service_account_file(str(_key))
         _creds = _creds.with_scopes(['https://www.googleapis.com/auth/earthengine'])
         ee.Initialize(_creds, project=GEE_PROJECT)
     except Exception as e:

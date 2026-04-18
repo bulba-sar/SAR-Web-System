@@ -9,3 +9,8 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 python-dotenv
+rio-tiler
+Pillow
+numpy
+pandas
+scikit-learn
