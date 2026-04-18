@@ -29,8 +29,8 @@ Workflow-Checker/
 ├── compute_model_metrics.py        #
 └── README.md                       # Project Documentation
 ```
-
-## How to Push and Pull in Github
+## Get Started
+### How to Push and Pull in Github
 
 ```bash
 #----------------- PUSH ------------------
@@ -50,7 +50,7 @@ git pull
 git stash pop
 ```
 
-## How to Run Locally
+### How to Run Locally
 
 ```bash
 # You will need 2 terminals for the backend and frontend
@@ -71,7 +71,7 @@ py -m venv .venv # skip is venv is already installed / skip if venv is not used
 npm start 
 ```
 
-## Installing Git LFS (Large File Storage)
+### Installing Git LFS (Large File Storage)
 This is for the basedmap since the file is 400mb
 **Download here:**  `git-lfs.com`
 
