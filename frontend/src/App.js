@@ -184,7 +184,18 @@ export default function App() {
       {/* 1. The Slim Icon Sidebar (Always Visible) */}
       <Sidebar
         activeNav={activeNav}
-        setActiveNav={setActiveNav}
+        setActiveNav={(id) => {
+          if (id === 'filters') {
+            if (activeNav === 'filters') {
+              setPanelOpen(p => !p);
+            } else {
+              setActiveNav('filters');
+              setPanelOpen(true);
+            }
+          } else {
+            setActiveNav(id);
+          }
+        }}
         isAdmin={isAdmin}
         permissions={permissions}
         darkMode={darkMode}
@@ -196,7 +207,7 @@ export default function App() {
 
         // SHOW PROFILE DASHBOARD
         <div className="flex-1 h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 pb-16 md:pb-0">
-          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} />
+          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} darkMode={darkMode} toggleDark={() => setDarkMode(d => !d)} />
         </div>
 
       ) : activeNav === 'admin' ? (
@@ -232,14 +243,6 @@ export default function App() {
                 permissions={permissions}
                 onTogglePanel={() => setPanelOpen(false)}
               />
-            </div>
-          )}
-          {/* Desktop: collapsed strip with expand button */}
-          {!panelOpen && (
-            <div className="hidden md:flex w-8 h-screen bg-white border-r border-zinc-200 flex-col items-center pt-20 z-10 shrink-0">
-              <button onClick={() => setPanelOpen(true)} title="Show filters" className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </button>
             </div>
           )}
 
@@ -282,7 +285,7 @@ export default function App() {
             {/* Mobile: floating filter button */}
             <button
               onClick={() => setMobileFilterOpen(true)}
-              className="md:hidden absolute top-4 left-4 z-[400] bg-white rounded-xl shadow-lg px-3 py-2 flex items-center gap-2 border border-zinc-200 text-xs font-bold text-zinc-700"
+              className="md:hidden absolute top-4 left-4 z-[400] bg-white dark:bg-zinc-800 rounded-xl shadow-lg px-3 py-2 flex items-center gap-2 border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300"
             >
               <svg className="w-4 h-4 text-[#305d3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
               Filters
