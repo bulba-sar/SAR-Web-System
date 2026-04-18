@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 
-export default function FilterPanel({ 
-  activeNav, 
-  year, 
-  setYear, 
-  period, 
-  setPeriod, 
-  activeLayer, 
-  setActiveLayer, 
-  setTargetLocation, 
-  showProtected, 
-  setShowProtected, 
-  sarOpacity, 
+export default function FilterPanel({
+  activeNav,
+  year,
+  setYear,
+  period,
+  setPeriod,
+  activeLayer,
+  setActiveLayer,
+  setTargetLocation,
+  showProtected,
+  setShowProtected,
+  sarOpacity,
   setSarOpacity,
-  // === NEW PROPS ===
   showCropSuitability,
   setShowCropSuitability,
   permissions = null,
+  onTogglePanel = null,
 }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [searchInput, setSearchInput]     = useState('');
@@ -72,16 +72,29 @@ export default function FilterPanel({
     <div className="w-72 lg:w-80 h-screen bg-white border-r border-zinc-200 flex flex-col shadow-xl z-10 transition-all">
       
       {/* --- Panel Header --- */}
-      <div className="p-4 lg:p-6 border-b border-zinc-200 bg-zinc-50 flex items-center gap-3">
-        <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[#4e7a59]/10 flex items-center justify-center text-[#4e7a59]">
-          <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
+      <div className="p-4 lg:p-6 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[#4e7a59]/10 flex items-center justify-center text-[#4e7a59]">
+            <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xs lg:text-sm font-bold text-zinc-900">Map Filters</h2>
+            <p className="text-[10px] lg:text-xs text-zinc-500">Customize LULC view</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xs lg:text-sm font-bold text-zinc-900">Map Filters</h2>
-          <p className="text-[10px] lg:text-xs text-zinc-500">Customize LULC view</p>
-        </div>
+        {onTogglePanel && (
+          <button
+            onClick={onTogglePanel}
+            className="p-1.5 rounded-lg hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition"
+            title="Close panel"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-5 lg:space-y-8 bg-white">

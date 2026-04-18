@@ -7,7 +7,7 @@ import { MapContainer, TileLayer, useMap, useMapEvents, Polygon } from 'react-le
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API = process.env.REACT_APP_API_URL || '${API}';
+const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 const calabarzonBounds = [
   [13.1000, 119.5000],
@@ -1283,7 +1283,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   };
 
   return (
-    <div className="w-full h-full relative z-0 bg-white p-4 lg:p-8 space-y-4 lg:space-y-6 overflow-y-auto">
+    <div className="w-full h-full relative z-0 bg-white p-4 lg:p-8 space-y-4 lg:space-y-6 overflow-y-auto pb-20 md:pb-8">
 
       {/* ── Header ── */}
       <div className="flex flex-wrap items-center justify-between border-b border-zinc-100 pb-4 lg:pb-6 gap-4">
