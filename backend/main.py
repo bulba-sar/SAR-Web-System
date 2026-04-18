@@ -18,7 +18,7 @@ import admin as admin_module
 from database import get_db
 
 # Public URL of this backend (set BACKEND_BASE_URL env var in production)
-BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://127.0.0.1:8000")
+BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "https://sar-web-system.onrender.com")
 
 app = FastAPI(title="Thesis Backend")
 app.include_router(admin_module.router)
