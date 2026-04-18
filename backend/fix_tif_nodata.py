@@ -1,13 +1,11 @@
 """
-Run this once to fix existing LULC TIF files so the background outside
+Run this once to fix existing TIF files so the background outside
 CALABARZON becomes transparent when served via the local tile endpoint.
 
 What it does:
-  1. Fetches the CALABARZON boundary polygon from GEE
-  2. For each single-band TIF in backend/tif/:
-     - Sets pixels OUTSIDE the boundary to value 255 (nodata marker)
-     - Records nodata=255 in the GeoTIFF metadata
-  3. Rebuilds overviews so the fixed TIF stays fast
+  - Single-band TIFs (LULC): sets pixels outside boundary to 255 (nodata)
+  - Multi-band TIFs (basemap): adds/updates an alpha channel, sets outside
+    pixels to alpha=0 (fully transparent), writes as a new RGBA GeoTIFF
 
 After running this, restart the FastAPI server — no other changes needed.
 
@@ -18,6 +16,7 @@ Usage (from backend/ directory):
 import ee
 import numpy as np
 import rasterio
+import shutil
 from rasterio.enums import Resampling
 from rasterio.features import geometry_mask
 from google.oauth2 import service_account
@@ -35,12 +34,12 @@ calabarzon = (
     ee.FeatureCollection("FAO/GAUL/2015/level2")
     .filter(ee.Filter.inList("ADM2_NAME", ["Batangas", "Cavite", "Laguna", "Quezon", "Rizal"]))
 )
-boundary_geom = calabarzon.geometry().getInfo()   # GeoJSON geometry dict
+boundary_geom = calabarzon.geometry().getInfo()
 print("  Boundary fetched.\n")
 
-# ── Process each single-band TIF ─────────────────────────────────────────────
-TIF_DIR  = Path(__file__).parent / "tif"
-NODATA   = 255
+# ── Process each TIF ─────────────────────────────────────────────────────────
+TIF_DIR = Path(__file__).parent / "tif"
+NODATA = 255
 OVERVIEW_LEVELS = [2, 4, 8, 16, 32, 64]
 
 tifs = sorted(TIF_DIR.glob("*.tif"))
@@ -50,28 +49,45 @@ else:
     for tif_path in tifs:
         print(f"Processing {tif_path.name} ...", flush=True)
 
-        with rasterio.open(tif_path, "r+") as ds:
-            if ds.count != 1:
-                print(f"  SKIPPED — {ds.count} bands (not a single-band class TIF)\n")
-                continue
+        with rasterio.open(tif_path) as ds:
+            n_bands = ds.count
 
-            # Build a boolean mask: True = outside CALABARZON (pixels to fill)
             outside = geometry_mask(
                 [boundary_geom],
                 out_shape=(ds.height, ds.width),
                 transform=ds.transform,
-                invert=False,   # False = outside=True, inside=False
+                invert=False,
             )
-
-            data = ds.read(1)
             changed = int(outside.sum())
-            data[outside] = NODATA
-            ds.write(data, 1)
-            ds.nodata = NODATA
 
+            if n_bands == 1:
+                # ── Single-band LULC TIF: set outside pixels to nodata=255 ──
+                data = ds.read(1)
+                data[outside] = NODATA
+                profile = ds.profile.copy()
+
+            else:
+                # ── Multi-band (e.g. RGB basemap): build RGBA with alpha=0 outside
+                data_bands = ds.read()          # shape: (bands, H, W)
+                alpha = np.where(outside, 0, 255).astype(np.uint8)
+                data = np.vstack([data_bands, alpha[np.newaxis, ...]])  # (bands+1, H, W)
+                profile = ds.profile.copy()
+                profile.update(count=n_bands + 1, nodata=None)
+
+        if n_bands == 1:
+            with rasterio.open(tif_path, "r+") as ds:
+                ds.write(data, 1)
+                ds.nodata = NODATA
             print(f"  Set {changed:,} outside pixels → {NODATA} (nodata).")
+        else:
+            # Write to a temp file then replace original (can't add bands in-place)
+            tmp_path = tif_path.with_suffix(".tmp.tif")
+            with rasterio.open(tmp_path, "w", **profile) as dst:
+                dst.write(data)
+            shutil.move(str(tmp_path), str(tif_path))
+            print(f"  Added alpha channel; set {changed:,} outside pixels → transparent.")
 
-        # Rebuild overviews so the patched TIF stays performant
+        # Rebuild overviews
         print(f"  Rebuilding overviews...", end=" ", flush=True)
         with rasterio.open(tif_path, "r+") as ds:
             ds.build_overviews(OVERVIEW_LEVELS, Resampling.nearest)

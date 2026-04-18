@@ -210,7 +210,7 @@ export default function Map({
         scrollWheelZoom={true} 
         className="w-full h-full z-0"        
         minZoom={8}
-        style={{ backgroundColor: '#000000' }} 
+        style={{ backgroundColor: '#172229' }} 
       >
         <MapMover targetLocation={targetLocation} />
         <MapClickListener 

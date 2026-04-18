@@ -172,7 +172,7 @@ def _local_basemap_url() -> str | None:
 
 @app.get("/basemap-tiles/{z}/{x}/{y}.png")
 def serve_basemap_tile(z: int, x: int, y: int):
-    """Serve a 256×256 JPEG tile from the local Sentinel-2 basemap GeoTIFF (RGB)."""
+    """Serve a 256×256 PNG tile from the local Sentinel-2 basemap GeoTIFF (RGBA)."""
     if not _RIO_AVAILABLE:
         raise HTTPException(status_code=503, detail="rio-tiler not installed")
     if not _BASEMAP_TIF.exists():
@@ -180,7 +180,7 @@ def serve_basemap_tile(z: int, x: int, y: int):
     try:
         with RioReader(str(_BASEMAP_TIF)) as src:
             img = src.tile(x, y, z, tilesize=256)
-        return Response(content=img.render(img_format="JPEG", quality=85), media_type="image/jpeg")
+        return Response(content=img.render(img_format="PNG"), media_type="image/png")
     except TileOutsideBounds:
         return Response(content=_EMPTY_PNG, media_type="image/png")
     except Exception:
