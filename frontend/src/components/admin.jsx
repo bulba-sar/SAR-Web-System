@@ -25,9 +25,9 @@ function formatDate(iso) {
 
 function SourceBadge({ source }) {
   const styles = {
-    geojson:   'bg-blue-50 text-blue-700 border-blue-200',
+    geojson: 'bg-blue-50 text-blue-700 border-blue-200',
     shapefile: 'bg-purple-50 text-purple-700 border-purple-200',
-    manual:    'bg-zinc-100 text-zinc-600 border-zinc-200',
+    manual: 'bg-zinc-100 text-zinc-600 border-zinc-200',
   };
   return (
     <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider ${styles[source] ?? styles.manual}`}>
@@ -230,7 +230,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
 
 // ── Dataset Section ───────────────────────────────────────────────────────────
 
-const DATASET_YEARS   = [2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+const DATASET_YEARS = [2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
 const DATASET_PERIODS = ['Jan-Jun', 'Jul-Dec'];
 
 function formatBytes(bytes) {
@@ -240,16 +240,16 @@ function formatBytes(bytes) {
 }
 
 function DatasetSection({ token }) {
-  const [datasets, setDatasets]       = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [year, setYear]               = useState(2021);
-  const [period, setPeriod]           = useState('Jan-Jun');
-  const [customName, setCustomName]   = useState('');
-  const [file, setFile]               = useState(null);
-  const [uploading, setUploading]     = useState(false);
-  const [deleting, setDeleting]       = useState(null);
-  const [error, setError]             = useState('');
-  const [success, setSuccess]         = useState('');
+  const [datasets, setDatasets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [year, setYear] = useState(2021);
+  const [period, setPeriod] = useState('Jan-Jun');
+  const [customName, setCustomName] = useState('');
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const fileRef = useRef(null);
 
   const computedFilename = customName.trim()
@@ -712,11 +712,10 @@ function UserRow({ user, token, onUpdated }) {
         </td>
         <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</td>
         <td className="px-4 py-3">
-          <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider ${
-            isPrivileged
+          <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider ${isPrivileged
               ? 'bg-[#305d3d]/10 text-[#305d3d] border-[#305d3d]/20'
               : 'bg-zinc-100 text-zinc-600 border-zinc-200'
-          }`}>
+            }`}>
             {user.role}
           </span>
         </td>
@@ -814,13 +813,13 @@ function AccessDenied({ reason }) {
 // ── Per-user Edit / Permissions Modal ────────────────────────────────────────
 
 const FEATURE_META = [
-  { key: 'analysis_tab',    label: 'Analysis Tab',            description: 'Access to the Analysis page' },
-  { key: 'save_aois',       label: 'Save Areas of Interest',  description: 'Save and load AOIs from the Profile page' },
-  { key: 'protected_areas', label: 'Protected Areas Layer',   description: 'Toggle the Protected Areas overlay on the map' },
-  { key: 'crop_suitability',label: 'Crop Suitability Layer',  description: 'Toggle the Crop Suitability overlay on the map' },
-  { key: 'lulc_analysis',   label: 'LULC Change Analysis',    description: 'Run LULC Change analysis in the Analysis tab' },
-  { key: 'crop_intensity',  label: 'Crop Intensity Analysis', description: 'Run Crop Intensity analysis in the Analysis tab' },
-  { key: 'compare_view',    label: 'Comparison View',         description: 'Access the side-by-side map comparison view' },
+  { key: 'analysis_tab', label: 'Analysis Tab', description: 'Access to the Analysis page' },
+  { key: 'save_aois', label: 'Save Areas of Interest', description: 'Save and load AOIs from the Profile page' },
+  { key: 'protected_areas', label: 'Protected Areas Layer', description: 'Toggle the Protected Areas overlay on the map' },
+  { key: 'crop_suitability', label: 'Crop Suitability Layer', description: 'Toggle the Crop Suitability overlay on the map' },
+  { key: 'lulc_analysis', label: 'LULC Change Analysis', description: 'Run LULC Change analysis in the Analysis tab' },
+  { key: 'crop_intensity', label: 'Crop Intensity Analysis', description: 'Run Crop Intensity analysis in the Analysis tab' },
+  { key: 'compare_view', label: 'Comparison View', description: 'Access the side-by-side map comparison view' },
 ];
 
 function Toggle({ checked, onChange, disabled }) {
@@ -831,9 +830,8 @@ function Toggle({ checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-        checked ? 'bg-[#305d3d]' : 'bg-zinc-300'
-      }`}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${checked ? 'bg-[#305d3d]' : 'bg-zinc-300'
+        }`}
     >
       <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
     </button>
@@ -997,16 +995,16 @@ function EditUserModal({ user, token, onSaved, onClose }) {
 
 const CLASS_ORDER_MODEL = ['Water', 'Urban', 'Forest', 'Agriculture'];
 const CLASS_COLORS_MODEL = {
-  Water:       '#1d4ed8',
-  Urban:       '#dc2626',
-  Forest:      '#15803d',
+  Water: '#1d4ed8',
+  Urban: '#dc2626',
+  Forest: '#15803d',
   Agriculture: '#ca8a04',
 };
 
 function ConfusionMatrixView({ confusion_matrix }) {
   const classes = confusion_matrix?.classes ?? CLASS_ORDER_MODEL;
-  const matrix  = confusion_matrix?.matrix  ?? [];
-  const maxVal  = Math.max(1, ...matrix.flat());
+  const matrix = confusion_matrix?.matrix ?? [];
+  const maxVal = Math.max(1, ...matrix.flat());
   return (
     <div className="overflow-x-auto">
       <table className="text-xs border-collapse">
@@ -1058,19 +1056,19 @@ function ConfusionMatrixView({ confusion_matrix }) {
 }
 
 function ModelPerformanceSection() {
-  const [data, setData]       = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [jobStatus, setJobStatus] = useState(null); // null | 'running' | 'done' | 'error'
-  const [jobError, setJobError]   = useState(null);
-  const [jobLog, setJobLog]       = useState([]);
+  const [jobError, setJobError] = useState(null);
+  const [jobLog, setJobLog] = useState([]);
   const pollRef = useRef(null);
 
   const load = () => {
     setLoading(true);
     setError(null);
-    fetch('http://127.0.0.1:8000/api/v1/analytics/model-performance')
+    fetch(`${API}/api/v1/analytics/model-performance`)
       .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { setError(String(e)); setLoading(false); });
@@ -1078,7 +1076,7 @@ function ModelPerformanceSection() {
 
   const pollStatus = useCallback(() => {
     const authH = { Authorization: `Bearer ${localStorage.getItem('sar_token')}` };
-    fetch('http://127.0.0.1:8000/api/v1/admin/run-model-metrics/status', { headers: authH })
+    fetch(`${API}/api/v1/admin/run-model-metrics/status`, { headers: authH })
       .then(r => r.ok ? r.json() : null)
       .then(s => {
         if (!s) return;
@@ -1092,14 +1090,14 @@ function ModelPerformanceSection() {
           clearInterval(pollRef.current);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleRun = () => {
     const authH = { Authorization: `Bearer ${localStorage.getItem('sar_token')}` };
     setJobStatus('starting');
     setJobError(null);
-    fetch('http://127.0.0.1:8000/api/v1/admin/run-model-metrics', { method: 'POST', headers: authH })
+    fetch(`${API}/api/v1/admin/run-model-metrics`, { method: 'POST', headers: authH })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(res => {
         setJobStatus(res.status === 'already_running' ? 'running' : 'running');
@@ -1135,8 +1133,8 @@ function ModelPerformanceSection() {
   const avg = key => filledPeriods.length
     ? filledPeriods.reduce((s, k) => s + periods[k].overall[key], 0) / filledPeriods.length : 0;
   const avgAccuracy = avg('accuracy');
-  const avgKappa    = avg('kappa');
-  const avgMse      = avg('mse');
+  const avgKappa = avg('kappa');
+  const avgMse = avg('mse');
 
   const activePeriod = selectedPeriod ? periods[selectedPeriod] : null;
 
@@ -1166,7 +1164,7 @@ function ModelPerformanceSection() {
         )}
         {jobStatus === 'done' && (
           <span className="text-xs font-bold text-green-700 flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             Done — metrics updated
           </span>
         )}
@@ -1217,8 +1215,8 @@ function ModelPerformanceSection() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Avg Accuracy', value: filledPeriods.length ? pct(avgAccuracy) : '—', sub: 'Correctly classified pixels' },
-            { label: 'Avg Kappa',    value: filledPeriods.length ? avgKappa.toFixed(4) : '—', sub: 'Agreement beyond chance' },
-            { label: 'Avg MSE',      value: filledPeriods.length ? avgMse.toFixed(4)  : '—', sub: 'Mean squared class error' },
+            { label: 'Avg Kappa', value: filledPeriods.length ? avgKappa.toFixed(4) : '—', sub: 'Agreement beyond chance' },
+            { label: 'Avg MSE', value: filledPeriods.length ? avgMse.toFixed(4) : '—', sub: 'Mean squared class error' },
           ].map(({ label, value, sub }) => (
             <div key={label} className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{value}</div>
@@ -1388,8 +1386,8 @@ export default function Admin() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleUploaded = newAOI => setAois(prev => [newAOI, ...prev]);
-  const handleUpdated  = updated => setAois(prev => prev.map(a => a.id === updated.id ? updated : a));
-  const handleDeleted  = id => setAois(prev => prev.filter(a => a.id !== id));
+  const handleUpdated = updated => setAois(prev => prev.map(a => a.id === updated.id ? updated : a));
+  const handleDeleted = id => setAois(prev => prev.filter(a => a.id !== id));
 
   // ── Render guards ──────────────────────────────────────────────────────────
   if (authState === 'loading') {
@@ -1442,19 +1440,18 @@ export default function Admin() {
       {/* Tabs */}
       <div className="shrink-0 flex border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6">
         {[
-          { id: 'aois',     label: 'Areas of Interest' },
+          { id: 'aois', label: 'Areas of Interest' },
           { id: 'datasets', label: 'Datasets' },
-          { id: 'users',    label: 'Users' },
-          { id: 'model',    label: 'Model Performance' },
+          { id: 'users', label: 'Users' },
+          { id: 'model', label: 'Model Performance' },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-3 text-xs font-bold border-b-2 transition-colors ${
-              activeTab === tab.id
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-colors ${activeTab === tab.id
                 ? 'border-[#305d3d] text-[#305d3d]'
                 : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
