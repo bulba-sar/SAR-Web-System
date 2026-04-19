@@ -78,10 +78,11 @@ function AuthForm({ onSuccess }) {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-[#305d3d]/10 rounded-2xl flex items-center justify-center border border-[#305d3d]/20 mb-3">
-            <span className="text-[#305d3d] font-black text-xl">B</span>
-          </div>
-          <h1 className="text-lg font-black text-zinc-900 dark:text-zinc-100">SAR CALABARZON</h1>
+          <img src="/logo3.png" alt="Sakahang Lupa" className="w-12 h-12 object-contain mb-3" />
+          <h1 className="text-lg font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-[#1f602e] dark:text-[#a2df87]">Sakahang </span>
+            <span className="text-[#d4a017]">Lupa</span>
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">Sign in to save your areas of interest</p>
         </div>
 

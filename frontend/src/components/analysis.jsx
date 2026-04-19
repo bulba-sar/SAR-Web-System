@@ -1103,8 +1103,8 @@ function CompareView({ basemapUrl }) {
 export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null, isLoggedIn = false }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
-  const [startYear, setStartYear] = useState('2022');
-  const [endYear, setEndYear] = useState('2023');
+  const [startYear, setStartYear] = useState('');
+  const [endYear, setEndYear] = useState('');
   const [analysisYears, setAnalysisYears] = useState(BASE_YEARS);
 
   useEffect(() => {
@@ -1329,12 +1329,14 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
           <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
-            <select value={startYear} onChange={(e) => setStartYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
+            <select value={startYear} onChange={(e) => { setStartYear(e.target.value); setEndYear(''); }} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
+              <option value="">– – –</option>
               {analysisYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <span className="text-zinc-400 font-bold text-xs">—</span>
             <select value={endYear} onChange={(e) => setEndYear(e.target.value)} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
-              {analysisYears.filter(y => y >= parseInt(startYear)).map(y => <option key={y} value={y}>{y}</option>)}
+              <option value="">– – –</option>
+              {analysisYears.filter(y => !startYear || y >= parseInt(startYear)).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
