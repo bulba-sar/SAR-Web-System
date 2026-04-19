@@ -80,7 +80,7 @@ function AuthForm({ onSuccess }) {
         <div className="flex flex-col items-center mb-8">
           <img src="/logo3.png" alt="Sakahang Lupa" className="w-12 h-12 object-contain mb-3" />
           <h1 className="text-lg font-bold" style={{ fontFamily: 'Georgia, serif' }}>
-            <span className="text-[#1f602e] dark:text-[#a2df87]">Sakahang </span>
+            <span className="text-[#23432f] dark:text-[#a0d870]">Sakahang </span>
             <span className="text-[#d4a017]">Lupa</span>
           </h1>
           <p className="text-xs text-zinc-400 mt-1">Sign in to save your areas of interest</p>
@@ -103,18 +103,18 @@ function AuthForm({ onSuccess }) {
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Full Name</label>
                 <input type="text" required value={form.name} onChange={e => update('name', e.target.value)}
                   placeholder="Juan dela Cruz"
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Institution</label>
                 <input type="text" value={form.institution} onChange={e => update('institution', e.target.value)}
                   placeholder="BSU-Alangilan, UPLB, DA-CALABARZON, or N/A"
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Role</label>
                 <select value={form.role} onChange={e => update('role', e.target.value)}
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100">
+                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100">
                   {ROLES.map(r => <option key={r}>{r}</option>)}
                 </select>
               </div>
@@ -125,14 +125,14 @@ function AuthForm({ onSuccess }) {
             <label className="block text-xs font-bold text-zinc-600 mb-1">Email</label>
             <input type="email" required value={form.email} onChange={e => update('email', e.target.value)}
               placeholder="you@example.com"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-zinc-600 mb-1">Password</label>
             <input type="password" required value={form.password} onChange={e => update('password', e.target.value)}
               placeholder=""
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
           </div>
 
           {error && (
@@ -140,7 +140,7 @@ function AuthForm({ onSuccess }) {
           )}
 
           <button type="submit" disabled={loading}
-            className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-60">
+            className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-60">
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
@@ -182,34 +182,34 @@ function SaveAOIForm({ token, drawnPolygon, onSaved }) {
   };
 
   return (
-    <div className="border border-[#305d3d]/30 dark:border-[#305d3d]/50 bg-[#305d3d]/5 dark:bg-[#305d3d]/10 rounded-xl p-4 mb-4">
+    <div className="border border-[#3f7b56]/30 dark:border-[#3f7b56]/50 bg-[#3f7b56]/5 dark:bg-[#3f7b56]/10 rounded-xl p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-xs font-bold text-[#305d3d]">Active drawing — {drawnPolygon.length} vertices</span>
+          <span className="text-xs font-bold text-[#3f7b56]">Active drawing — {drawnPolygon.length} vertices</span>
         </div>
         <button onClick={() => setOpen(o => !o)}
-          className="text-xs font-bold text-[#305d3d] hover:underline">
+          className="text-xs font-bold text-[#3f7b56] hover:underline">
           {open ? 'Cancel' : 'Save this Area'}
         </button>
       </div>
 
       {open && (
-        <div className="space-y-3 pt-2 border-t border-[#305d3d]/20">
+        <div className="space-y-3 pt-2 border-t border-[#3f7b56]/20">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Area Name *</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g. Batangas Rice Fields"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
           </div>
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Notes (optional)</label>
             <input type="text" value={desc} onChange={e => setDesc(e.target.value)}
               placeholder="e.g. Near Taal Lake, irrigated"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
           </div>
           <button onClick={handleSave} disabled={saving || !name.trim()}
-            className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-xs py-2 rounded-lg transition-all disabled:opacity-60">
+            className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-xs py-2 rounded-lg transition-all disabled:opacity-60">
             {saving ? 'Saving…' : 'Save Area'}
           </button>
         </div>
@@ -235,8 +235,8 @@ function AOICard({ aoi, onLoad, onDelete }) {
     <div className="border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-xl p-4 hover:border-zinc-300 dark:hover:border-zinc-500 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="w-8 h-8 shrink-0 bg-[#305d3d]/10 rounded-lg flex items-center justify-center mt-0.5">
-            <svg className="w-4 h-4 text-[#305d3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 shrink-0 bg-[#3f7b56]/10 rounded-lg flex items-center justify-center mt-0.5">
+            <svg className="w-4 h-4 text-[#3f7b56]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
           </div>
@@ -248,7 +248,7 @@ function AOICard({ aoi, onLoad, onDelete }) {
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button onClick={() => onLoad(aoi)}
-            className="px-3 py-1.5 text-xs font-bold bg-[#305d3d] hover:bg-[#254a30] text-white rounded-lg transition-all">
+            className="px-3 py-1.5 text-xs font-bold bg-[#3f7b56] hover:bg-[#23432f] text-white rounded-lg transition-all">
             Load
           </button>
           <button onClick={handleDelete} disabled={deleting}
@@ -430,7 +430,7 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
       {/* Header bar */}
       <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#305d3d] flex items-center justify-center text-white font-black text-sm">
+          <div className="w-9 h-9 rounded-xl bg-[#3f7b56] flex items-center justify-center text-white font-black text-sm">
             {getInitials(user?.name)}
           </div>
           <div>
@@ -467,7 +467,7 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
             <div className="flex items-center justify-between mb-3">
               <SectionHeader title="Profile" />
               <button onClick={() => setEditOpen(o => !o)}
-                className="text-xs font-bold text-[#305d3d] hover:underline">
+                className="text-xs font-bold text-[#3f7b56] hover:underline">
                 {editOpen ? 'Cancel' : 'Edit'}
               </button>
             </div>
@@ -477,16 +477,16 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Full Name</label>
                   <input type="text" value={editForm.name || ''} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+                    className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Institution</label>
                   <input type="text" value={editForm.institution || ''} onChange={e => setEditForm(f => ({ ...f, institution: e.target.value }))}
                     placeholder="e.g. UPLB, DA-CALABARZON"
-                    className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]" />
+                    className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
                 </div>
                 <button onClick={handleSaveProfile} disabled={editSaving}
-                  className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2 rounded-lg transition-all disabled:opacity-60">
+                  className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2 rounded-lg transition-all disabled:opacity-60">
                   {editSaving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>

@@ -201,7 +201,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
     <div className="space-y-1.5">
 
       {/* ── GEE-style toolbar ── */}
-      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2 gap-2">
+      <div className="flex items-center justify-between bg-green-50 dark:bg-zinc-800 border border-green-200 dark:border-zinc-700 rounded-lg px-3 py-2 gap-2">
         <div className="flex items-center gap-2">
           {/* Draw / Drawing button */}
           <button
@@ -218,7 +218,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Undo */}
           {isDrawing && vertexCount > 0 && (
-            <button onClick={undoVertex} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 hover:bg-green-200 text-green-800 text-xs font-bold transition-all">
+            <button onClick={undoVertex} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 dark:bg-zinc-700 hover:bg-green-200 dark:hover:bg-zinc-600 text-green-800 dark:text-zinc-200 text-xs font-bold transition-all">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
@@ -228,7 +228,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Vertex count */}
           {isDrawing && (
-            <span className="text-[10px] font-mono text-green-700">{vertexCount} pts</span>
+            <span className="text-[10px] font-mono text-green-700 dark:text-green-400">{vertexCount} pts</span>
           )}
         </div>
 
@@ -245,7 +245,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
 
           {/* Clear */}
           {(drawnPolygon || isDrawing) && (
-            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 hover:bg-red-100 text-green-800 hover:text-red-700 text-xs font-bold transition-all border border-green-800 hover:border-red-700">
+            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 dark:bg-zinc-700 hover:bg-red-100 dark:hover:bg-red-900/40 text-green-800 dark:text-zinc-200 hover:text-red-700 dark:hover:text-red-400 text-xs font-bold transition-all border border-green-800 dark:border-zinc-600 hover:border-red-700">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -310,14 +310,14 @@ const ClassBar = ({ label, percentage, color, pixelCount }) => (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-2">
         <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div>
-        <span className="text-xs lg:text-sm font-bold text-zinc-800">{label}</span>
+        <span className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200">{label}</span>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-[10px] lg:text-xs text-zinc-400 font-mono">{pixelCount?.toLocaleString() || 0} px</span>
-        <span className="text-xs lg:text-sm font-black text-zinc-900 w-14 text-right">{percentage}%</span>
+        <span className="text-xs lg:text-sm font-black text-zinc-900 dark:text-zinc-100 w-14 text-right">{percentage}%</span>
       </div>
     </div>
-    <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
       <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${percentage}%`, backgroundColor: color }}></div>
     </div>
   </div>
@@ -755,14 +755,14 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
 
       {/* ── Pre-load progress banner ── */}
       {!allReady && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl">
-          <div className="w-3.5 h-3.5 border-2 border-[#305d3d] border-t-transparent rounded-full animate-spin shrink-0" />
-          <span className="text-xs text-green-800">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+          <div className="w-3.5 h-3.5 border-2 border-[#3f7b56] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-xs text-green-800 dark:text-green-300">
             Pre-loading all periods…&nbsp;
-            <span className="font-black text-[#305d3d]">{loadedCount}/{allPeriods.length}</span> ready
+            <span className="font-black text-[#3f7b56] dark:text-[#a0d870]">{loadedCount}/{allPeriods.length}</span> ready
           </span>
-          <div className="flex-1 h-1.5 bg-green-200 rounded-full overflow-hidden">
-            <div className="h-full bg-[#305d3d] transition-all duration-300"
+          <div className="flex-1 h-1.5 bg-green-200 dark:bg-green-800/50 rounded-full overflow-hidden">
+            <div className="h-full bg-[#3f7b56] transition-all duration-300"
               style={{ width: `${(loadedCount / allPeriods.length) * 100}%` }} />
           </div>
         </div>
@@ -789,7 +789,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
       </div>
 
       {/* ── Scrubber ── */}
-      <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 space-y-3">
+      <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 space-y-3">
         {/* Range slider */}
         <input
           type="range"
@@ -798,7 +798,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
           value={draftIdx}
           onChange={e => handleScrub(Number(e.target.value))}
           className="w-full h-2 rounded-full appearance-none cursor-pointer"
-          style={{ accentColor: '#305d3d' }}
+          style={{ accentColor: '#3f7b56' }}
         />
 
         {/* Period dots — one group per year, spread evenly */}
@@ -821,7 +821,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
                         title={`${y} · ${period}`}
                         className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
                           isSelected
-                            ? 'bg-[#305d3d] border-[#305d3d] scale-125 shadow-md'
+                            ? 'bg-[#3f7b56] border-[#3f7b56] scale-125 shadow-md'
                             : isReady
                               ? 'bg-[#4ade80] border-[#4ade80] hover:scale-110'
                               : 'bg-zinc-300 border-zinc-300 animate-pulse'
@@ -832,7 +832,7 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
                 </div>
                 {/* Year label */}
                 <span className={`text-[9px] font-bold transition-colors duration-150 ${
-                  isYearActive ? 'text-[#305d3d]' : 'text-zinc-400'
+                  isYearActive ? 'text-[#3f7b56]' : 'text-zinc-400'
                 }`}>
                   {y}
                 </span>
@@ -843,8 +843,8 @@ function TimeSeriesCompare({ basemapUrl, opacity, classFilter, allPeriods }) {
 
         {/* Current label + counter */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-black text-[#305d3d]">{displayCurrent.year} · {displayCurrent.period}</span>
-          <span className="text-[10px] text-zinc-400 font-mono">{draftIdx + 1} / {allPeriods.length}</span>
+          <span className="text-xs font-black text-[#3f7b56] dark:text-[#a0d870]">{displayCurrent.year} · {displayCurrent.period}</span>
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">{draftIdx + 1} / {allPeriods.length}</span>
         </div>
       </div>
     </div>
@@ -948,12 +948,12 @@ function CompareView({ basemapUrl }) {
       <div className="flex flex-wrap items-center gap-3">
 
         {/* View mode selector */}
-        <div className="flex items-center gap-2 bg-zinc-100 rounded-lg px-3 py-2 shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">View</span>
+        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-3 py-2 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">View</span>
           <select
             value={compareMode}
             onChange={e => setCompareMode(e.target.value)}
-            className="bg-white text-zinc-800 text-xs font-bold px-2 py-1 rounded-lg border border-zinc-200 outline-none cursor-pointer"
+            className="bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-xs font-bold px-2 py-1 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer"
           >
             <option value="sidebyside">Side-by-Side</option>
             <option value="slider">Slider</option>
@@ -969,44 +969,44 @@ function CompareView({ basemapUrl }) {
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setShowResults(false); }}
               placeholder="Search a location in CALABARZON…"
-              className="w-full border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg pl-9 pr-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]"
             />
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             {showResults && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] overflow-hidden">
                 {searchLoading && (
-                  <div className="px-4 py-3 text-xs text-zinc-500 flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-[#305d3d] border-t-transparent rounded-full animate-spin" />
+                  <div className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-[#3f7b56] border-t-transparent rounded-full animate-spin" />
                     Searching…
                   </div>
                 )}
                 {!searchLoading && searchResults.length === 0 && (
-                  <div className="px-4 py-3 text-xs text-zinc-500">No locations found in CALABARZON.</div>
+                  <div className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">No locations found in CALABARZON.</div>
                 )}
                 {!searchLoading && searchResults.map((r, i) => (
                   <button key={i} type="button" onClick={() => zoomToBoth(r)}
-                    className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors">
-                    <span className="font-bold text-zinc-800 block truncate">{r.display_name.split(',').slice(0, 2).join(',')}</span>
+                    className="w-full text-left px-4 py-2.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-700 last:border-0 transition-colors">
+                    <span className="font-bold text-zinc-800 dark:text-zinc-100 block truncate">{r.display_name.split(',').slice(0, 2).join(',')}</span>
                     <span className="text-zinc-400 text-[10px]">{r.type} · {r.display_name.split(',').slice(2, 4).join(',')}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <button type="submit" className="px-3 py-2 bg-[#305d3d] hover:bg-[#254a30] text-white text-xs font-bold rounded-lg transition-all shrink-0">
+          <button type="submit" className="px-3 py-2 bg-[#3f7b56] hover:bg-[#23432f] text-white text-xs font-bold rounded-lg transition-all shrink-0">
             Search
           </button>
         </form>
 
         {/* Opacity slider */}
-        <div className="flex items-center gap-2 bg-zinc-100 rounded-lg px-3 py-2 shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">LULC Opacity</span>
+        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-3 py-2 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">LULC Opacity</span>
           <input type="range" min="0" max="1" step="0.05" value={opacity}
             onChange={e => setOpacity(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-zinc-300 rounded-lg appearance-none cursor-pointer accent-[#305d3d]" />
-          <span className="text-[10px] font-black font-mono text-zinc-700 w-8">{Math.round(opacity * 100)}%</span>
+            className="w-24 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-lg appearance-none cursor-pointer accent-[#3f7b56]" />
+          <span className="text-[10px] font-black font-mono text-zinc-700 dark:text-zinc-300 w-8">{Math.round(opacity * 100)}%</span>
         </div>
       </div>
 
@@ -1017,8 +1017,8 @@ function CompareView({ basemapUrl }) {
           <button key={cls.value} onClick={() => setClassFilter(cls.value)}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border ${
               classFilter === cls.value
-                ? 'bg-[#305d3d] text-white border-[#305d3d]'
-                : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+                ? 'bg-[#3f7b56] text-white border-[#3f7b56]'
+                : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-600'
             }`}>
             {cls.color && <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: cls.color }} />}
             {cls.label}
@@ -1294,17 +1294,17 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700">
             {can('lulc_analysis') && (
-              <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              <button onClick={() => setActiveTab('lulc')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'lulc' ? 'bg-white dark:bg-zinc-700 text-[#1d5e3a] dark:text-[#a0d870] shadow border border-green-100 dark:border-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-[#1d5e3a] dark:hover:text-[#a0d870]'}`}>
                 LULC Change
               </button>
             )}
             {can('crop_intensity') && (
-              <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              <button onClick={() => setActiveTab('crop')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'crop' ? 'bg-white dark:bg-zinc-700 text-[#1d5e3a] dark:text-[#a0d870] shadow border border-green-100 dark:border-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-[#1d5e3a] dark:hover:text-[#a0d870]'}`}>
                 Crop Intensity
               </button>
             )}
             {can('compare_view') && (
-              <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white text-[#1d5e3a] shadow border border-green-100' : 'text-zinc-500 hover:text-[#1d5e3a]'}`}>
+              <button onClick={() => setActiveTab('compare')} className={`text-xs lg:text-sm font-bold px-4 py-2 rounded-lg transition ${activeTab === 'compare' ? 'bg-white dark:bg-zinc-700 text-[#1d5e3a] dark:text-[#a0d870] shadow border border-green-100 dark:border-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-[#1d5e3a] dark:hover:text-[#a0d870]'}`}>
                 Compare
               </button>
             )}
@@ -1326,8 +1326,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
       {/* ── Control Row (hidden on Compare tab) ── */}
       {activeTab !== 'compare' && <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-start gap-2 lg:gap-4">
-        <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 p-1.5 lg:p-2 rounded-xl border border-zinc-100 flex-shrink-0">
-          <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
+        <div className="flex items-center gap-2 lg:gap-3 bg-zinc-50 dark:bg-zinc-800 p-1.5 lg:p-2 rounded-xl border border-zinc-100 dark:border-zinc-700 flex-shrink-0">
+          <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] dark:text-[#a0d870] uppercase tracking-wider ml-1 lg:ml-2">Range</span>
           <div className="flex items-center gap-1 lg:gap-2">
             <select value={startYear} onChange={(e) => { setStartYear(e.target.value); setEndYear(''); }} className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-700 px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-600 outline-none cursor-pointer">
               <option value="">– – –</option>
@@ -1343,10 +1343,10 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
         {activeTab === 'lulc' && (
           <div className="flex items-center gap-2 lg:gap-4 bg-zinc-50 dark:bg-zinc-800 p-1.5 lg:p-2 rounded-xl border border-zinc-100 dark:border-zinc-700 px-3 lg:px-4 flex-shrink-0">
-            <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] uppercase tracking-wider">Season</span>
+            <span className="text-[9px] lg:text-[11px] font-bold text-[#23432f] dark:text-[#a0d870] uppercase tracking-wider">Season</span>
             <div className="flex items-center gap-3 lg:gap-4">
               {[{ value: 'all', label: 'All' }, { value: 'Jan-Jun', label: 'Dry' }, { value: 'Jul-Dec', label: 'Wet' }].map(opt => (
-                <label key={opt.value} className="flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-bold text-zinc-700 cursor-pointer hover:text-[#1d5e3a] transition whitespace-nowrap">
+                <label key={opt.value} className="flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:text-[#1d5e3a] dark:hover:text-[#a0d870] transition whitespace-nowrap">
                   <input type="radio" name="analysisSeason" value={opt.value} checked={selectedSeason === opt.value} onChange={(e) => setSelectedSeason(e.target.value)} className="w-3 h-3 lg:w-4 lg:h-4 accent-[#1d5e3a] cursor-pointer" /> {opt.label}
                 </label>
               ))}
@@ -1370,14 +1370,14 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         <div className="space-y-3">
           <CalabarzonMiniMap sarUrl={sarUrl} basemapUrl={basemapUrl} sarOpacity={sarOpacity} setSarOpacity={setSarOpacity} drawnPolygon={drawnPolygon} setDrawnPolygon={setDrawnPolygon} />
           {drawnPolygon ? (
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-              <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              <span className="text-xs lg:text-sm text-green-800 font-medium">Study area defined ({drawnPolygon.length} vertices). Click <strong>Run Analysis</strong>.</span>
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <svg className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              <span className="text-xs lg:text-sm text-green-800 dark:text-green-300 font-medium">Study area defined ({drawnPolygon.length} vertices). Click <strong>Run Analysis</strong>.</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-              <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span className="text-xs lg:text-sm text-amber-800 font-medium">Click the <strong>pen icon</strong> on the map to draw your study area.</span>
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span className="text-xs lg:text-sm text-amber-800 dark:text-amber-300 font-medium">Click the <strong>pen icon</strong> on the map to draw your study area.</span>
             </div>
           )}
         </div>
@@ -1392,13 +1392,13 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
               {isAnalyzing && <LoadingState message="Processing LULC data in Google Earth Engine..." />}
               {analysisError && <ErrorState message={analysisError} />}
               {overallSummary && (
-                <div className="border-2 border-[#1d5e3a]/20 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-[#f0fdf4] to-white space-y-4">
+                <div className="border-2 border-[#1d5e3a]/20 dark:border-[#3f7b56]/30 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-[#f0fdf4] dark:from-zinc-800 to-white dark:to-zinc-800 space-y-4">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
-                      <h3 className="text-sm lg:text-base font-black text-[#1d5e3a] uppercase tracking-wide">Overall Land Cover Distribution</h3>
-                      <p className="text-[10px] lg:text-xs text-zinc-500 mt-1">Aggregated across <strong>{overallSummary.periods_counted} period{overallSummary.periods_counted > 1 ? 's' : ''}</strong> &middot; {overallSummary.range_label}</p>
+                      <h3 className="text-sm lg:text-base font-black text-[#1d5e3a] dark:text-[#a0d870] uppercase tracking-wide">Overall Land Cover Distribution</h3>
+                      <p className="text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400 mt-1">Aggregated across <strong>{overallSummary.periods_counted} period{overallSummary.periods_counted > 1 ? 's' : ''}</strong> &middot; {overallSummary.range_label}</p>
                     </div>
-                    <span className="text-[10px] lg:text-xs text-zinc-400 font-mono bg-white px-2 py-1 rounded-lg border border-zinc-100">{overallSummary.total_pixels.toLocaleString()} total px</span>
+                    <span className="text-[10px] lg:text-xs text-zinc-400 font-mono bg-white dark:bg-zinc-700 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-600">{overallSummary.total_pixels.toLocaleString()} total px</span>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
                     {CLASS_ORDER.map(cls => {
@@ -1407,8 +1407,8 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                       return (
                         <div key={cls} className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 lg:p-4 space-y-1 shadow-sm">
                           <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-sm" style={{ backgroundColor: CLASS_COLORS[cls] }}></div><span className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">{cls}</span></div>
-                          <p className="text-xl lg:text-3xl font-black text-zinc-900">{data.percentage}%</p>
-                          <p className="text-[9px] lg:text-[10px] text-zinc-400 font-mono">{data.pixel_count.toLocaleString()} px</p>
+                          <p className="text-xl lg:text-3xl font-black text-zinc-900 dark:text-zinc-100">{data.percentage}%</p>
+                          <p className="text-[9px] lg:text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">{data.pixel_count.toLocaleString()} px</p>
                         </div>
                       );
                     })}
@@ -1432,33 +1432,33 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
               {/* Crop Summary Cards */}
               {cropData?.summary && (
-                <div className="border-2 border-amber-200/50 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-amber-50/50 to-white space-y-4">
+                <div className="border-2 border-amber-200/50 dark:border-amber-800/50 rounded-xl p-4 lg:p-6 bg-gradient-to-br from-amber-50/50 dark:from-zinc-800 to-white dark:to-zinc-800 space-y-4">
                   <div>
-                    <h3 className="text-sm lg:text-base font-black text-amber-800 uppercase tracking-wide flex items-center gap-2">
+                    <h3 className="text-sm lg:text-base font-black text-amber-800 dark:text-amber-300 uppercase tracking-wide flex items-center gap-2">
                       <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                       Crop Intensity Summary
                     </h3>
-                    <p className="text-[10px] lg:text-xs text-zinc-500 mt-1">
+                    <p className="text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                       {cropData.summary.total_years_analyzed} year{cropData.summary.total_years_analyzed > 1 ? 's' : ''} analyzed &middot; Elevation: {cropData.summary.elevation_m}m
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
-                    <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm">
-                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Avg Cycles/Year</p>
-                      <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{cropData.summary.average_cycles_per_year}</p>
+                    <div className="bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl p-3 lg:p-4 shadow-sm">
+                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Avg Cycles/Year</p>
+                      <p className="text-xl lg:text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{cropData.summary.average_cycles_per_year}</p>
                     </div>
-                    <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm">
-                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Avg Utilization</p>
-                      <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{cropData.summary.average_utilization_percent}%</p>
+                    <div className="bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl p-3 lg:p-4 shadow-sm">
+                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Avg Utilization</p>
+                      <p className="text-xl lg:text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{cropData.summary.average_utilization_percent}%</p>
                     </div>
-                    <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm">
-                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Avg NDVI</p>
-                      <p className="text-xl lg:text-3xl font-black text-zinc-900 mt-1">{cropData.summary.average_ndvi}</p>
+                    <div className="bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl p-3 lg:p-4 shadow-sm">
+                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Avg NDVI</p>
+                      <p className="text-xl lg:text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">{cropData.summary.average_ndvi}</p>
                     </div>
-                    <div className="bg-white border border-zinc-200 rounded-xl p-3 lg:p-4 shadow-sm">
-                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase">Dominant Crop</p>
-                      <p className="text-base lg:text-xl font-black text-[#1d5e3a] mt-1 leading-tight">{cropData.summary.dominant_crop}</p>
+                    <div className="bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl p-3 lg:p-4 shadow-sm">
+                      <p className="text-[10px] lg:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Dominant Crop</p>
+                      <p className="text-base lg:text-xl font-black text-[#1d5e3a] dark:text-[#a0d870] mt-1 leading-tight">{cropData.summary.dominant_crop}</p>
                     </div>
                   </div>
                 </div>
@@ -1472,19 +1472,19 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                 const last = yearly[yearly.length - 1].crop_percentage;
                 const diff = (last - first).toFixed(1);
                 return (
-                  <div className="border border-zinc-200 rounded-xl p-4 lg:p-5 bg-white space-y-4">
+                  <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 lg:p-5 bg-white dark:bg-zinc-800 space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
-                        <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
+                        <h4 className="text-xs lg:text-sm font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-wide flex items-center gap-2">
                           <svg className="w-4 h-4 text-[#2d6a4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                           Crop Area Coverage
                         </h4>
-                        <p className="text-[10px] lg:text-xs text-zinc-400 mt-0.5">Agriculture pixels present in both semesters</p>
+                        <p className="text-[10px] lg:text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Agriculture pixels present in both semesters</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-1.5 text-center">
-                          <p className="text-[9px] text-zinc-400 uppercase font-bold">Avg</p>
-                          <p className="text-sm font-black text-zinc-900">{avg}%</p>
+                        <div className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-lg px-3 py-1.5 text-center">
+                          <p className="text-[9px] text-zinc-400 dark:text-zinc-400 uppercase font-bold">Avg</p>
+                          <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{avg}%</p>
                         </div>
                         <div className={`rounded-lg px-3 py-1.5 text-center ${parseFloat(diff) >= 0 ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}>
                           <p className="text-[9px] text-zinc-400 uppercase font-bold">Trend</p>
@@ -1510,20 +1510,20 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="border-b border-zinc-100">
-                            <th className="text-left py-2 px-3 font-bold text-zinc-500">Year</th>
-                            <th className="text-right py-2 px-3 font-bold text-zinc-500">Coverage</th>
-                            <th className="text-right py-2 px-3 font-bold text-zinc-500">Crop Area (ha)</th>
-                            <th className="text-right py-2 px-3 font-bold text-zinc-500">Total Area (ha)</th>
+                          <tr className="border-b border-zinc-100 dark:border-zinc-700">
+                            <th className="text-left py-2 px-3 font-bold text-zinc-500 dark:text-zinc-400">Year</th>
+                            <th className="text-right py-2 px-3 font-bold text-zinc-500 dark:text-zinc-400">Coverage</th>
+                            <th className="text-right py-2 px-3 font-bold text-zinc-500 dark:text-zinc-400">Crop Area (ha)</th>
+                            <th className="text-right py-2 px-3 font-bold text-zinc-500 dark:text-zinc-400">Total Area (ha)</th>
                           </tr>
                         </thead>
                         <tbody>
                           {yearly.map(row => (
-                            <tr key={row.year} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
-                              <td className="py-2 px-3 font-black text-zinc-900">{row.year}</td>
-                              <td className="py-2 px-3 text-right font-mono text-zinc-700">{row.crop_percentage}%</td>
-                              <td className="py-2 px-3 text-right font-mono text-zinc-700">{row.crop_area_ha}</td>
-                              <td className="py-2 px-3 text-right font-mono text-zinc-700">{row.total_area_ha}</td>
+                            <tr key={row.year} className="border-b border-zinc-50 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition">
+                              <td className="py-2 px-3 font-black text-zinc-900 dark:text-zinc-100">{row.year}</td>
+                              <td className="py-2 px-3 text-right font-mono text-zinc-700 dark:text-zinc-300">{row.crop_percentage}%</td>
+                              <td className="py-2 px-3 text-right font-mono text-zinc-700 dark:text-zinc-300">{row.crop_area_ha}</td>
+                              <td className="py-2 px-3 text-right font-mono text-zinc-700 dark:text-zinc-300">{row.total_area_ha}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1547,22 +1547,22 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
           BELOW THE GRID: LULC sections
          ═══════════════════════════════════════════ */}
       {activeTab === 'lulc' && changeDetection && (
-        <div className="border border-zinc-200 rounded-xl p-4 lg:p-6 bg-zinc-50">
-          <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 lg:p-6 bg-zinc-50 dark:bg-zinc-800">
+          <h4 className="text-xs lg:text-sm font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-wide mb-4 flex items-center gap-2">
             <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
             Change Detection: {analyticsData[0].label} → {analyticsData[analyticsData.length - 1].label}
           </h4>
           <div className="overflow-x-auto">
             <table className="w-full text-xs lg:text-sm">
-              <thead><tr className="border-b border-zinc-200 bg-white"><th className="text-left py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500">Land Use Class</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500">{analyticsData[0].label}</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500">{analyticsData[analyticsData.length - 1].label}</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500">Change</th><th className="text-left py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500">Trend</th></tr></thead>
+              <thead><tr className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-700"><th className="text-left py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500 dark:text-zinc-400">Land Use Class</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500 dark:text-zinc-400">{analyticsData[0].label}</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500 dark:text-zinc-400">{analyticsData[analyticsData.length - 1].label}</th><th className="text-right py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500 dark:text-zinc-400">Change</th><th className="text-left py-2 lg:py-3 px-2 lg:px-4 font-bold text-zinc-500 dark:text-zinc-400">Trend</th></tr></thead>
               <tbody>
                 {Object.entries(changeDetection).sort((a, b) => Math.abs(b[1].diff) - Math.abs(a[1].diff)).map(([className, data]) => {
                   const diffNum = parseFloat(data.diff);
                   return (
-                    <tr key={className} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-100/50 transition">
-                      <td className="py-2 lg:py-3 px-2 lg:px-4"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS[className] || '#888' }}></div><span className="font-bold text-zinc-800">{className}</span></div></td>
-                      <td className="text-right py-2 lg:py-3 px-2 lg:px-4 font-mono text-zinc-700">{data.start.toFixed(2)}%</td>
-                      <td className="text-right py-2 lg:py-3 px-2 lg:px-4 font-mono text-zinc-700">{data.end.toFixed(2)}%</td>
+                    <tr key={className} className="border-b border-zinc-100 dark:border-zinc-700 last:border-0 hover:bg-zinc-100/50 dark:hover:bg-zinc-700/50 transition">
+                      <td className="py-2 lg:py-3 px-2 lg:px-4"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS[className] || '#888' }}></div><span className="font-bold text-zinc-800 dark:text-zinc-200">{className}</span></div></td>
+                      <td className="text-right py-2 lg:py-3 px-2 lg:px-4 font-mono text-zinc-700 dark:text-zinc-300">{data.start.toFixed(2)}%</td>
+                      <td className="text-right py-2 lg:py-3 px-2 lg:px-4 font-mono text-zinc-700 dark:text-zinc-300">{data.end.toFixed(2)}%</td>
                       <td className="text-right py-2 lg:py-3 px-2 lg:px-4"><span className={`font-black font-mono ${diffNum > 0 ? 'text-green-600' : diffNum < 0 ? 'text-red-600' : 'text-zinc-400'}`}>{diffNum > 0 ? '+' : ''}{data.diff}%</span></td>
                       <td className="py-2 lg:py-3 px-2 lg:px-4">
                         {diffNum > 0 && <span className="text-[10px] lg:text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">▲ Increase</span>}
@@ -1580,7 +1580,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
       {activeTab === 'lulc' && analyticsData && analyticsData.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
+          <h4 className="text-xs lg:text-sm font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-wide flex items-center gap-2">
             <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             Per-Period Breakdown
           </h4>
@@ -1588,17 +1588,17 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             {analyticsData.map((entry, idx) => {
               const prev = idx > 0 ? analyticsData[idx - 1] : null;
               return (
-                <div key={idx} className="border border-zinc-200 rounded-xl p-4 lg:p-5 bg-zinc-50 space-y-3">
+                <div key={idx} className="border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 lg:p-5 bg-zinc-50 dark:bg-zinc-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h5 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide">{entry.label}</h5>
-                    <span className="text-[10px] lg:text-xs text-zinc-400 font-mono">{entry.total_pixels?.toLocaleString()} px</span>
+                    <h5 className="text-xs lg:text-sm font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-wide">{entry.label}</h5>
+                    <span className="text-[10px] lg:text-xs text-zinc-400 dark:text-zinc-500 font-mono">{entry.total_pixels?.toLocaleString()} px</span>
                   </div>
                   <div className="space-y-2.5">
                     {Object.entries(entry.classes).sort((a, b) => b[1].percentage - a[1].percentage).map(([className, data]) => (
                       <div key={className} className="space-y-1">
                         <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS[className] || '#888' }}></div><span className="text-xs lg:text-sm font-bold text-zinc-800">{className}</span></div>
-                          <div className="flex items-center gap-2"><ChangeIndicator current={data.percentage} previous={prev?.classes[className]?.percentage ?? null} /><span className="text-xs lg:text-sm font-black text-zinc-900 w-14 text-right">{data.percentage}%</span></div>
+                          <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS[className] || '#888' }}></div><span className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-100">{className}</span></div>
+                          <div className="flex items-center gap-2"><ChangeIndicator current={data.percentage} previous={prev?.classes[className]?.percentage ?? null} /><span className="text-xs lg:text-sm font-black text-zinc-900 dark:text-white w-14 text-right">{data.percentage}%</span></div>
                         </div>
                         <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${data.percentage}%`, backgroundColor: CLASS_COLORS[className] || '#888' }}></div></div>
                       </div>
@@ -1616,7 +1616,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
          ═══════════════════════════════════════════ */}
       {activeTab === 'crop' && can('crop_intensity') && cropData?.yearly && cropData.yearly.length > 0 && (
         <div className="space-y-4">
-          <h4 className="text-xs lg:text-sm font-black text-zinc-800 uppercase tracking-wide flex items-center gap-2">
+          <h4 className="text-xs lg:text-sm font-black text-zinc-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
             <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             Year-by-Year Crop Analysis
           </h4>
@@ -1630,29 +1630,29 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             }));
 
             return (
-              <div key={idx} className="border border-zinc-200 rounded-xl overflow-hidden bg-zinc-50">
+              <div key={idx} className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-800">
                 {/* Year Header */}
-                <div className="flex items-center justify-between p-4 lg:p-5 border-b border-zinc-200 bg-white">
+                <div className="flex items-center justify-between p-4 lg:p-5 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                   <div className="flex items-center gap-3">
-                    <h5 className="text-base lg:text-lg font-black text-zinc-900">{yr.year}</h5>
+                    <h5 className="text-base lg:text-lg font-black text-zinc-900 dark:text-white">{yr.year}</h5>
                     <span className={`text-[10px] lg:text-xs font-bold px-2.5 py-1 rounded-full border ${intensityStyle.bg} ${intensityStyle.text} ${intensityStyle.border}`}>
                       {yr.intensity_label}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 lg:gap-6 text-[10px] lg:text-xs text-zinc-500">
-                    <span><strong className="text-zinc-800">{yr.cropping_cycles}</strong> cycle{yr.cropping_cycles !== 1 ? 's' : ''}</span>
-                    <span><strong className="text-zinc-800">{yr.utilization_percent}%</strong> utilized</span>
-                    <span><strong className="text-zinc-800">{yr.active_months}</strong> active / <strong>{yr.fallow_months}</strong> fallow</span>
+                  <div className="flex items-center gap-4 lg:gap-6 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">
+                    <span><strong className="text-zinc-800 dark:text-white">{yr.cropping_cycles}</strong> cycle{yr.cropping_cycles !== 1 ? 's' : ''}</span>
+                    <span><strong className="text-zinc-800 dark:text-white">{yr.utilization_percent}%</strong> utilized</span>
+                    <span><strong className="text-zinc-800 dark:text-white">{yr.active_months}</strong> active / <strong className="dark:text-white">{yr.fallow_months}</strong> fallow</span>
                   </div>
                 </div>
 
                 <div className="p-4 lg:p-5 space-y-5">
                   {/* Timelines */}
-                  <div className="bg-white border border-zinc-100 rounded-lg p-3 lg:p-4">
+                  <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-3 lg:p-4">
                     <TimelineChart data={ndviWithPeaks} dataKey="ndvi_mean" color="#15803d" label="Monthly Vegetation Health" unit="Greenness Index (0–1)" minVal={0} maxVal={1} />
                     {yr.peak_months.length > 0 && (
-                      <p className="text-[9px] lg:text-[10px] text-zinc-400 mt-2">
-                        Peak months: <strong className="text-zinc-600">{yr.peak_months.map(m => MONTH_LABELS[m - 1]).join(', ')}</strong>
+                      <p className="text-[9px] lg:text-[10px] text-zinc-400 dark:text-zinc-400 mt-2">
+                        Peak months: <strong className="text-zinc-600 dark:text-zinc-200">{yr.peak_months.map(m => MONTH_LABELS[m - 1]).join(', ')}</strong>
                         <span className="inline-block w-2 h-2 bg-amber-400 rounded-full ml-1.5 align-middle ring-1 ring-offset-1 ring-amber-400"></span>
                       </p>
                     )}
@@ -1660,18 +1660,18 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
                   {/* Estimated Crops */}
                   <div>
-                    <p className="text-[10px] lg:text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Estimated Crop Types</p>
+                    <p className="text-[10px] lg:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Estimated Crop Types</p>
                     <div className="space-y-2">
                       {yr.estimated_crops.map((crop, ci) => (
-                        <div key={ci} className="flex items-start gap-3 bg-white border border-zinc-100 rounded-lg p-3 lg:p-4">
+                        <div key={ci} className="flex items-start gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-700 rounded-lg p-3 lg:p-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs lg:text-sm font-black text-zinc-800">{crop.crop}</span>
+                              <span className="text-xs lg:text-sm font-black text-zinc-800 dark:text-white">{crop.crop}</span>
                               <span className={`text-[9px] lg:text-[10px] font-bold px-2 py-0.5 rounded-full ${CONFIDENCE_COLORS[crop.confidence]}`}>
                                 {crop.confidence}
                               </span>
                             </div>
-                            <p className="text-[10px] lg:text-xs text-zinc-500 leading-relaxed">{crop.reasoning}</p>
+                            <p className="text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{crop.reasoning}</p>
                           </div>
                         </div>
                       ))}
@@ -1679,9 +1679,9 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                   </div>
 
                   {/* Quick Stats Row */}
-                  <div className="flex items-center gap-4 lg:gap-6 text-[10px] lg:text-xs text-zinc-500 pt-2 border-t border-zinc-100">
-                    <span>Max NDVI: <strong className="text-zinc-800">{yr.max_ndvi}</strong></span>
-                    <span>Mean NDVI: <strong className="text-zinc-800">{yr.mean_ndvi}</strong></span>
+                  <div className="flex items-center gap-4 lg:gap-6 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                    <span>Max NDVI: <strong className="text-zinc-800 dark:text-white">{yr.max_ndvi}</strong></span>
+                    <span>Mean NDVI: <strong className="text-zinc-800 dark:text-white">{yr.mean_ndvi}</strong></span>
                   </div>
                 </div>
               </div>

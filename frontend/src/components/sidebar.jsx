@@ -27,8 +27,8 @@ function AboutModal({ onClose }) {
 
           {/* What is this */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">About</h3>
-            <p className="text-xs leading-relaxed text-zinc-600">
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">About</h3>
+            <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
               This web system maps Land Use and Land Cover (LULC) across the CALABARZON region of the Philippines
               using a fusion of <strong>Sentinel-1 SAR</strong> (Synthetic Aperture Radar) and <strong>Sentinel-2
               multispectral</strong> satellite imagery. Developed as a thesis project, it supports agricultural
@@ -37,27 +37,27 @@ function AboutModal({ onClose }) {
             </p>
             {/* Satellite highlight pills */}
             <div className="flex gap-2 pt-1">
-              <div className="flex-1 bg-[#1d4ed8]/8 border border-[#1d4ed8]/20 rounded-xl p-3 space-y-1">
+              <div className="flex-1 bg-[#1d4ed8]/8 dark:bg-[#1d4ed8]/10 border border-[#1d4ed8]/20 rounded-xl p-3 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-[#1d4ed8]" />
                   <span className="text-[10px] font-black text-[#1d4ed8]">Sentinel-1 SAR</span>
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-relaxed">C-band radar · IW mode · VV + VH polarizations · all-weather, day &amp; night imaging</p>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">C-band radar · IW mode · VV + VH polarizations · all-weather, day &amp; night imaging</p>
               </div>
-              <div className="flex-1 bg-[#15803d]/8 border border-[#15803d]/20 rounded-xl p-3 space-y-1">
+              <div className="flex-1 bg-[#15803d]/8 dark:bg-[#15803d]/10 border border-[#15803d]/20 rounded-xl p-3 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-[#15803d]" />
                   <span className="text-[10px] font-black text-[#15803d]">Sentinel-2 MSI</span>
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-relaxed">Multispectral · 10m resolution · 6 bands · cloud-masked · NDVI &amp; NDWI indices</p>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">Multispectral · 10m resolution · 6 bands · cloud-masked · NDVI &amp; NDWI indices</p>
               </div>
             </div>
           </section>
 
           {/* Study Area */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Study Area</h3>
-            <p className="text-xs leading-relaxed text-zinc-600">
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">Study Area</h3>
+            <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
               CALABARZON (Region IV-A) — comprising <strong>Cavite, Laguna, Batangas, Rizal,</strong> and <strong>Quezon</strong> provinces.
               The region is one of the most economically active in the Philippines, with significant agricultural,
               forested, and urbanizing areas.
@@ -66,8 +66,8 @@ function AboutModal({ onClose }) {
 
           {/* Data Sources */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Data Sources</h3>
-            <ul className="text-xs text-zinc-600 space-y-1.5">
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">Data Sources</h3>
+            <ul className="text-xs text-zinc-600 dark:text-zinc-300 space-y-1.5">
               <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Sentinel-1 GRD</strong> — C-band SAR (IW mode, VV+VH polarizations) from ESA/Copernicus. Bi-annual median composites filtered to &lt;40% cloud cover.</span></li>
               <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Sentinel-2 SR Harmonized</strong> — Multispectral optical imagery (10m). Cloud-masked via QA60 band. Bands: B2, B3, B4, B8, B11, B12.</span></li>
               <li className="flex gap-2"><span className="text-[#1d5e3a] font-black shrink-0">·</span><span><strong>Google Dynamic World V1</strong> — Near-real-time land cover, used as primary gap-fill for unclassified pixels.</span></li>
@@ -80,7 +80,7 @@ function AboutModal({ onClose }) {
 
           {/* LULC Classes */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">LULC Classifications</h3>
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">LULC Classifications</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { cls: 'Forest',      color: '#15803d', desc: 'Closed-canopy and open forest areas, including natural and secondary growth.' },
@@ -88,12 +88,12 @@ function AboutModal({ onClose }) {
                 { cls: 'Urban',       color: '#dc2626', desc: 'Built-up areas including settlements, commercial zones, and infrastructure.' },
                 { cls: 'Water',       color: '#1d4ed8', desc: 'Rivers, lakes, reservoirs, and other permanent or seasonal water bodies.' },
               ].map(({ cls, color, desc }) => (
-                <div key={cls} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 space-y-1">
+                <div key={cls} className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-xl p-3 space-y-1">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-xs font-black text-zinc-800">{cls}</span>
+                    <span className="text-xs font-black text-zinc-800 dark:text-white">{cls}</span>
                   </div>
-                  <p className="text-[10px] text-zinc-500 leading-relaxed">{desc}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
@@ -101,8 +101,8 @@ function AboutModal({ onClose }) {
 
           {/* Methodology */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Methodology</h3>
-            <ol className="text-xs text-zinc-600 space-y-2 list-none">
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">Methodology</h3>
+            <ol className="text-xs text-zinc-600 dark:text-zinc-300 space-y-2 list-none">
               {[
                 { title: 'Data Acquisition & Compositing', body: 'Sentinel-1 (VV, VH) and Sentinel-2 (optical) collections are filtered bi-annually and reduced to median composites. Sentinel-2 images are cloud-masked using the QA60 bitmask before compositing.' },
                 { title: 'Feature Engineering (13-band composite)', body: 'The input stack includes 6 Sentinel-2 bands, NDVI, NDWI, NDVI temporal std dev, VV temporal std dev, VV, VH, and terrain slope. Temporal std dev features help distinguish agriculture (high variance) from permanent water (near-zero variance).' },
@@ -113,7 +113,7 @@ function AboutModal({ onClose }) {
               ].map(({ title, body }, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="text-[#1d5e3a] font-black shrink-0 mt-px">{i + 1}.</span>
-                  <span><strong className="text-zinc-800">{title}:</strong> {body}</span>
+                  <span><strong className="text-zinc-800 dark:text-white">{title}:</strong> {body}</span>
                 </li>
               ))}
             </ol>
@@ -121,7 +121,7 @@ function AboutModal({ onClose }) {
 
           {/* Tech Stack */}
           <section className="space-y-2">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Technology Stack</h3>
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">Technology Stack</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { name: 'Google Earth Engine', desc: 'Cloud geospatial processing — compositing, classification, export' },
@@ -129,19 +129,19 @@ function AboutModal({ onClose }) {
                 { name: 'React + Leaflet', desc: 'Interactive frontend map with overlays and polygon analysis' },
                 { name: 'Random Forest (GEE)', desc: '250-tree ensemble classifier with 13-band SAR/optical features' },
               ].map(({ name, desc }) => (
-                <div key={name} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 space-y-1">
-                  <span className="text-[10px] font-black text-[#1d5e3a]">{name}</span>
-                  <p className="text-[10px] text-zinc-500 leading-relaxed">{desc}</p>
+                <div key={name} className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-xl p-3 space-y-1">
+                  <span className="text-[10px] font-black text-[#1d5e3a] dark:text-[#a0d870]">{name}</span>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
           </section>
 
           {/* Coverage */}
-          <section className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 space-y-1">
-            <h3 className="text-xs font-black text-zinc-900 uppercase tracking-wider">Temporal Coverage</h3>
-            <p className="text-xs text-zinc-600">2021 – 2025 &nbsp;·&nbsp; Bi-annual periods (Jan–Jun and Jul–Dec)</p>
-            <p className="text-[10px] text-zinc-400 mt-1">Data is updated as new Sentinel-1 composites are processed and exported from GEE.</p>
+          <section className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-xl p-4 space-y-1">
+            <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">Temporal Coverage</h3>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300">2021 – 2025 &nbsp;·&nbsp; Bi-annual periods (Jan–Jun and Jul–Dec)</p>
+            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">Data is updated as new Sentinel-1 composites are processed and exported from GEE.</p>
           </section>
 
         </div>
@@ -163,7 +163,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
       <button
         onClick={() => setActiveNav(id)}
         className={`w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 transition-all ${isActive
-            ? 'border-[#305d3d] bg-[#305d3d]/10 text-[#305d3d]'
+            ? 'border-[#3f7b56] bg-[#3f7b56]/10 text-[#3f7b56] dark:border-[#6dc44a] dark:bg-[#6dc44a]/10 dark:text-[#6dc44a]'
             : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
       >
@@ -179,7 +179,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
       <button
         onClick={() => setActiveNav(id)}
         className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-all ${isActive
-          ? 'text-[#305d3d] bg-[#305d3d]/10'
+          ? 'text-[#3f7b56] bg-[#3f7b56]/10 dark:text-[#6dc44a] dark:bg-[#6dc44a]/10'
           : 'text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100'
         }`}
       >
@@ -207,7 +207,7 @@ export default function Sidebar({ activeNav, setActiveNav, isAdmin = false, perm
 
         {/* Bottom Section */}
         <div className="flex flex-col w-full items-center gap-2">
-          <button onClick={() => setShowAbout(true)} className="w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 border-transparent text-zinc-500 hover:bg-black/5 hover:text-zinc-900 transition-all" title="About & Methodology">
+          <button onClick={() => setShowAbout(true)} className="w-full flex flex-col items-center justify-center py-4 lg:py-5 border-l-4 border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all" title="About & Methodology">
             <svg className="w-5 h-5 lg:w-6 lg:h-6 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span className="text-[9px] lg:text-[10px] mt-1 lg:mt-1.5 font-bold tracking-wider uppercase transition-all">About</span>
           </button>

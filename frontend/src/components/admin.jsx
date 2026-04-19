@@ -98,7 +98,7 @@ function MapPreviewModal({ aoi, onClose }) {
               />
               <LeafletGeoJSON
                 data={geojsonData}
-                style={{ color: '#305d3d', weight: 2, fillOpacity: 0.2, fillColor: '#305d3d' }}
+                style={{ color: '#3f7b56', weight: 2, fillOpacity: 0.2, fillColor: '#3f7b56' }}
               />
               <FitBounds geojsonData={geojsonData} />
             </MapContainer>
@@ -172,7 +172,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
               type="text"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]"
             />
           </div>
 
@@ -185,7 +185,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Optional notes"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]"
             />
           </div>
 
@@ -197,7 +197,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
               value={form.geojson}
               onChange={e => setForm(f => ({ ...f, geojson: e.target.value }))}
               rows={8}
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] resize-y"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] resize-y"
             />
           </div>
 
@@ -217,7 +217,7 @@ function EditModal({ aoi, token, onSaved, onClose }) {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2 rounded-lg transition disabled:opacity-60"
+              className="flex-1 bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2 rounded-lg transition disabled:opacity-60"
             >
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
@@ -333,7 +333,7 @@ function DatasetSection({ token }) {
             <select
               value={year}
               onChange={e => setYear(Number(e.target.value))}
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {DATASET_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -343,7 +343,7 @@ function DatasetSection({ token }) {
             <select
               value={period}
               onChange={e => setPeriod(e.target.value)}
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {DATASET_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -360,7 +360,7 @@ function DatasetSection({ token }) {
             value={customName}
             onChange={e => setCustomName(e.target.value)}
             placeholder={`${year}-${period}.tif`}
-            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-300 dark:placeholder-zinc-500"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-300 dark:placeholder-zinc-500"
           />
           {customName.trim() && (
             <p className="text-[10px] text-zinc-400 mt-1">
@@ -375,7 +375,7 @@ function DatasetSection({ token }) {
         <div>
           <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">GeoTIFF File (.tif)</label>
           <div
-            className="border-2 border-dashed border-zinc-200 dark:border-zinc-600 rounded-xl p-5 text-center cursor-pointer hover:border-[#305d3d]/40 hover:bg-[#305d3d]/5 dark:hover:border-[#305d3d]/60 dark:hover:bg-[#305d3d]/10 transition-all"
+            className="border-2 border-dashed border-zinc-200 dark:border-zinc-600 rounded-xl p-5 text-center cursor-pointer hover:border-[#3f7b56]/40 hover:bg-[#3f7b56]/5 dark:hover:border-[#3f7b56]/60 dark:hover:bg-[#3f7b56]/10 transition-all"
             onClick={() => fileRef.current?.click()}
             onDragOver={e => e.preventDefault()}
             onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
@@ -384,7 +384,7 @@ function DatasetSection({ token }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             {file ? (
-              <p className="text-sm font-bold text-[#305d3d]">{file.name} ({formatBytes(file.size)})</p>
+              <p className="text-sm font-bold text-[#3f7b56]">{file.name} ({formatBytes(file.size)})</p>
             ) : (
               <>
                 <p className="text-sm font-medium text-zinc-500">Drag & drop or click to select</p>
@@ -401,7 +401,7 @@ function DatasetSection({ token }) {
         <button
           onClick={handleUpload}
           disabled={uploading}
-          className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2.5 rounded-lg transition disabled:opacity-60"
+          className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition disabled:opacity-60"
         >
           {uploading ? 'Uploading & fixing nodata…' : 'Upload Dataset'}
         </button>
@@ -523,7 +523,7 @@ function UploadSection({ token, onUploaded }) {
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Laguna Wetlands"
-            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]"
           />
         </div>
         <div>
@@ -535,7 +535,7 @@ function UploadSection({ token, onUploaded }) {
             value={form.description}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             placeholder="Optional notes"
-            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d]"
+            className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]"
           />
         </div>
       </div>
@@ -546,7 +546,7 @@ function UploadSection({ token, onUploaded }) {
           File — .geojson / .json / .zip (Shapefile)
         </label>
         <div
-          className="border-2 border-dashed border-zinc-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#305d3d]/40 hover:bg-[#305d3d]/5 transition-all"
+          className="border-2 border-dashed border-zinc-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#3f7b56]/40 hover:bg-[#3f7b56]/5 transition-all"
           onClick={() => fileRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
@@ -560,7 +560,7 @@ function UploadSection({ token, onUploaded }) {
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
           {file ? (
-            <p className="text-sm font-bold text-[#305d3d]">{file.name}</p>
+            <p className="text-sm font-bold text-[#3f7b56]">{file.name}</p>
           ) : (
             <>
               <p className="text-sm font-medium text-zinc-500">Drag & drop or click to select</p>
@@ -591,7 +591,7 @@ function UploadSection({ token, onUploaded }) {
       <button
         onClick={handleUpload}
         disabled={uploading}
-        className="w-full bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2.5 rounded-lg transition disabled:opacity-60"
+        className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition disabled:opacity-60"
       >
         {uploading ? 'Uploading…' : 'Upload AOI'}
       </button>
@@ -644,7 +644,7 @@ function AOIRow({ aoi, token, onUpdated, onDeleted }) {
             <button
               onClick={() => setPreviewOpen(true)}
               title="Preview on map"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-[#305d3d] hover:bg-[#305d3d]/10 transition"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-[#3f7b56] hover:bg-[#3f7b56]/10 transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -713,7 +713,7 @@ function UserRow({ user, token, onUpdated }) {
         <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</td>
         <td className="px-4 py-3">
           <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider ${isPrivileged
-              ? 'bg-[#305d3d]/10 text-[#305d3d] border-[#305d3d]/20'
+              ? 'bg-[#3f7b56]/10 text-[#3f7b56] border-[#3f7b56]/20'
               : 'bg-zinc-100 text-zinc-600 border-zinc-200'
             }`}>
             {user.role}
@@ -830,7 +830,7 @@ function Toggle({ checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${checked ? 'bg-[#305d3d]' : 'bg-zinc-300'
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${checked ? 'bg-[#3f7b56]' : 'bg-zinc-300'
         }`}
     >
       <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -927,7 +927,7 @@ function EditUserModal({ user, token, onSaved, onClose }) {
             <select
               value={role}
               onChange={e => setRole(e.target.value)}
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#305d3d]/30 focus:border-[#305d3d] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
             >
               {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
@@ -981,7 +981,7 @@ function EditUserModal({ user, token, onSaved, onClose }) {
           <button onClick={onClose} className="flex-1 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 font-bold text-sm py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition">
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving || loading} className="flex-1 bg-[#305d3d] hover:bg-[#254a30] text-white font-bold text-sm py-2 rounded-lg transition disabled:opacity-60">
+          <button onClick={handleSave} disabled={saving || loading} className="flex-1 bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2 rounded-lg transition disabled:opacity-60">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -1111,7 +1111,7 @@ function ModelPerformanceSection() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-48 text-zinc-400 text-sm gap-2">
-      <div className="w-4 h-4 border-2 border-zinc-300 border-t-[#305d3d] rounded-full animate-spin" />
+      <div className="w-4 h-4 border-2 border-zinc-300 border-t-[#3f7b56] rounded-full animate-spin" />
       Loading model metrics…
     </div>
   );
@@ -1121,7 +1121,7 @@ function ModelPerformanceSection() {
         Could not load model metrics. Make sure the backend is running and{' '}
         <code className="mx-1 bg-red-50 px-1 rounded">backend/model_metrics.json</code> exists.
       </p>
-      <button onClick={load} className="text-xs font-bold text-[#305d3d] underline">Retry</button>
+      <button onClick={load} className="text-xs font-bold text-[#3f7b56] underline">Retry</button>
     </div>
   );
 
@@ -1146,7 +1146,7 @@ function ModelPerformanceSection() {
         <button
           onClick={handleRun}
           disabled={jobStatus === 'running' || jobStatus === 'starting'}
-          className="flex items-center gap-2 text-xs font-bold bg-[#305d3d] hover:bg-[#254a30] disabled:opacity-50 text-white px-4 py-2 rounded-lg transition shrink-0"
+          className="flex items-center gap-2 text-xs font-bold bg-[#3f7b56] hover:bg-[#23432f] disabled:opacity-50 text-white px-4 py-2 rounded-lg transition shrink-0"
         >
           {(jobStatus === 'running' || jobStatus === 'starting') ? (
             <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -1192,14 +1192,14 @@ function ModelPerformanceSection() {
 
       {/* Model config pills */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-[10px] font-black text-[#305d3d] uppercase tracking-wider">Model:</span>
+        <span className="text-[10px] font-black text-[#3f7b56] uppercase tracking-wider">Model:</span>
         {[
           `${model?.type ?? 'Random Forest'}`,
           `${model?.n_estimators ?? 250} trees`,
           `${((model?.train_ratio ?? 0.7) * 100).toFixed(0)}% train / ${((model?.test_ratio ?? 0.3) * 100).toFixed(0)}% test`,
           `${model?.features?.length ?? 26} input features`,
         ].map(tag => (
-          <span key={tag} className="bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-900 text-[#305d3d] dark:text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
+          <span key={tag} className="bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-900 text-[#3f7b56] dark:text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
         ))}
         <span className="ml-auto text-[10px] text-zinc-400">{filledPeriods.length}/{periodKeys.length} periods recorded</span>
       </div>
@@ -1264,7 +1264,7 @@ function ModelPerformanceSection() {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {filled ? (
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${isActive ? 'bg-[#305d3d] text-white border-[#305d3d]' : 'text-[#305d3d] border-[#305d3d]/30'}`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${isActive ? 'bg-[#3f7b56] text-white border-[#3f7b56]' : 'text-[#3f7b56] border-[#3f7b56]/30'}`}>
                           {isActive ? 'Hide' : 'View'}
                         </span>
                       ) : (
@@ -1417,7 +1417,7 @@ export default function Admin() {
       {/* Header */}
       <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#305d3d] flex items-center justify-center text-white">
+          <div className="w-9 h-9 rounded-xl bg-[#3f7b56] flex items-center justify-center text-white">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1449,7 +1449,7 @@ export default function Admin() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-3 text-xs font-bold border-b-2 transition-colors ${activeTab === tab.id
-                ? 'border-[#305d3d] text-[#305d3d]'
+                ? 'border-[#3f7b56] text-[#3f7b56]'
                 : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
               }`}
           >
