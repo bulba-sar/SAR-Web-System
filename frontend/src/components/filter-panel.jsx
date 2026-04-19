@@ -25,17 +25,16 @@ export default function FilterPanel({
   const [showResults, setShowResults]     = useState(false);
   const [availableDatasets, setAvailableDatasets] = useState([]);
 
-  const API = process.env.REACT_APP_API_URL || '${API}';
+  const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
   useEffect(() => {
     fetch(`${API}/datasets/available`)
       .then(r => r.json())
       .then(data => setAvailableDatasets(Array.isArray(data) ? data : []))
       .catch(() => {});
-  }, []);
+  }, [API]);
 
-  const hasDataset = (y, p) => availableDatasets.some(d => d.year === y && d.period === p);
-  const availableYears = [...new Set(availableDatasets.filter(d => d.year).map(d => d.year))].sort((a,b) => b - a);
+  const availableYears =[...new Set(availableDatasets.filter(d => d.year).map(d => d.year))].sort((a,b) => b - a);
   const allYears = [...new Set([...availableYears, 2025, 2024, 2023, 2022, 2021])].sort((a,b) => b - a);
 
   useEffect(() => {
@@ -159,7 +158,6 @@ export default function FilterPanel({
                 { value: 'Jan-Jun', label: 'Jan - Jun', sub: 'Dry Season' },
                 { value: 'Jul-Dec', label: 'Jul - Dec', sub: 'Wet Season' },
               ].map(({ value, label, sub }) => {
-                const available = hasDataset(year, value);
                 return (
                   <label key={value} className={`flex items-start gap-2 lg:gap-2.5 cursor-pointer group p-2 lg:p-2.5 bg-white dark:bg-zinc-700 border rounded-lg hover:border-green-400 transition-colors ${period === value ? 'border-green-300' : 'border-zinc-200 dark:border-zinc-600'}`}>
                     <input
