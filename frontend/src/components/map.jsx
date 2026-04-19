@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API = process.env.REACT_APP_API_URL || '${API}';
+const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // MAP MOVER
 function MapMover({ targetLocation }) {
