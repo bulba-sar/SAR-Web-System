@@ -2,7 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --sar-dark-1:  #23432f;
+  --sar-dark-2:  #1d5e3a;
+  --sar-mid:     #3f7b56;
+  --sar-light:   #77bb95;
+  --sar-text:    #2a2a2a;
+}
+
+.dark {
+  --sar-accent-1:     #308230;
+  --sar-accent-2:     #4a9e3a;
+  --sar-accent-bright:#6dc44a;
+  --sar-accent-light: #a0d870;
+  --sar-text:         #f7f7f7;
+}
+
 .leaflet-container {
   background: #172229 !important;
+}
+
+/* Dark mode: Leaflet zoom buttons */
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out {
+  background-color: #71717a !important;
+  color: #e4e4e7 !important;
+  border-color: #52525b !important;
+}
+.dark .leaflet-control-zoom-in:hover,
+.dark .leaflet-control-zoom-out:hover {
+  background-color: #52525b !important;
+  color: #f4f4f5 !important;
+}
+
+/* Dark mode: filter panel scrollbar */
+.dark .sar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.dark .sar-scrollbar::-webkit-scrollbar-track {
+  background: #27272a;
+}
+.dark .sar-scrollbar::-webkit-scrollbar-thumb {
+  background: #71717a;
+  border-radius: 3px;
+}
+.dark .sar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+/* Dark mode: global scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #27272a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #71717a;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
 }
 
