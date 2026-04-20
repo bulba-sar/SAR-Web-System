@@ -1,4 +1,5 @@
 # --- BACKEND ---
+backend/tif/*.tif
 backend/venv/
 backend/.venv/
 backend/__pycache__/
