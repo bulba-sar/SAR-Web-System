@@ -1691,7 +1691,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                           <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS[className] || '#888' }}></div><span className="text-xs lg:text-sm font-bold text-zinc-800 dark:text-zinc-100">{className}</span></div>
                           <div className="flex items-center gap-2"><ChangeIndicator current={data.percentage} previous={prev?.classes[className]?.percentage ?? null} /><span className="text-xs lg:text-sm font-black text-zinc-900 dark:text-white w-14 text-right">{data.percentage}%</span></div>
                         </div>
-                        <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${data.percentage}%`, backgroundColor: CLASS_COLORS[className] || '#888' }}></div></div>
+                        <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${data.percentage}%`, backgroundColor: CLASS_COLORS[className] || '#888' }}></div></div>
                       </div>
                     ))}
                   </div>
