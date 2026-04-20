@@ -512,11 +512,13 @@ def get_satellite_basemap(db: Session = Depends(get_db)):
 @app.get("/get-protected-areas")
 def get_protected_areas():
     try:
+        calabarzon_geom = calabarzon.geometry()
         protected_areas = ee.FeatureCollection("WCMC/WDPA/current/polygons")
-        local_pa = protected_areas.filterBounds(calabarzon)
-        styled_pa = local_pa.style(**{
+        local_pa = protected_areas.filterBounds(calabarzon_geom)
+        clipped_pa = local_pa.map(lambda f: f.intersection(calabarzon_geom, maxError=100))
+        styled_pa = clipped_pa.style(**{
             'color': '00FF00', 'width': 3, 'fillColor': '00FF0022'
-        }).clip(calabarzon)
+        })
         map_id = styled_pa.getMapId()
         return {"tile_url": map_id['tile_fetcher'].url_format}
 
