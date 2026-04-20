@@ -1,18 +1,3 @@
-"""
-Run this once to fix existing TIF files so the background outside
-CALABARZON becomes transparent when served via the local tile endpoint.
-
-What it does:
-  - Single-band TIFs (LULC): sets pixels outside boundary to 255 (nodata)
-  - Multi-band TIFs (basemap): adds/updates an alpha channel, sets outside
-    pixels to alpha=0 (fully transparent), writes as a new RGBA GeoTIFF
-
-After running this, restart the FastAPI server — no other changes needed.
-
-Usage (from backend/ directory):
-    ../.venv/Scripts/python fix_tif_nodata.py
-"""
-
 import ee
 import numpy as np
 import rasterio

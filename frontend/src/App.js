@@ -9,7 +9,8 @@ import Admin from './components/admin';
 const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 export default function App() {
-  const [activeNav, setActiveNav] = useState('filters');
+  const [activeNav, setActiveNav] = useState(() => sessionStorage.getItem('sar_nav') || 'filters');
+  useEffect(() => { sessionStorage.setItem('sar_nav', activeNav); }, [activeNav]);
   const [targetLocation, setTargetLocation] = useState(null);
   
   // Map Layer Toggles

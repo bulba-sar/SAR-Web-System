@@ -121,14 +121,15 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
     setVertexCount(d.points.length);
   };
 
-  // Clear everything — both the in-progress drawing and the saved polygon
-  const clearAll = () => {
-    const map = mapRef.current;
-    if (map) cleanupLayers(map);
-    setVertexCount(0);
-    setIsDrawing(false);
-    setDrawnPolygon(null);
-  };
+  // When the parent clears drawnPolygon (e.g. Clear button), also wipe Leaflet draw layers
+  useEffect(() => {
+    if (drawnPolygon === null) {
+      const map = mapRef.current;
+      if (map) cleanupLayers(map);
+      setVertexCount(0);
+      setIsDrawing(false);
+    }
+  }, [drawnPolygon, cleanupLayers]);
 
   // Register / unregister native Leaflet events while drawing
   useEffect(() => {
@@ -191,7 +192,7 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
       map.off('mousemove', onMouseMove);
       document.removeEventListener('keydown', onKeyDown);
       map.getContainer().style.cursor = '';
-      // Clean up the preview line on mode exit (vertex dots + poly stay until clearAll/finish)
+      // Clean up the preview line on mode exit (vertex dots + poly stay until cleared/finish)
       if (d.preview && map.hasLayer(d.preview)) map.removeLayer(d.preview);
       d.preview = null;
     };
@@ -243,15 +244,6 @@ const CalabarzonMiniMap = ({ sarUrl, basemapUrl, sarOpacity, setSarOpacity, draw
             </button>
           )}
 
-          {/* Clear */}
-          {(drawnPolygon || isDrawing) && (
-            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-green-100 dark:bg-zinc-700 hover:bg-red-100 dark:hover:bg-red-900/40 text-green-800 dark:text-zinc-200 hover:text-red-700 dark:hover:text-red-400 text-xs font-bold transition-all border border-green-800 dark:border-zinc-600 hover:border-red-700">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Clear
-            </button>
-          )}
         </div>
       </div>
 
@@ -445,7 +437,6 @@ const CropAreaTooltip = ({ active, payload }) => {
 const COMPARE_PERIODS = ['Jan-Jun', 'Jul-Dec'];
 const COMPARE_CLASSES = [
   { value: 'all',         label: 'All Classes' },
-  { value: 'water',       label: 'Water',       color: '#1d4ed8' },
   { value: 'urban',       label: 'Urban',        color: '#dc2626' },
   { value: 'forest',      label: 'Forest',       color: '#15803d' },
   { value: 'agriculture', label: 'Agriculture',  color: '#ca8a04' },
@@ -1134,6 +1125,15 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   const [cropAreaData, setCropAreaData] = useState(null);
   const [cropAreaError, setCropAreaError] = useState(null);
 
+  // ── Abort controller for cancelling in-flight analysis requests ──
+  const analysisAbortRef = useRef(null);
+
+  // ── Download dialog state ──
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [dlOptions, setDlOptions] = useState([]);       // { id, label, checked }
+  const [dlIncludeAvg, setDlIncludeAvg] = useState(true);
+  const [dlTab, setDlTab] = useState('lulc');
+
   // ── LULC Computed Values ──
   const overallSummary = useMemo(() => {
     if (!analyticsData || analyticsData.length === 0) return null;
@@ -1192,33 +1192,111 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
     setCropAreaData(null); setCropAreaError(null);
   };
 
-  // ── Export analysis results as CSV ──
-  const handleDownloadCSV = () => {
-    if (!analyticsData || analyticsData.length === 0) return;
-    const rows = [['Period', 'Class', 'Pixel Count', 'Percentage (%)']];
-    analyticsData.forEach(entry => {
-      Object.entries(entry.classes).forEach(([cls, d]) => {
-        rows.push([entry.label, cls, d.pixel_count, d.percentage]);
-      });
-    });
-    const csv = rows.map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+  // ── Open download dialog ──
+  const openDownloadDialog = () => {
+    if (activeTab === 'lulc') {
+      if (!analyticsData || analyticsData.length === 0) return;
+      setDlTab('lulc');
+      setDlOptions(analyticsData.map(e => ({ id: e.label, label: e.label, checked: true })));
+    } else {
+      if (!cropData?.yearly) return;
+      setDlTab('crop');
+      setDlOptions(cropData.yearly.map(yr => ({ id: String(yr.year), label: String(yr.year), checked: true })));
+    }
+    setDlIncludeAvg(true);
+    setShowDownloadDialog(true);
+  };
+
+  const triggerCsvDownload = (rows, filename) => {
+    const csv = '\uFEFF' + rows.map(r => r.map(cell => {
+      const s = String(cell ?? '');
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `LULC_Analysis_${startYear}-${endYear}.csv`;
-    a.click();
+    a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ── Execute download based on dialog selections ──
+  const executeDownload = () => {
+    const selected = new Set(dlOptions.filter(o => o.checked).map(o => o.id));
+    setShowDownloadDialog(false);
+
+    if (dlTab === 'lulc') {
+      const filtered = analyticsData.filter(e => selected.has(e.label));
+      if (filtered.length === 0) return;
+      const rows = [['Period', 'Class', 'Pixel Count', 'Percentage (%)']];
+      filtered.forEach(entry => {
+        Object.entries(entry.classes).forEach(([cls, d]) => {
+          rows.push([entry.label, cls, d.pixel_count, d.percentage]);
+        });
+      });
+      if (dlIncludeAvg && filtered.length > 0) {
+        const classes = Object.keys(filtered[0].classes);
+        rows.push([]);
+        classes.forEach(cls => {
+          const avg = (filtered.reduce((s, e) => s + (e.classes[cls]?.percentage || 0), 0) / filtered.length).toFixed(2);
+          rows.push([`Average (${startYear}-${endYear})`, cls, '', avg]);
+        });
+      }
+      triggerCsvDownload(rows, `LULC_Analysis_${startYear}-${endYear}.csv`);
+    } else {
+      const filtered = cropData.yearly.filter(yr => selected.has(String(yr.year)));
+      if (filtered.length === 0) return;
+      const rows = [['Year', 'Intensity Label', 'Cropping Cycles', 'Active Months', 'Fallow Months', 'Utilization (%)', 'Max NDVI', 'Mean NDVI', 'Estimated Crops']];
+      filtered.forEach(yr => {
+        rows.push([
+          yr.year, yr.intensity_label, yr.cropping_cycles,
+          yr.active_months, yr.fallow_months, yr.utilization_percent,
+          yr.max_ndvi, yr.mean_ndvi,
+          yr.estimated_crops.map(c => c.crop).join(' | '),
+        ]);
+      });
+      if (dlIncludeAvg) {
+        const s = cropData.summary;
+        rows.push([]);
+        rows.push(['SUMMARY', '', s.average_cycles_per_year, '', '', s.average_utilization_percent, '', s.average_ndvi, s.dominant_crop]);
+      }
+      if (cropAreaData?.yearly_data) {
+        const areaFiltered = cropAreaData.yearly_data.filter(yr => selected.has(String(yr.year)));
+        if (areaFiltered.length > 0) {
+          rows.push([]);
+          rows.push(['Year', 'Crop Area (ha)', 'Total Area (ha)', 'Crop Coverage (%)']);
+          areaFiltered.forEach(yr => {
+            rows.push([yr.year, yr.crop_area_ha, yr.total_area_ha, yr.crop_percentage]);
+          });
+          if (dlIncludeAvg) {
+            const avgPct = (areaFiltered.reduce((s, y) => s + (y.crop_percentage || 0), 0) / areaFiltered.length).toFixed(2);
+            rows.push([`Average (${startYear}-${endYear})`, '', '', avgPct]);
+          }
+        }
+      }
+      triggerCsvDownload(rows, `Crop_Intensity_${startYear}-${endYear}.csv`);
+    }
+  };
+
+  // ── Cancel any running analysis ──
+  const handleCancelAnalysis = () => {
+    analysisAbortRef.current?.abort();
+    setIsAnalyzing(false);
+    setIsCropAnalyzing(false);
+    setAnalysisError(null);
+    setCropError(null);
   };
 
   // ── Run LULC Analysis ──
   const handleRunLULC = async () => {
-    if (!drawnPolygon) { setAnalysisError("Please draw your study area on the map first."); return; }
+    if (!drawnPolygon) { setAnalysisError("Please draw your study area of interest using draw polygon first."); return; }
+    if (!startYear || !endYear) { setAnalysisError("Please select your desired start and end year first."); return; }
+    const ctrl = new AbortController();
+    analysisAbortRef.current = ctrl;
     setIsAnalyzing(true); setAnalysisError(null); setAnalyticsData(null);
     try {
       const response = await fetch(`${API}/api/v1/analytics/lulc-change`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload())
+        body: JSON.stringify(buildPayload()), signal: ctrl.signal,
       });
       const data = await response.json();
       if (data.status === 'success' && data.analytics?.length > 0) {
@@ -1231,29 +1309,32 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         setAnalysisError(data.message || "No LULC data available for this area and time range.");
       }
     } catch (error) {
-      setAnalysisError("Could not connect to the backend. Is FastAPI running on port 8000?");
+      if (error.name !== 'AbortError') setAnalysisError("Could not connect to the backend. Is FastAPI running on port 8000?");
     }
     setIsAnalyzing(false);
   };
 
   // ── Run Crop Intensity + Crop Area Coverage (parallel) ──
   const handleRunCropIntensity = async () => {
-    if (!drawnPolygon) { alert("Please draw your study area first."); return; }
+    if (!drawnPolygon) { setAnalysisError("Please draw your study area of interest using draw polygon first."); return; }
+    if (!startYear || !endYear) { setAnalysisError("Please select your desired start and end year first."); return; }
     setIsCropAnalyzing(true);
     setCropError(null); setCropData(null);
     setCropAreaError(null); setCropAreaData(null);
 
     const payload = buildPayload();
+    const ctrl = new AbortController();
+    analysisAbortRef.current = ctrl;
 
     try {
       const [intensityResult, areaResult] = await Promise.allSettled([
         fetch(`${API}/api/v1/analytics/crop-intensity`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload), signal: ctrl.signal,
         }).then(r => r.json()),
         fetch(`${API}/api/v1/analytics/crop-area`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload), signal: ctrl.signal,
         }).then(r => r.json())
       ]);
 
@@ -1272,7 +1353,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
         else setCropAreaError(d.detail || "Crop area analysis failed.");
       }
     } catch (error) {
-      setCropError("Could not connect to the backend. Is FastAPI running on port 8000?");
+      if (error.name !== 'AbortError') setCropError("Could not connect to the backend. Is FastAPI running on port 8000?");
     }
     setIsCropAnalyzing(false);
   };
@@ -1309,15 +1390,17 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
               </button>
             )}
           </div>
+          {activeTab !== 'compare' && (
           <button
-            onClick={isLoggedIn ? handleDownloadCSV : undefined}
-            disabled={isLoggedIn && (!analyticsData || analyticsData.length === 0)}
+            onClick={isLoggedIn ? openDownloadDialog : undefined}
+            disabled={isLoggedIn && (activeTab === 'lulc' ? (!analyticsData || analyticsData.length === 0) : !cropData?.yearly)}
             title={!isLoggedIn ? 'Login to download CSV' : undefined}
             className={`flex items-center gap-1.5 lg:gap-2 text-white font-bold text-xs lg:text-sm bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg transition shadow-sm whitespace-nowrap ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed'}`}
           >
             <svg className="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Download CSV
           </button>
+          )}
         </div>
       </div>
 
@@ -1356,10 +1439,16 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
           <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] dark:text-green-400 bg-white dark:bg-zinc-800 border border-[#23432f] dark:border-green-700 px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition whitespace-nowrap">Clear</button>
-          <button onClick={handleRunAnalysis} disabled={isAnalyzing || isCropAnalyzing} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap disabled:opacity-60 flex items-center gap-2">
-            {(isAnalyzing || isCropAnalyzing) && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-            {(isAnalyzing || isCropAnalyzing) ? 'Analyzing...' : 'Run Analysis'}
-          </button>
+          {(isAnalyzing || isCropAnalyzing) ? (
+            <button onClick={handleCancelAnalysis} className="text-[10px] lg:text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1 lg:px-5 lg:py-2 rounded-lg transition shadow-sm whitespace-nowrap flex items-center gap-2">
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Cancel
+            </button>
+          ) : (
+            <button onClick={handleRunAnalysis} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] px-3 py-1 lg:px-5 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap">
+              Run Analysis
+            </button>
+          )}
         </div>
       </div>}
 
@@ -1482,15 +1571,17 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                         <p className="text-[10px] lg:text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Agriculture pixels present in both semesters</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-lg px-3 py-1.5 text-center">
+                        <div title="Average crop area percentage across all analyzed years" className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-lg px-3 py-1.5 text-center cursor-help">
                           <p className="text-[9px] text-zinc-400 dark:text-zinc-400 uppercase font-bold">Avg</p>
                           <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">{avg}%</p>
+                          <p className="text-[8px] text-zinc-400 mt-0.5">mean crop area</p>
                         </div>
-                        <div className={`rounded-lg px-3 py-1.5 text-center ${parseFloat(diff) >= 0 ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}>
+                        <div title={`Change from ${yearly[0].year} to ${yearly[yearly.length-1].year}: ${parseFloat(diff) >= 0 ? 'increased' : 'decreased'} by ${Math.abs(diff)}%`} className={`rounded-lg px-3 py-1.5 text-center cursor-help ${parseFloat(diff) >= 0 ? 'bg-green-50 border border-green-100 dark:bg-green-950/30 dark:border-green-900' : 'bg-red-50 border border-red-100 dark:bg-red-950/30 dark:border-red-900'}`}>
                           <p className="text-[9px] text-zinc-400 uppercase font-bold">Trend</p>
-                          <p className={`text-sm font-black ${parseFloat(diff) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                          <p className={`text-sm font-black ${parseFloat(diff) >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
                             {parseFloat(diff) >= 0 ? '+' : ''}{diff}%
                           </p>
+                          <p className="text-[8px] text-zinc-400 mt-0.5">first → last yr</p>
                         </div>
                       </div>
                     </div>
@@ -1691,6 +1782,83 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
       )}
 
       </>}
+
+      {/* ── Download Options Dialog ── */}
+      {showDownloadDialog && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowDownloadDialog(false)}>
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-700 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-zinc-900 dark:text-white text-sm">Download CSV</h3>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Select which data to include</p>
+              </div>
+              <button onClick={() => setShowDownloadDialog(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4 space-y-3 max-h-72 overflow-y-auto sar-scrollbar">
+              {/* Select All */}
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={dlOptions.every(o => o.checked)}
+                  onChange={e => setDlOptions(prev => prev.map(o => ({ ...o, checked: e.target.checked })))}
+                  className="w-4 h-4 rounded accent-[#3f7b56] cursor-pointer"
+                />
+                <span className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wide">Select All {dlTab === 'lulc' ? 'Periods' : 'Years'}</span>
+              </label>
+
+              <div className="border-t border-zinc-100 dark:border-zinc-700 pt-2 space-y-1.5">
+                {dlOptions.map((opt, i) => (
+                  <label key={opt.id} className="flex items-center gap-2.5 cursor-pointer group px-1 py-0.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition">
+                    <input
+                      type="checkbox"
+                      checked={opt.checked}
+                      onChange={e => setDlOptions(prev => prev.map((o, j) => j === i ? { ...o, checked: e.target.checked } : o))}
+                      className="w-4 h-4 rounded accent-[#3f7b56] cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white transition">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Average / Summary row toggle */}
+              <div className="border-t border-zinc-100 dark:border-zinc-700 pt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer group px-1 py-0.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition">
+                  <input
+                    type="checkbox"
+                    checked={dlIncludeAvg}
+                    onChange={e => setDlIncludeAvg(e.target.checked)}
+                    className="w-4 h-4 rounded accent-[#3f7b56] cursor-pointer"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Include Average / Summary rows</span>
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Appended at the bottom of the file</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-700 flex items-center justify-end gap-2">
+              <button onClick={() => setShowDownloadDialog(false)} className="px-4 py-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition">
+                Cancel
+              </button>
+              <button
+                onClick={executeDownload}
+                disabled={!dlOptions.some(o => o.checked)}
+                className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#23432f] to-[#1d5e3a] rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
