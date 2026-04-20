@@ -1,1 +1,2 @@
-backend/tif/*.tif filter=lfs diff=lfs merge=lfs -text
+# LFS tracking removed — .tif files are now stored on Google Drive
+# See backend/download_tifs.py to fetch them locally
