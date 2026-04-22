@@ -39,6 +39,9 @@ except ImportError:
 _TIF_DIR = pathlib.Path(__file__).parent / "tif"
 _TIF_DIR.mkdir(exist_ok=True)
 
+_BASEMAP_DIR = pathlib.Path(__file__).parent / "basemap"
+_BASEMAP_DIR.mkdir(exist_ok=True)
+
 # 256x256 fully-transparent PNG returned for tiles outside the image bounds
 _EMPTY_PNG: bytes = b""
 try:
@@ -180,7 +183,7 @@ def health():
 #  LOCAL TILE ENDPOINTS  (rio-tiler, served from backend/tif/)
 # ============================================================
 
-_BASEMAP_TIF = _TIF_DIR / "basemap.tif"
+_BASEMAP_TIF = _BASEMAP_DIR / "basemap.tif"
 
 
 def _local_basemap_url() -> str | None:
@@ -192,18 +195,28 @@ def _local_basemap_url() -> str | None:
 
 @app.get("/basemap-tiles/{z}/{x}/{y}.png")
 def serve_basemap_tile(z: int, x: int, y: int):
-    """Serve a 256×256 PNG tile from the local Sentinel-2 basemap GeoTIFF (RGBA)."""
+    """Serve a 256×256 PNG tile from the local Sentinel-2 basemap GeoTIFF.
+    Reads only the first 3 bands (RGB). The last band, if present, is the
+    CALABARZON boundary alpha mask written by fix_tif_nodata.py — pixels
+    outside the region are set to transparent automatically.
+    """
     if not _RIO_AVAILABLE:
         raise HTTPException(status_code=503, detail="rio-tiler not installed")
     if not _BASEMAP_TIF.exists():
-        raise HTTPException(status_code=404, detail="basemap.tif not found in backend/tif/")
+        raise HTTPException(status_code=404, detail="basemap.tif not found in backend/basemap/")
     try:
         with RioReader(str(_BASEMAP_TIF)) as src:
-            img = src.tile(x, y, z, tilesize=256)
+            n_bands = src.dataset.count
+            img = src.tile(x, y, z, tilesize=256, indexes=[1, 2, 3])
+            # Apply CALABARZON boundary mask from the alpha band added by fix_tif_nodata.py
+            if n_bands > 3:
+                alpha = src.tile(x, y, z, tilesize=256, indexes=[n_bands])
+                img.mask[alpha.data[0] == 0] = 0
         return Response(content=img.render(img_format="PNG"), media_type="image/png")
     except TileOutsideBounds:
         return Response(content=_EMPTY_PNG, media_type="image/png")
-    except Exception:
+    except Exception as e:
+        print(f"[basemap-tile] ERROR {z}/{x}/{y}: {type(e).__name__}: {e}", flush=True)
         return Response(content=_EMPTY_PNG, media_type="image/png")
 
 
