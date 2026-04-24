@@ -195,25 +195,28 @@ def _local_basemap_url() -> str | None:
 
 @app.get("/basemap-tiles/{z}/{x}/{y}.png")
 def serve_basemap_tile(z: int, x: int, y: int):
-    """Serve a 256×256 PNG tile from the local Sentinel-2 basemap GeoTIFF.
-    Reads only the first 3 bands (RGB). The last band, if present, is the
-    CALABARZON boundary alpha mask written by fix_tif_nodata.py — pixels
-    outside the region are set to transparent automatically.
-    """
+    """Serve a 256×256 PNG tile from the local Sentinel-2 basemap GeoTIFF."""
+    print(f"[basemap-tile] HIT {z}/{x}/{y}", flush=True)
     if not _RIO_AVAILABLE:
         raise HTTPException(status_code=503, detail="rio-tiler not installed")
     if not _BASEMAP_TIF.exists():
         raise HTTPException(status_code=404, detail="basemap.tif not found in backend/basemap/")
     try:
         with RioReader(str(_BASEMAP_TIF)) as src:
-            n_bands = src.dataset.count
             img = src.tile(x, y, z, tilesize=256, indexes=[1, 2, 3])
-            # Apply CALABARZON boundary mask from the alpha band added by fix_tif_nodata.py
-            if n_bands > 3:
-                alpha = src.tile(x, y, z, tilesize=256, indexes=[n_bands])
+            if src.dataset.count >= 4:
+                # Band 4 is always the computed alpha after fix_tif_nodata.py processing.
+                alpha = src.tile(x, y, z, tilesize=256, indexes=[4])
+                nonzero = int((alpha.data[0] > 0).sum())
+                print(f"[basemap-tile] {z}/{x}/{y} alpha_nonzero={nonzero}/65536", flush=True)
                 img.mask[alpha.data[0] == 0] = 0
+            else:
+                print(f"[basemap-tile] {z}/{x}/{y} no alpha band", flush=True)
+        if img.data.dtype != "uint8":
+            img.rescale(in_range=((0, 3000),) * 3)
         return Response(content=img.render(img_format="PNG"), media_type="image/png")
     except TileOutsideBounds:
+        print(f"[basemap-tile] {z}/{x}/{y} outside-bounds → empty tile", flush=True)
         return Response(content=_EMPTY_PNG, media_type="image/png")
     except Exception as e:
         print(f"[basemap-tile] ERROR {z}/{x}/{y}: {type(e).__name__}: {e}", flush=True)
