@@ -34,6 +34,15 @@ export default function App() {
   // Drawn polygon — lifted here so Profile can save/load AOIs
   const [drawnPolygon, setDrawnPolygon] = useState(null);
 
+  // Admin AOIs — fetched once on mount, displayed on the map for all users
+  const [adminAois, setAdminAois] = useState([]);
+  useEffect(() => {
+    fetch(`${API}/aois`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setAdminAois(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   // Filter panel visibility (desktop collapse + mobile overlay)
   const [panelOpen, setPanelOpen] = useState(true);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -282,6 +291,7 @@ export default function App() {
               agriUrl={agriLayerUrl}
               cropSuitabilityUrl={showCropSuitability ? cropSuitabilityUrl : null}
               showCropSuitability={showCropSuitability}
+              adminAois={adminAois}
             />
             {/* Mobile: floating filter button */}
             <button

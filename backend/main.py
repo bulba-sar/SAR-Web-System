@@ -268,6 +268,21 @@ def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
         return Response(content=_EMPTY_PNG, media_type="image/png")
 
 
+@app.get("/aois")
+def get_public_aois(db: Session = Depends(get_db)):
+    """Public endpoint — returns all admin-managed AOIs for display on the map."""
+    aois = db.query(models.AdminAOI).order_by(models.AdminAOI.created_at.desc()).all()
+    return [
+        {
+            "id":          a.id,
+            "name":        a.name,
+            "description": a.description,
+            "geojson":     a.geojson,
+        }
+        for a in aois
+    ]
+
+
 @app.get("/datasets/available")
 def list_available_datasets():
     """Public endpoint — returns year/period pairs for which a local TIF exists."""
