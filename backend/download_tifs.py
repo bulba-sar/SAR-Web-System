@@ -38,7 +38,7 @@ def download_all():
         id=GDRIVE_FOLDER_ID,
         output=TIF_DIR,
         quiet=False,
-        remaining_ok=True,
+        remaining_ok=True,  # Comment out if tif files are not yet installed
     )
 
     # basemap.tif belongs in backend/basemap/, not backend/tif/

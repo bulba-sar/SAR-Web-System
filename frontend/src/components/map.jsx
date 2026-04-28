@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap, useMapEvents, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
@@ -178,11 +178,37 @@ function MapClickListener({ showProtected, showCropSuitability, setPopupInfo }) 
   return null;
 }
 
-// MAIN MAP COMPONENT 
-export default function Map({ 
-  basemapUrl, sarUrl, year, period, loading, targetLocation, 
+// ADMIN AOI LAYER
+const AOI_STYLE = { color: '#f59e0b', weight: 2, opacity: 0.9, fillColor: '#f59e0b', fillOpacity: 0.12 };
+
+function AdminAOILayer({ aois }) {
+  if (!aois || aois.length === 0) return null;
+  return aois.map(aoi => {
+    let geojson;
+    try { geojson = typeof aoi.geojson === 'string' ? JSON.parse(aoi.geojson) : aoi.geojson; }
+    catch { return null; }
+    return (
+      <GeoJSON
+        key={aoi.id}
+        data={geojson}
+        style={AOI_STYLE}
+        onEachFeature={(_, layer) => {
+          layer.bindTooltip(
+            `<strong>${aoi.name}</strong>${aoi.description ? `<br/><span style="font-size:11px">${aoi.description}</span>` : ''}`,
+            { sticky: true, direction: 'top' }
+          );
+        }}
+      />
+    );
+  });
+}
+
+// MAIN MAP COMPONENT
+export default function Map({
+  basemapUrl, sarUrl, year, period, loading, targetLocation,
   protectedUrl, showProtected, sarOpacity,
-  cropSuitabilityUrl, showCropSuitability
+  cropSuitabilityUrl, showCropSuitability,
+  adminAois
 }) {
 
   const [popupInfo, setPopupInfo] = useState(null);
@@ -229,6 +255,7 @@ export default function Map({
         {sarUrl && !showCropSuitability && <GEELayer url={sarUrl} key={`sar-${sarUrl}`} opacity={sarOpacity} />}
         {cropSuitabilityUrl && showCropSuitability && <GEELayer url={cropSuitabilityUrl} key={`crop-${cropSuitabilityUrl}`} opacity={sarOpacity} />}
         {protectedUrl && <GEELayer url={protectedUrl} key={`pa-${protectedUrl}`} opacity={1.0} />}
+        <AdminAOILayer aois={adminAois} />
         
         {/* POPUP UI */}
         {popupInfo && (

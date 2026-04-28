@@ -28,6 +28,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
 
+from validation import validate_dataset
+
 _TIF_DIR = pathlib.Path(__file__).parent / "tif"
 _TIF_DIR.mkdir(exist_ok=True)
 
@@ -613,6 +615,7 @@ async def upload_dataset(
     admin: models.User = Depends(get_admin_user),
 ):
     """Save an uploaded .tif to backend/tif/ and run the nodata fix automatically."""
+    # ── Basic form field validation ────────────────────────────────────────
     if year not in VALID_YEARS:
         raise HTTPException(status_code=400, detail=f"Invalid year: {year}. Must be 2021–2030.")
     if period not in VALID_PERIODS:
@@ -622,7 +625,7 @@ async def upload_dataset(
     if not (fname.endswith(".tif") or fname.endswith(".tiff")):
         raise HTTPException(status_code=400, detail="File must be a GeoTIFF (.tif or .tiff)")
 
-    # Determine final filename
+    # ── Determine final filename ───────────────────────────────────────────
     if custom_name and custom_name.strip():
         safe = re.sub(r"[^\w\-]", "_", custom_name.strip())
         if not safe.lower().endswith(".tif"):
@@ -631,11 +634,28 @@ async def upload_dataset(
     else:
         dest_name = f"{year}-{period}.tif"
 
-    dest = _TIF_DIR / dest_name
+    # ── Read file bytes then run validation (Tier 1 + Tier 2) ─────────────
     contents = await file.read()
+    existing = [f.name for f in _TIF_DIR.glob("*.tif")]
+
+    validation = await asyncio.to_thread(validate_dataset, contents, dest_name, existing)
+
+    if not validation.is_valid:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Dataset failed validation. Upload rejected.",
+                "errors": validation.errors,
+                "warnings": validation.warnings,
+                "info": validation.info,
+            },
+        )
+
+    # ── Write to disk ──────────────────────────────────────────────────────
+    dest = _TIF_DIR / dest_name
     dest.write_bytes(contents)
 
-    # Run the nodata fix in a thread (blocking rasterio + GEE boundary fetch)
+    # ── Run the nodata fix in a thread (rasterio + GEE boundary fetch) ─────
     try:
         fix_status = await asyncio.to_thread(_fix_nodata_single, dest)
     except Exception as exc:
@@ -646,6 +666,8 @@ async def upload_dataset(
         "filename": dest_name,
         "size_bytes": len(contents),
         "nodata_fix": fix_status,
+        "warnings": validation.warnings,
+        "info": validation.info,
     }
 
 
