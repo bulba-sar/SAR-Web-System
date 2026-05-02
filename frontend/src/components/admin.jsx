@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { MapContainer, TileLayer, GeoJSON as LeafletGeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -1136,8 +1136,6 @@ function ModelPerformanceSection() {
   const avgKappa = avg('kappa');
   const avgMse = avg('mse');
 
-  const activePeriod = selectedPeriod ? periods[selectedPeriod] : null;
-
   return (
     <div className="space-y-6">
 
@@ -1247,86 +1245,83 @@ function ModelPerformanceSection() {
                 const filled = (p?.overall?.accuracy ?? 0) > 0;
                 const isActive = selectedPeriod === key;
                 return (
-                  <tr
-                    key={key}
-                    onClick={() => filled && setSelectedPeriod(isActive ? null : key)}
-                    className={`border-b border-zinc-100 dark:border-zinc-700 last:border-0 transition ${isActive ? 'bg-green-50 dark:bg-green-900/30' : i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/40 dark:bg-zinc-700/40'} ${filled ? 'cursor-pointer hover:bg-green-50/60 dark:hover:bg-green-900/20' : ''}`}
-                  >
-                    <td className="px-4 py-2.5 font-bold text-zinc-800 dark:text-zinc-100">{key}</td>
-                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">
-                      {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
-                      {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
-                      {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">
-                      {filled ? (
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${isActive ? 'bg-[#3f7b56] text-white border-[#3f7b56]' : 'text-[#3f7b56] border-[#3f7b56]/30'}`}>
-                          {isActive ? 'Hide' : 'View'}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-zinc-300 italic">pending</span>
-                      )}
-                    </td>
-                  </tr>
+                  <Fragment key={key}>
+                    <tr
+                      onClick={() => filled && setSelectedPeriod(isActive ? null : key)}
+                      className={`border-b border-zinc-100 dark:border-zinc-700 transition ${isActive ? 'bg-green-50 dark:bg-green-900/30' : i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/40 dark:bg-zinc-700/40'} ${filled ? 'cursor-pointer hover:bg-green-50/60 dark:hover:bg-green-900/20' : ''}`}
+                    >
+                      <td className="px-4 py-2.5 font-bold text-zinc-800 dark:text-zinc-100">{key}</td>
+                      <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">
+                        {filled ? pct(p.overall.accuracy) : <span className="text-zinc-300">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
+                        {filled ? p.overall.kappa.toFixed(4) : <span className="text-zinc-300">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-mono text-zinc-700 dark:text-zinc-300">
+                        {filled ? p.overall.mse.toFixed(4) : <span className="text-zinc-300">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {filled ? (
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${isActive ? 'bg-[#3f7b56] text-white border-[#3f7b56]' : 'text-[#3f7b56] border-[#3f7b56]/30'}`}>
+                            {isActive ? 'Hide ▲' : 'View ▼'}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-zinc-300 italic">pending</span>
+                        )}
+                      </td>
+                    </tr>
+                    {isActive && filled && (
+                      <tr className="border-b border-zinc-100 dark:border-zinc-700">
+                        <td colSpan={5} className="p-0">
+                          <div className="px-4 py-4 bg-green-50/30 dark:bg-green-900/10 space-y-5">
+                            <div>
+                              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
+                              <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-600">
+                                      <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
+                                      <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
+                                      <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
+                                      <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">F1 Score</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {CLASS_ORDER_MODEL.map((cls, ci) => {
+                                      const m = p.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
+                                      return (
+                                        <tr key={cls} className={ci % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/60 dark:bg-zinc-700/40'}>
+                                          <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
+                                              <span className="font-bold text-zinc-800 dark:text-zinc-100">{cls}</span>
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.precision)}</td>
+                                          <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.recall)}</td>
+                                          <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.f1)}</td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Confusion Matrix</p>
+                              <ConfusionMatrixView confusion_matrix={p.confusion_matrix} />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
           </table>
         </div>
       </div>
-
-      {/* Drill-down for selected period */}
-      {activePeriod && selectedPeriod && (
-        <div className="border border-green-100 dark:border-green-900 bg-green-50/30 dark:bg-green-900/10 rounded-2xl p-4 space-y-5">
-          <h3 className="text-sm font-black text-zinc-800 dark:text-zinc-100">
-            {selectedPeriod}
-            <span className="ml-2 text-xs font-normal text-zinc-500">— detailed metrics</span>
-          </h3>
-
-          <div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Per-Class Metrics</p>
-            <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-600">
-                    <th className="text-left font-black text-zinc-500 uppercase tracking-wider px-4 py-2">Class</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Precision</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">Recall</th>
-                    <th className="font-black text-zinc-500 uppercase tracking-wider px-4 py-2 text-center">F1 Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CLASS_ORDER_MODEL.map((cls, i) => {
-                    const m = activePeriod.per_class?.[cls] ?? { precision: 0, recall: 0, f1: 0 };
-                    return (
-                      <tr key={cls} className={i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50/60 dark:bg-zinc-700/40'}>
-                        <td className="px-4 py-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CLASS_COLORS_MODEL[cls] }} />
-                            <span className="font-bold text-zinc-800 dark:text-zinc-100">{cls}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.precision)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.recall)}</td>
-                        <td className="px-4 py-2 text-center font-mono font-bold text-zinc-700 dark:text-zinc-300">{pct(m.f1)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Confusion Matrix</p>
-            <ConfusionMatrixView confusion_matrix={activePeriod.confusion_matrix} />
-          </div>
-        </div>
-      )}
 
       {/* Input features */}
       {model?.features && (
