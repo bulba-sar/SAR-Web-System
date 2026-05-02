@@ -1,0 +1,2572 @@
+{
+  "config": {
+    "gee_project": "sar-calabarzon",
+    "asset_path": "projects/sar-calabarzon/assets/FINAL_Training_Points_Agro",
+    "test_size": 0.3,
+    "cv_folds": 5,
+    "random_state": 42,
+    "models": [
+      "Random Forest",
+      "XGBoost",
+      "SVM"
+    ]
+  },
+  "models": {
+    "Random Forest": {
+      "periods": {
+        "2021-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8754,
+            "kappa": 0.8454,
+            "mse": 1.1281
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9143,
+              "recall": 0.9143,
+              "f1": 0.9143
+            },
+            "Urban": {
+              "precision": 0.9508,
+              "recall": 0.9831,
+              "f1": 0.9667
+            },
+            "Forest": {
+              "precision": 0.76,
+              "recall": 0.9048,
+              "f1": 0.8261
+            },
+            "Agriculture": {
+              "precision": 0.9524,
+              "recall": 0.9375,
+              "f1": 0.9449
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                0,
+                3
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                57,
+                0
+              ],
+              [
+                3,
+                0,
+                0,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8793,
+            "std_accuracy": 0.0252,
+            "fold_scores": [
+              0.8457,
+              0.9037,
+              0.8556,
+              0.9091,
+              0.8824
+            ]
+          },
+          "train_time_sec": 0.64
+        },
+        "2021-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8786,
+            "kappa": 0.849,
+            "mse": 0.9214
+          },
+          "per_class": {
+            "Water": {
+              "precision": 1.0,
+              "recall": 0.9714,
+              "f1": 0.9855
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7333,
+              "recall": 0.873,
+              "f1": 0.7971
+            },
+            "Agriculture": {
+              "precision": 0.9,
+              "recall": 0.9844,
+              "f1": 0.9403
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                34,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                55,
+                3
+              ],
+              [
+                0,
+                0,
+                1,
+                63
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8832,
+            "std_accuracy": 0.0168,
+            "fold_scores": [
+              0.861,
+              0.9091,
+              0.893,
+              0.8817,
+              0.871
+            ]
+          },
+          "train_time_sec": 0.63
+        },
+        "2022-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8861,
+            "kappa": 0.8584,
+            "mse": 0.9431
+          },
+          "per_class": {
+            "Water": {
+              "precision": 1.0,
+              "recall": 0.9143,
+              "f1": 0.9552
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "Forest": {
+              "precision": 0.7059,
+              "recall": 0.9524,
+              "f1": 0.8108
+            },
+            "Agriculture": {
+              "precision": 0.9538,
+              "recall": 0.9688,
+              "f1": 0.9612
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                1,
+                2
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                62
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8846,
+            "std_accuracy": 0.0109,
+            "fold_scores": [
+              0.8777,
+              0.8717,
+              0.8824,
+              0.8877,
+              0.9037
+            ]
+          },
+          "train_time_sec": 0.67
+        },
+        "2022-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8968,
+            "kappa": 0.8722,
+            "mse": 0.7829
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9394,
+              "recall": 0.8857,
+              "f1": 0.9118
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "Forest": {
+              "precision": 0.7778,
+              "recall": 0.8889,
+              "f1": 0.8296
+            },
+            "Agriculture": {
+              "precision": 0.9524,
+              "recall": 0.9375,
+              "f1": 0.9449
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                31,
+                0,
+                3,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                56,
+                0
+              ],
+              [
+                2,
+                0,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8868,
+            "std_accuracy": 0.0248,
+            "fold_scores": [
+              0.8564,
+              0.893,
+              0.877,
+              0.877,
+              0.9305
+            ]
+          },
+          "train_time_sec": 0.65
+        },
+        "2023-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8826,
+            "kappa": 0.8543,
+            "mse": 0.9359
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9828,
+              "recall": 0.9661,
+              "f1": 0.9744
+            },
+            "Forest": {
+              "precision": 0.716,
+              "recall": 0.9206,
+              "f1": 0.8056
+            },
+            "Agriculture": {
+              "precision": 0.9677,
+              "recall": 0.9375,
+              "f1": 0.9524
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                57,
+                2,
+                0
+              ],
+              [
+                0,
+                0,
+                58,
+                0
+              ],
+              [
+                1,
+                1,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.9007,
+            "std_accuracy": 0.0159,
+            "fold_scores": [
+              0.8777,
+              0.9198,
+              0.8877,
+              0.9037,
+              0.9144
+            ]
+          },
+          "train_time_sec": 0.73
+        },
+        "2023-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8754,
+            "kappa": 0.8455,
+            "mse": 1.0854
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9697,
+              "recall": 0.9143,
+              "f1": 0.9412
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7342,
+              "recall": 0.9206,
+              "f1": 0.8169
+            },
+            "Agriculture": {
+              "precision": 0.9672,
+              "recall": 0.9219,
+              "f1": 0.944
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                58,
+                0
+              ],
+              [
+                1,
+                1,
+                1,
+                59
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8739,
+            "std_accuracy": 0.0171,
+            "fold_scores": [
+              0.8777,
+              0.8717,
+              0.8449,
+              0.877,
+              0.8984
+            ]
+          },
+          "train_time_sec": 0.68
+        },
+        "2024-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.911,
+            "kappa": 0.8896,
+            "mse": 0.7509
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7722,
+              "recall": 0.9683,
+              "f1": 0.8592
+            },
+            "Agriculture": {
+              "precision": 0.9841,
+              "recall": 0.9688,
+              "f1": 0.9764
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                1,
+                0,
+                1
+              ],
+              [
+                0,
+                58,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                61,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                62
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8911,
+            "std_accuracy": 0.0187,
+            "fold_scores": [
+              0.8564,
+              0.9091,
+              0.8984,
+              0.9037,
+              0.8877
+            ]
+          },
+          "train_time_sec": 0.77
+        },
+        "2024-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8949,
+            "kappa": 0.87,
+            "mse": 0.7826
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9831,
+              "recall": 0.9831,
+              "f1": 0.9831
+            },
+            "Forest": {
+              "precision": 0.8065,
+              "recall": 0.8621,
+              "f1": 0.8333
+            },
+            "Agriculture": {
+              "precision": 0.8971,
+              "recall": 0.9531,
+              "f1": 0.9242
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                58,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                50,
+                2
+              ],
+              [
+                1,
+                0,
+                0,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.879,
+            "std_accuracy": 0.0258,
+            "fold_scores": [
+              0.8641,
+              0.9185,
+              0.8913,
+              0.8415,
+              0.8798
+            ]
+          },
+          "train_time_sec": 0.66
+        },
+        "2025-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8861,
+            "kappa": 0.8588,
+            "mse": 0.8932
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9714,
+              "recall": 0.9714,
+              "f1": 0.9714
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7375,
+              "recall": 0.9365,
+              "f1": 0.8252
+            },
+            "Agriculture": {
+              "precision": 0.9833,
+              "recall": 0.9219,
+              "f1": 0.9516
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                34,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                59,
+                0
+              ],
+              [
+                1,
+                0,
+                1,
+                59
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8749,
+            "std_accuracy": 0.0157,
+            "fold_scores": [
+              0.8717,
+              0.8556,
+              0.8717,
+              0.9037,
+              0.8717
+            ]
+          },
+          "train_time_sec": 0.65
+        },
+        "2025-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8434,
+            "kappa": 0.8068,
+            "mse": 1.2847
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9167,
+              "recall": 0.9429,
+              "f1": 0.9296
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 0.9661,
+              "f1": 0.9828
+            },
+            "Forest": {
+              "precision": 0.7121,
+              "recall": 0.746,
+              "f1": 0.7287
+            },
+            "Agriculture": {
+              "precision": 0.9344,
+              "recall": 0.8906,
+              "f1": 0.912
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                57,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                47,
+                3
+              ],
+              [
+                3,
+                0,
+                1,
+                57
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8652,
+            "std_accuracy": 0.016,
+            "fold_scores": [
+              0.8449,
+              0.877,
+              0.8877,
+              0.8663,
+              0.8503
+            ]
+          },
+          "train_time_sec": 0.66
+        }
+      },
+      "average": {
+        "accuracy": {
+          "mean": 0.883,
+          "std": 0.0168
+        },
+        "kappa": {
+          "mean": 0.855,
+          "std": 0.0207
+        },
+        "mse": {
+          "mean": 0.9508,
+          "std": 0.1618
+        },
+        "mean_accuracy": {
+          "mean": 0.8819,
+          "std": 0.0094
+        },
+        "per_class": {
+          "Water": {
+            "precision": {
+              "mean": 0.9623,
+              "std": 0.0285
+            },
+            "recall": {
+              "mean": 0.9343,
+              "std": 0.0257
+            },
+            "f1": {
+              "mean": 0.9479,
+              "std": 0.0225
+            }
+          },
+          "Urban": {
+            "precision": {
+              "mean": 0.9784,
+              "std": 0.0166
+            },
+            "recall": {
+              "mean": 0.9831,
+              "std": 0.0107
+            },
+            "f1": {
+              "mean": 0.9806,
+              "std": 0.0106
+            }
+          },
+          "Forest": {
+            "precision": {
+              "mean": 0.7456,
+              "std": 0.031
+            },
+            "recall": {
+              "mean": 0.8973,
+              "std": 0.0596
+            },
+            "f1": {
+              "mean": 0.8133,
+              "std": 0.0325
+            }
+          },
+          "Agriculture": {
+            "precision": {
+              "mean": 0.9492,
+              "std": 0.0291
+            },
+            "recall": {
+              "mean": 0.9422,
+              "std": 0.0262
+            },
+            "f1": {
+              "mean": 0.9452,
+              "std": 0.017
+            }
+          }
+        },
+        "n_periods": 10
+      }
+    },
+    "XGBoost": {
+      "periods": {
+        "2021-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8897,
+            "kappa": 0.8631,
+            "mse": 0.9929
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9429,
+              "recall": 0.9429,
+              "f1": 0.9429
+            },
+            "Urban": {
+              "precision": 0.9516,
+              "recall": 1.0,
+              "f1": 0.9752
+            },
+            "Forest": {
+              "precision": 0.7671,
+              "recall": 0.8889,
+              "f1": 0.8235
+            },
+            "Agriculture": {
+              "precision": 0.9688,
+              "recall": 0.9688,
+              "f1": 0.9688
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                56,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                62
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8857,
+            "std_accuracy": 0.0221,
+            "fold_scores": [
+              0.8511,
+              0.9037,
+              0.877,
+              0.9144,
+              0.8824
+            ]
+          },
+          "train_time_sec": 0.68
+        },
+        "2021-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8786,
+            "kappa": 0.8491,
+            "mse": 0.9786
+          },
+          "per_class": {
+            "Water": {
+              "precision": 1.0,
+              "recall": 0.9714,
+              "f1": 0.9855
+            },
+            "Urban": {
+              "precision": 0.9831,
+              "recall": 0.9831,
+              "f1": 0.9831
+            },
+            "Forest": {
+              "precision": 0.7143,
+              "recall": 0.873,
+              "f1": 0.7857
+            },
+            "Agriculture": {
+              "precision": 0.9403,
+              "recall": 0.9844,
+              "f1": 0.9618
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                34,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                55,
+                2
+              ],
+              [
+                0,
+                0,
+                1,
+                63
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8778,
+            "std_accuracy": 0.0209,
+            "fold_scores": [
+              0.8396,
+              0.9037,
+              0.8824,
+              0.8817,
+              0.8817
+            ]
+          },
+          "train_time_sec": 0.45
+        },
+        "2022-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.9004,
+            "kappa": 0.8762,
+            "mse": 0.8683
+          },
+          "per_class": {
+            "Water": {
+              "precision": 1.0,
+              "recall": 0.8571,
+              "f1": 0.9231
+            },
+            "Urban": {
+              "precision": 0.9833,
+              "recall": 1.0,
+              "f1": 0.9916
+            },
+            "Forest": {
+              "precision": 0.7564,
+              "recall": 0.9365,
+              "f1": 0.8369
+            },
+            "Agriculture": {
+              "precision": 0.9412,
+              "recall": 1.0,
+              "f1": 0.9697
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                30,
+                0,
+                2,
+                3
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                59,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                64
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8911,
+            "std_accuracy": 0.0151,
+            "fold_scores": [
+              0.867,
+              0.8877,
+              0.893,
+              0.893,
+              0.9144
+            ]
+          },
+          "train_time_sec": 0.38
+        },
+        "2022-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.9039,
+            "kappa": 0.881,
+            "mse": 0.726
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9412,
+              "recall": 0.9143,
+              "f1": 0.9275
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 0.9831,
+              "f1": 0.9915
+            },
+            "Forest": {
+              "precision": 0.7733,
+              "recall": 0.9206,
+              "f1": 0.8406
+            },
+            "Agriculture": {
+              "precision": 0.9677,
+              "recall": 0.9375,
+              "f1": 0.9524
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                2,
+                1
+              ],
+              [
+                0,
+                58,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                58,
+                0
+              ],
+              [
+                2,
+                0,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8889,
+            "std_accuracy": 0.0303,
+            "fold_scores": [
+              0.8457,
+              0.9037,
+              0.861,
+              0.9091,
+              0.9251
+            ]
+          },
+          "train_time_sec": 0.61
+        },
+        "2023-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8968,
+            "kappa": 0.8721,
+            "mse": 0.8363
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9412,
+              "recall": 0.9143,
+              "f1": 0.9275
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 0.9661,
+              "f1": 0.9828
+            },
+            "Forest": {
+              "precision": 0.7532,
+              "recall": 0.9206,
+              "f1": 0.8286
+            },
+            "Agriculture": {
+              "precision": 0.9683,
+              "recall": 0.9531,
+              "f1": 0.9606
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                1,
+                2
+              ],
+              [
+                0,
+                57,
+                2,
+                0
+              ],
+              [
+                0,
+                0,
+                58,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8975,
+            "std_accuracy": 0.0162,
+            "fold_scores": [
+              0.8777,
+              0.8877,
+              0.893,
+              0.9251,
+              0.9037
+            ]
+          },
+          "train_time_sec": 0.42
+        },
+        "2023-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.879,
+            "kappa": 0.8501,
+            "mse": 0.9288
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9412,
+              "recall": 0.9143,
+              "f1": 0.9275
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 0.9492,
+              "f1": 0.9739
+            },
+            "Forest": {
+              "precision": 0.725,
+              "recall": 0.9206,
+              "f1": 0.8112
+            },
+            "Agriculture": {
+              "precision": 0.9524,
+              "recall": 0.9375,
+              "f1": 0.9449
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                0,
+                1,
+                2
+              ],
+              [
+                0,
+                56,
+                2,
+                0
+              ],
+              [
+                1,
+                0,
+                58,
+                0
+              ],
+              [
+                1,
+                0,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8611,
+            "std_accuracy": 0.0179,
+            "fold_scores": [
+              0.8617,
+              0.861,
+              0.8289,
+              0.8717,
+              0.8824
+            ]
+          },
+          "train_time_sec": 0.42
+        },
+        "2024-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.9146,
+            "kappa": 0.8941,
+            "mse": 0.79
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9394,
+              "recall": 0.8857,
+              "f1": 0.9118
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "Forest": {
+              "precision": 0.7792,
+              "recall": 0.9524,
+              "f1": 0.8571
+            },
+            "Agriculture": {
+              "precision": 0.9841,
+              "recall": 0.9688,
+              "f1": 0.9764
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                31,
+                0,
+                2,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                60,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                62
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8943,
+            "std_accuracy": 0.021,
+            "fold_scores": [
+              0.8617,
+              0.9198,
+              0.8877,
+              0.9144,
+              0.8877
+            ]
+          },
+          "train_time_sec": 0.68
+        },
+        "2024-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.9022,
+            "kappa": 0.879,
+            "mse": 0.7681
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "Forest": {
+              "precision": 0.8065,
+              "recall": 0.8621,
+              "f1": 0.8333
+            },
+            "Agriculture": {
+              "precision": 0.9118,
+              "recall": 0.9688,
+              "f1": 0.9394
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                50,
+                1
+              ],
+              [
+                1,
+                0,
+                0,
+                62
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8867,
+            "std_accuracy": 0.0296,
+            "fold_scores": [
+              0.8533,
+              0.9239,
+              0.9185,
+              0.8579,
+              0.8798
+            ]
+          },
+          "train_time_sec": 0.53
+        },
+        "2025-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8897,
+            "kappa": 0.8637,
+            "mse": 0.8648
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "Forest": {
+              "precision": 0.7571,
+              "recall": 0.8413,
+              "f1": 0.797
+            },
+            "Agriculture": {
+              "precision": 0.9836,
+              "recall": 0.9375,
+              "f1": 0.96
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                2,
+                0
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                53,
+                0
+              ],
+              [
+                1,
+                0,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8717,
+            "std_accuracy": 0.0188,
+            "fold_scores": [
+              0.8503,
+              0.8503,
+              0.8824,
+              0.8984,
+              0.877
+            ]
+          },
+          "train_time_sec": 0.38
+        },
+        "2025-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.847,
+            "kappa": 0.811,
+            "mse": 1.2776
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9429,
+              "recall": 0.9429,
+              "f1": 0.9429
+            },
+            "Urban": {
+              "precision": 0.9821,
+              "recall": 0.9322,
+              "f1": 0.9565
+            },
+            "Forest": {
+              "precision": 0.7042,
+              "recall": 0.7937,
+              "f1": 0.7463
+            },
+            "Agriculture": {
+              "precision": 0.9667,
+              "recall": 0.9062,
+              "f1": 0.9355
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                55,
+                3,
+                0
+              ],
+              [
+                0,
+                0,
+                50,
+                1
+              ],
+              [
+                2,
+                0,
+                1,
+                58
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.862,
+            "std_accuracy": 0.018,
+            "fold_scores": [
+              0.8289,
+              0.8663,
+              0.8824,
+              0.8717,
+              0.861
+            ]
+          },
+          "train_time_sec": 0.45
+        }
+      },
+      "average": {
+        "accuracy": {
+          "mean": 0.8902,
+          "std": 0.0179
+        },
+        "kappa": {
+          "mean": 0.8639,
+          "std": 0.022
+        },
+        "mse": {
+          "mean": 0.9031,
+          "std": 0.1497
+        },
+        "mean_accuracy": {
+          "mean": 0.8817,
+          "std": 0.0123
+        },
+        "per_class": {
+          "Water": {
+            "precision": {
+              "mean": 0.959,
+              "std": 0.0234
+            },
+            "recall": {
+              "mean": 0.9229,
+              "std": 0.0314
+            },
+            "f1": {
+              "mean": 0.9402,
+              "std": 0.0204
+            }
+          },
+          "Urban": {
+            "precision": {
+              "mean": 0.99,
+              "std": 0.0149
+            },
+            "recall": {
+              "mean": 0.9814,
+              "std": 0.0233
+            },
+            "f1": {
+              "mean": 0.9855,
+              "std": 0.0134
+            }
+          },
+          "Forest": {
+            "precision": {
+              "mean": 0.7536,
+              "std": 0.0297
+            },
+            "recall": {
+              "mean": 0.891,
+              "std": 0.0464
+            },
+            "f1": {
+              "mean": 0.816,
+              "std": 0.0307
+            }
+          },
+          "Agriculture": {
+            "precision": {
+              "mean": 0.9585,
+              "std": 0.0212
+            },
+            "recall": {
+              "mean": 0.9563,
+              "std": 0.026
+            },
+            "f1": {
+              "mean": 0.9569,
+              "std": 0.0129
+            }
+          }
+        },
+        "n_periods": 10
+      }
+    },
+    "SVM": {
+      "periods": {
+        "2021-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8826,
+            "kappa": 0.8548,
+            "mse": 1.0641
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9429,
+              "recall": 0.9429,
+              "f1": 0.9429
+            },
+            "Urban": {
+              "precision": 0.9831,
+              "recall": 0.9831,
+              "f1": 0.9831
+            },
+            "Forest": {
+              "precision": 0.7761,
+              "recall": 0.8254,
+              "f1": 0.8
+            },
+            "Agriculture": {
+              "precision": 0.9683,
+              "recall": 0.9531,
+              "f1": 0.9606
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                52,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.875,
+            "std_accuracy": 0.0278,
+            "fold_scores": [
+              0.8351,
+              0.9198,
+              0.8824,
+              0.877,
+              0.861
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2021-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8679,
+            "kappa": 0.8366,
+            "mse": 1.0464
+          },
+          "per_class": {
+            "Water": {
+              "precision": 1.0,
+              "recall": 0.9714,
+              "f1": 0.9855
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7778,
+              "recall": 0.7778,
+              "f1": 0.7778
+            },
+            "Agriculture": {
+              "precision": 0.9104,
+              "recall": 0.9531,
+              "f1": 0.9313
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                34,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                49,
+                2
+              ],
+              [
+                0,
+                0,
+                0,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8692,
+            "std_accuracy": 0.0168,
+            "fold_scores": [
+              0.8503,
+              0.8984,
+              0.861,
+              0.8763,
+              0.8602
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2022-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8719,
+            "kappa": 0.8416,
+            "mse": 1.0925
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9688,
+              "recall": 0.8857,
+              "f1": 0.9254
+            },
+            "Urban": {
+              "precision": 0.9219,
+              "recall": 1.0,
+              "f1": 0.9593
+            },
+            "Forest": {
+              "precision": 0.8033,
+              "recall": 0.7778,
+              "f1": 0.7903
+            },
+            "Agriculture": {
+              "precision": 0.9531,
+              "recall": 0.9531,
+              "f1": 0.9531
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                31,
+                2,
+                0,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                49,
+                1
+              ],
+              [
+                1,
+                0,
+                0,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8718,
+            "std_accuracy": 0.022,
+            "fold_scores": [
+              0.8511,
+              0.9091,
+              0.8503,
+              0.8663,
+              0.8824
+            ]
+          },
+          "train_time_sec": 0.01
+        },
+        "2022-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8754,
+            "kappa": 0.8461,
+            "mse": 1.0285
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9365,
+              "recall": 1.0,
+              "f1": 0.9672
+            },
+            "Forest": {
+              "precision": 0.8095,
+              "recall": 0.8095,
+              "f1": 0.8095
+            },
+            "Agriculture": {
+              "precision": 0.95,
+              "recall": 0.8906,
+              "f1": 0.9194
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                51,
+                0
+              ],
+              [
+                1,
+                2,
+                2,
+                57
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8782,
+            "std_accuracy": 0.0199,
+            "fold_scores": [
+              0.8457,
+              0.893,
+              0.8717,
+              0.877,
+              0.9037
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2023-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.9039,
+            "kappa": 0.8814,
+            "mse": 0.8434
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9714,
+              "recall": 0.9714,
+              "f1": 0.9714
+            },
+            "Urban": {
+              "precision": 0.9833,
+              "recall": 1.0,
+              "f1": 0.9916
+            },
+            "Forest": {
+              "precision": 0.8125,
+              "recall": 0.8254,
+              "f1": 0.8189
+            },
+            "Agriculture": {
+              "precision": 0.9839,
+              "recall": 0.9531,
+              "f1": 0.9683
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                34,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                52,
+                0
+              ],
+              [
+                1,
+                0,
+                1,
+                61
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8879,
+            "std_accuracy": 0.0206,
+            "fold_scores": [
+              0.8511,
+              0.9091,
+              0.8824,
+              0.893,
+              0.9037
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2023-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8612,
+            "kappa": 0.8288,
+            "mse": 1.089
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9412,
+              "recall": 0.9143,
+              "f1": 0.9275
+            },
+            "Urban": {
+              "precision": 0.9667,
+              "recall": 0.9831,
+              "f1": 0.9748
+            },
+            "Forest": {
+              "precision": 0.7692,
+              "recall": 0.7937,
+              "f1": 0.7812
+            },
+            "Agriculture": {
+              "precision": 0.9661,
+              "recall": 0.8906,
+              "f1": 0.9268
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                32,
+                1,
+                1,
+                1
+              ],
+              [
+                0,
+                58,
+                0,
+                0
+              ],
+              [
+                1,
+                0,
+                50,
+                0
+              ],
+              [
+                1,
+                0,
+                1,
+                57
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8579,
+            "std_accuracy": 0.0243,
+            "fold_scores": [
+              0.8245,
+              0.8877,
+              0.8556,
+              0.8824,
+              0.8396
+            ]
+          },
+          "train_time_sec": 0.01
+        },
+        "2024-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8897,
+            "kappa": 0.8639,
+            "mse": 0.9146
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9429,
+              "recall": 0.9429,
+              "f1": 0.9429
+            },
+            "Urban": {
+              "precision": 0.9672,
+              "recall": 1.0,
+              "f1": 0.9833
+            },
+            "Forest": {
+              "precision": 0.7846,
+              "recall": 0.8095,
+              "f1": 0.7969
+            },
+            "Agriculture": {
+              "precision": 1.0,
+              "recall": 0.9375,
+              "f1": 0.9677
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                51,
+                0
+              ],
+              [
+                2,
+                0,
+                1,
+                60
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8793,
+            "std_accuracy": 0.0381,
+            "fold_scores": [
+              0.8245,
+              0.9412,
+              0.8663,
+              0.893,
+              0.8717
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2024-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.8877,
+            "kappa": 0.8617,
+            "mse": 0.8152
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9459,
+              "recall": 1.0,
+              "f1": 0.9722
+            },
+            "Urban": {
+              "precision": 1.0,
+              "recall": 0.9661,
+              "f1": 0.9828
+            },
+            "Forest": {
+              "precision": 0.8197,
+              "recall": 0.8621,
+              "f1": 0.8403
+            },
+            "Agriculture": {
+              "precision": 0.9333,
+              "recall": 0.875,
+              "f1": 0.9032
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                35,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                57,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                50,
+                0
+              ],
+              [
+                2,
+                0,
+                1,
+                56
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8703,
+            "std_accuracy": 0.0237,
+            "fold_scores": [
+              0.8587,
+              0.9076,
+              0.8804,
+              0.8361,
+              0.8689
+            ]
+          },
+          "train_time_sec": 0.02
+        },
+        "2025-Jan-Jun": {
+          "overall": {
+            "accuracy": 0.8826,
+            "kappa": 0.855,
+            "mse": 0.911
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9833,
+              "recall": 1.0,
+              "f1": 0.9916
+            },
+            "Forest": {
+              "precision": 0.7846,
+              "recall": 0.8095,
+              "f1": 0.7969
+            },
+            "Agriculture": {
+              "precision": 0.9672,
+              "recall": 0.9219,
+              "f1": 0.944
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                59,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                51,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                59
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8674,
+            "std_accuracy": 0.0164,
+            "fold_scores": [
+              0.8503,
+              0.8503,
+              0.8663,
+              0.893,
+              0.877
+            ]
+          },
+          "train_time_sec": 0.01
+        },
+        "2025-Jul-Dec": {
+          "overall": {
+            "accuracy": 0.847,
+            "kappa": 0.8115,
+            "mse": 1.153
+          },
+          "per_class": {
+            "Water": {
+              "precision": 0.9706,
+              "recall": 0.9429,
+              "f1": 0.9565
+            },
+            "Urban": {
+              "precision": 0.9828,
+              "recall": 0.9661,
+              "f1": 0.9744
+            },
+            "Forest": {
+              "precision": 0.7544,
+              "recall": 0.6825,
+              "f1": 0.7167
+            },
+            "Agriculture": {
+              "precision": 0.9365,
+              "recall": 0.9219,
+              "f1": 0.9291
+            }
+          },
+          "confusion_matrix": {
+            "classes": [
+              "Water",
+              "Urban",
+              "Forest",
+              "Agriculture"
+            ],
+            "matrix": [
+              [
+                33,
+                1,
+                1,
+                0
+              ],
+              [
+                0,
+                57,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                43,
+                2
+              ],
+              [
+                1,
+                0,
+                0,
+                59
+              ]
+            ]
+          },
+          "cross_validation": {
+            "folds": 5,
+            "mean_accuracy": 0.8749,
+            "std_accuracy": 0.0248,
+            "fold_scores": [
+              0.8342,
+              0.9091,
+              0.8877,
+              0.8663,
+              0.877
+            ]
+          },
+          "train_time_sec": 0.02
+        }
+      },
+      "average": {
+        "accuracy": {
+          "mean": 0.877,
+          "std": 0.0152
+        },
+        "kappa": {
+          "mean": 0.8481,
+          "std": 0.0188
+        },
+        "mse": {
+          "mean": 0.9958,
+          "std": 0.1098
+        },
+        "mean_accuracy": {
+          "mean": 0.8732,
+          "std": 0.0076
+        },
+        "per_class": {
+          "Water": {
+            "precision": {
+              "mean": 0.9625,
+              "std": 0.0179
+            },
+            "recall": {
+              "mean": 0.9457,
+              "std": 0.0298
+            },
+            "f1": {
+              "mean": 0.9537,
+              "std": 0.0185
+            }
+          },
+          "Urban": {
+            "precision": {
+              "mean": 0.9691,
+              "std": 0.0225
+            },
+            "recall": {
+              "mean": 0.9881,
+              "std": 0.0132
+            },
+            "f1": {
+              "mean": 0.9783,
+              "std": 0.0097
+            }
+          },
+          "Forest": {
+            "precision": {
+              "mean": 0.7892,
+              "std": 0.0201
+            },
+            "recall": {
+              "mean": 0.7973,
+              "std": 0.0449
+            },
+            "f1": {
+              "mean": 0.7928,
+              "std": 0.0308
+            }
+          },
+          "Agriculture": {
+            "precision": {
+              "mean": 0.9569,
+              "std": 0.0247
+            },
+            "recall": {
+              "mean": 0.925,
+              "std": 0.0286
+            },
+            "f1": {
+              "mean": 0.9403,
+              "std": 0.0208
+            }
+          }
+        },
+        "n_periods": 10
+      }
+    }
+  },
+  "comparison": {
+    "ranking": [
+      {
+        "rank": 1,
+        "model": "XGBoost",
+        "avg_accuracy": 0.8902,
+        "avg_kappa": 0.8639,
+        "avg_mse": 0.9031,
+        "avg_cv_accuracy": 0.8817,
+        "periods_completed": 10
+      },
+      {
+        "rank": 2,
+        "model": "Random Forest",
+        "avg_accuracy": 0.883,
+        "avg_kappa": 0.855,
+        "avg_mse": 0.9508,
+        "avg_cv_accuracy": 0.8819,
+        "periods_completed": 10
+      },
+      {
+        "rank": 3,
+        "model": "SVM",
+        "avg_accuracy": 0.877,
+        "avg_kappa": 0.8481,
+        "avg_mse": 0.9958,
+        "avg_cv_accuracy": 0.8732,
+        "periods_completed": 10
+      }
+    ],
+    "best_model": "XGBoost",
+    "note": "Models ranked by mean accuracy across all completed periods. Cross-validation confirms generalization (higher mean + lower std = better). Confusion matrices and per-class metrics detail per-class behaviour."
+  }
+}
