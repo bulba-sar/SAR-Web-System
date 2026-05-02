@@ -9,9 +9,21 @@ import Admin from './components/admin';
 const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 export default function App() {
-  const [activeNav, setActiveNav] = useState(() => sessionStorage.getItem('sar_nav') || 'filters');
+  const [activeNav, setActiveNav] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset_token')) return 'profile';
+    return sessionStorage.getItem('sar_nav') || 'filters';
+  });
   useEffect(() => { sessionStorage.setItem('sar_nav', activeNav); }, [activeNav]);
   const [targetLocation, setTargetLocation] = useState(null);
+
+  // Password reset token from email link (?reset_token=...)
+  const [resetToken, setResetToken] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('reset_token');
+    if (t) window.history.replaceState({}, '', window.location.pathname);
+    return t || null;
+  });
   
   // Map Layer Toggles
   const [showProtected, setShowProtected] = useState(false);
@@ -217,7 +229,7 @@ export default function App() {
 
         // SHOW PROFILE DASHBOARD
         <div className="flex-1 h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 pb-16 md:pb-0">
-          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} darkMode={darkMode} toggleDark={() => setDarkMode(d => !d)} />
+          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} darkMode={darkMode} toggleDark={() => setDarkMode(d => !d)} resetToken={resetToken} onResetDone={() => setResetToken(null)} />
         </div>
 
       ) : activeNav === 'admin' ? (

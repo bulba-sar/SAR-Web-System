@@ -45,7 +45,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     email = Column(String(200), unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)   # NULL for Google-only accounts
+    google_id     = Column(String(200), nullable=True, index=True)
     institution = Column(String(200), nullable=True)
     role        = Column(String(50), default="Researcher")
     permissions = Column(Text, nullable=True)  # JSON override; NULL = use role defaults

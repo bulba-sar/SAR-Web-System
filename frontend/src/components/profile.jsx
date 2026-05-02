@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 
 const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+const GOOGLE_ENABLED = !!process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const ROLES = ['Researcher', 'Student', 'Farmer', 'Government Official', 'NGO'];
 
@@ -41,14 +43,26 @@ const Field = ({ label, value }) => (
 //  LOGIN / REGISTER FORM
 // ============================================================
 
-function AuthForm({ onSuccess }) {
+function AuthForm({ onSuccess, resetToken = null, onResetDone }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '', institution: '', role: 'Researcher' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  // Forgot password flow
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
 
+  // Reset password flow (when resetToken prop provided from email link)
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetDone, setResetDone] = useState(false);
+
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const inputCls = "w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]";
+
+  // ── Normal login / register ───────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -58,10 +72,8 @@ function AuthForm({ onSuccess }) {
       const body = mode === 'login'
         ? { email: form.email, password: form.password }
         : { name: form.name, email: form.email, password: form.password, institution: form.institution, role: form.role };
-
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.detail || 'Something went wrong');
       localStorage.setItem('sar_token', data.access_token);
       onSuccess(data.access_token, data.user);
@@ -72,19 +84,182 @@ function AuthForm({ onSuccess }) {
     }
   };
 
+  // ── Google Sign-In ────────────────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Google sign-in failed');
+      localStorage.setItem('sar_token', data.access_token);
+      onSuccess(data.access_token, data.user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Forgot password ───────────────────────────────────────────────
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await fetch(`${API}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+    } catch {}
+    setForgotSent(true);
+    setLoading(false);
+  };
+
+  // ── Reset password (from email link) ─────────────────────────────
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, new_password: newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Reset failed');
+      setResetDone(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Shared logo header ────────────────────────────────────────────
+  const Logo = () => (
+    <div className="flex flex-col items-center mb-8">
+      <img src="/logo3.png" alt="Sakahang Lupa" className="w-12 h-12 object-contain mb-3" />
+      <h1 className="text-lg font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+        <span className="text-[#23432f] dark:text-[#a0d870]">Sakahang </span>
+        <span className="text-[#d4a017]">Lupa</span>
+      </h1>
+    </div>
+  );
+
+  const ErrorBox = () => error ? (
+    <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">{error}</div>
+  ) : null;
+
+  // ── Reset password view ───────────────────────────────────────────
+  if (resetToken) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <Logo />
+          {resetDone ? (
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-6 h-6 text-[#3f7b56]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100">Password updated!</p>
+              <p className="text-xs text-zinc-400">You can now sign in with your new password.</p>
+              <button onClick={onResetDone}
+                className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition-all">
+                Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mb-6">Enter your new password below.</p>
+              <form onSubmit={handleResetSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">New Password</label>
+                  <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                    placeholder="At least 8 characters" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Confirm Password</label>
+                  <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat new password" className={inputCls} />
+                </div>
+                <ErrorBox />
+                <button type="submit" disabled={loading}
+                  className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-60">
+                  {loading ? 'Updating…' : 'Set New Password'}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Forgot password view ──────────────────────────────────────────
+  if (forgotMode) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <Logo />
+          {forgotSent ? (
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100">Check your email</p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                If <strong>{forgotEmail}</strong> is registered, a reset link has been sent. It expires in 15 minutes.
+              </p>
+              <button onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail(''); }}
+                className="w-full border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 font-bold text-sm py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all">
+                Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mb-6">
+                Enter your email and we'll send you a reset link.
+              </p>
+              <form onSubmit={handleForgotSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Email</label>
+                  <input type="email" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                    placeholder="you@example.com" className={inputCls} />
+                </div>
+                <button type="submit" disabled={loading}
+                  className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-60">
+                  {loading ? 'Sending…' : 'Send Reset Link'}
+                </button>
+                <button type="button" onClick={() => { setForgotMode(false); setError(''); }}
+                  className="w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors py-1">
+                  ← Back to Sign In
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal login / register view ──────────────────────────────────
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <img src="/logo3.png" alt="Sakahang Lupa" className="w-12 h-12 object-contain mb-3" />
-          <h1 className="text-lg font-bold" style={{ fontFamily: 'Georgia, serif' }}>
-            <span className="text-[#23432f] dark:text-[#a0d870]">Sakahang </span>
-            <span className="text-[#d4a017]">Lupa</span>
-          </h1>
-          <p className="text-xs text-zinc-400 mt-1">Sign in to save your areas of interest</p>
-        </div>
+        <Logo />
+        <p className="text-xs text-zinc-400 text-center -mt-4 mb-6">Sign in to save your areas of interest</p>
 
         {/* Toggle */}
         <div className="flex bg-zinc-100 dark:bg-zinc-700 rounded-lg p-1 mb-6">
@@ -102,19 +277,17 @@ function AuthForm({ onSuccess }) {
               <div>
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Full Name</label>
                 <input type="text" required value={form.name} onChange={e => update('name', e.target.value)}
-                  placeholder="Juan dela Cruz"
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
+                  placeholder="Juan dela Cruz" className={inputCls} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Institution</label>
                 <input type="text" value={form.institution} onChange={e => update('institution', e.target.value)}
-                  placeholder="BSU-Alangilan, UPLB, DA-CALABARZON, or N/A"
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
+                  placeholder="BSU-Alangilan, UPLB, DA-CALABARZON, or N/A" className={inputCls} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Role</label>
                 <select value={form.role} onChange={e => update('role', e.target.value)}
-                  className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56] bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100">
+                  className={inputCls}>
                   {ROLES.map(r => <option key={r}>{r}</option>)}
                 </select>
               </div>
@@ -122,28 +295,54 @@ function AuthForm({ onSuccess }) {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-zinc-600 mb-1">Email</label>
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-1">Email</label>
             <input type="email" required value={form.email} onChange={e => update('email', e.target.value)}
-              placeholder="you@example.com"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
+              placeholder="you@example.com" className={inputCls} />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-600 mb-1">Password</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-300">Password</label>
+              {mode === 'login' && (
+                <button type="button" onClick={() => { setForgotMode(true); setError(''); }}
+                  className="text-[11px] font-medium text-[#3f7b56] hover:underline">
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <input type="password" required value={form.password} onChange={e => update('password', e.target.value)}
-              placeholder=""
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
+              className={inputCls} />
           </div>
 
-          {error && (
-            <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 text-xs text-red-700 dark:text-red-300 font-medium">{error}</div>
-          )}
+          <ErrorBox />
 
           <button type="submit" disabled={loading}
             className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-60">
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
+
+        {/* Google Sign-In */}
+        {GOOGLE_ENABLED && (
+          <>
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign-in failed. Please try again.')}
+                theme="outline"
+                size="large"
+                text={mode === 'login' ? 'signin_with' : 'signup_with'}
+                shape="rectangular"
+                locale="en"
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -303,7 +502,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmClass, onConfirm, o
 //  MAIN PROFILE COMPONENT
 // ============================================================
 
-export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, onAuthChange, darkMode = false, toggleDark = null }) {
+export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, onAuthChange, darkMode = false, toggleDark = null, resetToken = null, onResetDone }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [token, setToken] = useState(localStorage.getItem('sar_token'));
   const [user, setUser] = useState(null);
@@ -412,7 +611,7 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
   };
 
   // ── Not logged in ──
-  if (!token) return <AuthForm onSuccess={handleAuthSuccess} />;
+  if (!token) return <AuthForm onSuccess={handleAuthSuccess} resetToken={resetToken} onResetDone={onResetDone} />;
 
   // ── Loading ──
   if (loadingUser && !user) {
