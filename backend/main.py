@@ -72,6 +72,8 @@ except Exception as e:
 # --- COLUMN MIGRATIONS (add new columns to existing tables safely) ---
 _COLUMN_MIGRATIONS = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions TEXT;",
+    "ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(200);",
 ]
 
 try:
@@ -1466,6 +1468,19 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token from the frontend
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
 class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
     institution: Optional[str] = None
@@ -1529,10 +1544,76 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 @app.post("/auth/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == req.email).first()
-    if not user or not auth_module.verify_password(req.password, user.password_hash):
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user.password_hash:
+        raise HTTPException(status_code=400, detail="This account uses Google Sign-In. Please use the Google button to sign in.")
+    if not auth_module.verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = auth_module.create_token(user.id)
     return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
+
+
+@app.post("/auth/google")
+def google_auth(req: GoogleAuthRequest, db: Session = Depends(get_db)):
+    google_client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
+    if not google_client_id:
+        raise HTTPException(status_code=503, detail="Google Sign-In is not configured on this server")
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as _greq
+        idinfo = id_token.verify_oauth2_token(req.credential, _greq.Request(), google_client_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=f"Invalid Google token: {exc}")
+
+    email     = idinfo["email"]
+    google_id = idinfo["sub"]
+    name      = idinfo.get("name") or email.split("@")[0]
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        user = models.User(
+            name=name, email=email, password_hash=None,
+            google_id=google_id, role="Researcher",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif not user.google_id:
+        user.google_id = google_id
+        db.commit()
+        db.refresh(user)
+
+    token = auth_module.create_token(user.id)
+    return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
+
+
+@app.post("/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == req.email).first()
+    # Always return success — prevents email enumeration
+    if user and user.password_hash:
+        reset_token = auth_module.create_reset_token(user.id)
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+        reset_url = f"{frontend_url}?reset_token={reset_token}"
+        try:
+            auth_module.send_reset_email(req.email, reset_url)
+        except Exception as exc:
+            print(f"[forgot-password] Email send failed: {exc}", flush=True)
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+
+@app.post("/auth/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user_id = auth_module.verify_reset_token(req.token)
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    user.password_hash = auth_module.hash_password(req.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 
 # ============================================================
