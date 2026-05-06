@@ -69,8 +69,8 @@ TEST_SIZE    = 0.3   # 70 % train / 30 % test — same as existing RF pipeline
 RANDOM_STATE = 42
 CV_FOLDS     = 5     # stratified k-fold cross-validation
 
-CLASS_NAMES = {0: "Water", 1: "Urban", 2: "Forest", 3: "Agriculture"}
-ALL_CLASSES  = list(CLASS_NAMES.keys())   # [0, 1, 2, 3]
+CLASS_NAMES = {0: "Water", 1: "Urban", 2: "Forest", 3: "Agriculture", 4: "Agroforestry"}
+ALL_CLASSES  = list(CLASS_NAMES.keys())   # [0, 1, 2, 3, 4]
 
 PERIODS = [
     ("2021", "S1"), ("2021", "S2"),

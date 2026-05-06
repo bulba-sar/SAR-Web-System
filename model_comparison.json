@@ -40,6 +40,11 @@
               "precision": 0.9524,
               "recall": 0.9375,
               "f1": 0.9449
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1": 0.8889
             }
           },
           "confusion_matrix": {
@@ -47,18 +52,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 0,
-                3
+                3,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -66,13 +74,22 @@
                 0,
                 0,
                 57,
+                0,
                 0
               ],
               [
                 3,
                 0,
                 0,
-                60
+                60,
+                0
+              ],
+              [
+                0,
+                3,
+                0,
+                0,
+                12
               ]
             ]
           },
@@ -88,7 +105,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.64
+          "train_time_sec": 0.62
         },
         "2021-Jul-Dec": {
           "overall": {
@@ -116,6 +133,11 @@
               "precision": 0.9,
               "recall": 0.9844,
               "f1": 0.9403
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -123,18 +145,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 34,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -142,13 +167,22 @@
                 0,
                 1,
                 55,
-                3
+                3,
+                0
               ],
               [
                 0,
                 0,
                 1,
-                63
+                63,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0,
+                14
               ]
             ]
           },
@@ -164,7 +198,7 @@
               0.871
             ]
           },
-          "train_time_sec": 0.63
+          "train_time_sec": 0.6
         },
         "2022-Jan-Jun": {
           "overall": {
@@ -192,6 +226,11 @@
               "precision": 0.9538,
               "recall": 0.9688,
               "f1": 0.9612
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -199,18 +238,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 1,
-                2
+                2,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -218,13 +260,22 @@
                 0,
                 0,
                 60,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 1,
-                62
+                62,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -240,7 +291,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.67
+          "train_time_sec": 0.6
         },
         "2022-Jul-Dec": {
           "overall": {
@@ -268,6 +319,11 @@
               "precision": 0.9524,
               "recall": 0.9375,
               "f1": 0.9449
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -275,18 +331,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 31,
                 0,
                 3,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -294,13 +353,22 @@
                 0,
                 0,
                 56,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 1,
-                60
+                60,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1,
+                14
               ]
             ]
           },
@@ -316,7 +384,7 @@
               0.9305
             ]
           },
-          "train_time_sec": 0.65
+          "train_time_sec": 0.6
         },
         "2023-Jan-Jun": {
           "overall": {
@@ -344,6 +412,11 @@
               "precision": 0.9677,
               "recall": 0.9375,
               "f1": 0.9524
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -351,32 +424,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                2
+                2,
+                0
               ],
               [
                 0,
                 57,
                 2,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 58,
+                0,
                 0
               ],
               [
                 1,
                 1,
                 1,
-                60
+                60,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -392,7 +477,7 @@
               0.9144
             ]
           },
-          "train_time_sec": 0.73
+          "train_time_sec": 0.6
         },
         "2023-Jul-Dec": {
           "overall": {
@@ -420,6 +505,11 @@
               "precision": 0.9672,
               "recall": 0.9219,
               "f1": 0.944
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -427,18 +517,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 1,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -446,13 +539,22 @@
                 0,
                 0,
                 58,
+                0,
                 0
               ],
               [
                 1,
                 1,
                 1,
-                59
+                59,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0,
+                14
               ]
             ]
           },
@@ -468,7 +570,7 @@
               0.8984
             ]
           },
-          "train_time_sec": 0.68
+          "train_time_sec": 0.6
         },
         "2024-Jan-Jun": {
           "overall": {
@@ -496,6 +598,11 @@
               "precision": 0.9841,
               "recall": 0.9688,
               "f1": 0.9764
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -503,32 +610,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 1,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 61,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 0,
-                62
+                62,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -544,7 +663,7 @@
               0.8877
             ]
           },
-          "train_time_sec": 0.77
+          "train_time_sec": 0.59
         },
         "2024-Jul-Dec": {
           "overall": {
@@ -572,6 +691,11 @@
               "precision": 0.8971,
               "recall": 0.9531,
               "f1": 0.9242
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -579,32 +703,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                2
+                2,
+                0
               ],
               [
                 0,
                 58,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 50,
-                2
+                2,
+                0
               ],
               [
                 1,
                 0,
                 0,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1,
+                14
               ]
             ]
           },
@@ -620,7 +756,7 @@
               0.8798
             ]
           },
-          "train_time_sec": 0.66
+          "train_time_sec": 0.62
         },
         "2025-Jan-Jun": {
           "overall": {
@@ -648,6 +784,11 @@
               "precision": 0.9833,
               "recall": 0.9219,
               "f1": 0.9516
+            },
+            "Agroforestry": {
+              "precision": 0.9333,
+              "recall": 0.9333,
+              "f1": 0.9333
             }
           },
           "confusion_matrix": {
@@ -655,18 +796,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 34,
                 0,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -674,13 +818,22 @@
                 0,
                 1,
                 59,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 1,
-                59
+                59,
+                1
+              ],
+              [
+                0,
+                1,
+                0,
+                0,
+                14
               ]
             ]
           },
@@ -696,7 +849,7 @@
               0.8717
             ]
           },
-          "train_time_sec": 0.65
+          "train_time_sec": 0.68
         },
         "2025-Jul-Dec": {
           "overall": {
@@ -724,6 +877,11 @@
               "precision": 0.9344,
               "recall": 0.8906,
               "f1": 0.912
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -731,32 +889,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 57,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 47,
-                3
+                3,
+                0
               ],
               [
                 3,
                 0,
                 1,
-                57
+                57,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -772,7 +942,7 @@
               0.8503
             ]
           },
-          "train_time_sec": 0.66
+          "train_time_sec": 0.6
         }
       },
       "average": {
@@ -848,6 +1018,20 @@
               "mean": 0.9452,
               "std": 0.017
             }
+          },
+          "Agroforestry": {
+            "precision": {
+              "mean": 0.9871,
+              "std": 0.0259
+            },
+            "recall": {
+              "mean": 0.9466,
+              "std": 0.0581
+            },
+            "f1": {
+              "mean": 0.9652,
+              "std": 0.0324
+            }
           }
         },
         "n_periods": 10
@@ -881,6 +1065,11 @@
               "precision": 0.9688,
               "recall": 0.9688,
               "f1": 0.9688
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1": 0.8889
             }
           },
           "confusion_matrix": {
@@ -888,18 +1077,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                2
+                2,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -907,13 +1099,22 @@
                 0,
                 0,
                 56,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 0,
-                62
+                62,
+                0
+              ],
+              [
+                0,
+                3,
+                0,
+                0,
+                12
               ]
             ]
           },
@@ -929,7 +1130,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.68
+          "train_time_sec": 0.64
         },
         "2021-Jul-Dec": {
           "overall": {
@@ -957,6 +1158,11 @@
               "precision": 0.9403,
               "recall": 0.9844,
               "f1": 0.9618
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -964,18 +1170,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 34,
                 0,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -983,13 +1192,22 @@
                 0,
                 0,
                 55,
-                2
+                2,
+                0
               ],
               [
                 0,
                 0,
                 1,
-                63
+                63,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0,
+                14
               ]
             ]
           },
@@ -1005,7 +1223,7 @@
               0.8817
             ]
           },
-          "train_time_sec": 0.45
+          "train_time_sec": 0.39
         },
         "2022-Jan-Jun": {
           "overall": {
@@ -1033,6 +1251,11 @@
               "precision": 0.9412,
               "recall": 1.0,
               "f1": 0.9697
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -1040,16 +1263,26 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 30,
                 0,
                 2,
-                3
+                3,
+                0
               ],
               [
+                0,
+                59,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
                 0,
                 59,
                 0,
@@ -1058,14 +1291,16 @@
               [
                 0,
                 0,
-                59,
+                0,
+                64,
                 0
               ],
               [
                 0,
                 0,
                 0,
-                64
+                0,
+                15
               ]
             ]
           },
@@ -1081,7 +1316,7 @@
               0.9144
             ]
           },
-          "train_time_sec": 0.38
+          "train_time_sec": 0.36
         },
         "2022-Jul-Dec": {
           "overall": {
@@ -1109,6 +1344,11 @@
               "precision": 0.9677,
               "recall": 0.9375,
               "f1": 0.9524
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -1116,32 +1356,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 2,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 58,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 1,
-                60
+                60,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1,
+                14
               ]
             ]
           },
@@ -1157,7 +1409,7 @@
               0.9251
             ]
           },
-          "train_time_sec": 0.61
+          "train_time_sec": 0.38
         },
         "2023-Jan-Jun": {
           "overall": {
@@ -1185,6 +1437,11 @@
               "precision": 0.9683,
               "recall": 0.9531,
               "f1": 0.9606
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -1192,32 +1449,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 1,
-                2
+                2,
+                0
               ],
               [
                 0,
                 57,
                 2,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 58,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 0,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1233,7 +1502,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.42
+          "train_time_sec": 0.41
         },
         "2023-Jul-Dec": {
           "overall": {
@@ -1261,6 +1530,11 @@
               "precision": 0.9524,
               "recall": 0.9375,
               "f1": 0.9449
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -1268,32 +1542,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 0,
                 1,
-                2
+                2,
+                0
               ],
               [
                 0,
                 56,
                 2,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 58,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 1,
-                60
+                60,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1309,7 +1595,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.42
+          "train_time_sec": 0.38
         },
         "2024-Jan-Jun": {
           "overall": {
@@ -1337,6 +1623,11 @@
               "precision": 0.9841,
               "recall": 0.9688,
               "f1": 0.9764
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -1344,18 +1635,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 31,
                 0,
                 2,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -1363,13 +1657,22 @@
                 0,
                 0,
                 60,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 0,
-                62
+                62,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1385,7 +1688,7 @@
               0.8877
             ]
           },
-          "train_time_sec": 0.68
+          "train_time_sec": 0.43
         },
         "2024-Jul-Dec": {
           "overall": {
@@ -1413,6 +1716,11 @@
               "precision": 0.9118,
               "recall": 0.9688,
               "f1": 0.9394
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -1420,18 +1728,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                2
+                2,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -1439,13 +1750,22 @@
                 0,
                 0,
                 50,
-                1
+                1,
+                0
               ],
               [
                 1,
                 0,
                 0,
-                62
+                62,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1,
+                14
               ]
             ]
           },
@@ -1461,7 +1781,7 @@
               0.8798
             ]
           },
-          "train_time_sec": 0.53
+          "train_time_sec": 0.4
         },
         "2025-Jan-Jun": {
           "overall": {
@@ -1489,6 +1809,11 @@
               "precision": 0.9836,
               "recall": 0.9375,
               "f1": 0.96
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -1496,18 +1821,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 2,
+                0,
                 0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -1515,13 +1843,22 @@
                 0,
                 0,
                 53,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 1,
-                60
+                60,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1537,7 +1874,7 @@
               0.877
             ]
           },
-          "train_time_sec": 0.38
+          "train_time_sec": 0.39
         },
         "2025-Jul-Dec": {
           "overall": {
@@ -1565,6 +1902,11 @@
               "precision": 0.9667,
               "recall": 0.9062,
               "f1": 0.9355
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -1572,32 +1914,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 55,
                 3,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 50,
-                1
+                1,
+                0
               ],
               [
                 2,
                 0,
                 1,
-                58
+                58,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1613,7 +1967,7 @@
               0.861
             ]
           },
-          "train_time_sec": 0.45
+          "train_time_sec": 0.39
         }
       },
       "average": {
@@ -1689,6 +2043,20 @@
               "mean": 0.9569,
               "std": 0.0129
             }
+          },
+          "Agroforestry": {
+            "precision": {
+              "mean": 0.9812,
+              "std": 0.0286
+            },
+            "recall": {
+              "mean": 0.96,
+              "std": 0.0611
+            },
+            "f1": {
+              "mean": 0.9689,
+              "std": 0.0306
+            }
           }
         },
         "n_periods": 10
@@ -1722,6 +2090,11 @@
               "precision": 0.9683,
               "recall": 0.9531,
               "f1": 0.9606
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.9333,
+              "f1": 0.9655
             }
           },
           "confusion_matrix": {
@@ -1729,18 +2102,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                2
+                2,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -1748,13 +2124,22 @@
                 0,
                 0,
                 52,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 0,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0,
+                14
               ]
             ]
           },
@@ -1770,7 +2155,7 @@
               0.861
             ]
           },
-          "train_time_sec": 0.02
+          "train_time_sec": 0.05
         },
         "2021-Jul-Dec": {
           "overall": {
@@ -1798,6 +2183,11 @@
               "precision": 0.9104,
               "recall": 0.9531,
               "f1": 0.9313
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -1805,18 +2195,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 34,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -1824,13 +2217,22 @@
                 0,
                 1,
                 49,
-                2
+                2,
+                0
               ],
               [
                 0,
                 0,
                 0,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1874,6 +2276,11 @@
               "precision": 0.9531,
               "recall": 0.9531,
               "f1": 0.9531
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -1881,18 +2288,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 31,
                 2,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -1900,13 +2310,22 @@
                 0,
                 1,
                 49,
-                1
+                1,
+                0
               ],
               [
                 1,
                 0,
                 0,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -1922,7 +2341,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.01
+          "train_time_sec": 0.02
         },
         "2022-Jul-Dec": {
           "overall": {
@@ -1950,6 +2369,11 @@
               "precision": 0.95,
               "recall": 0.8906,
               "f1": 0.9194
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 0.8667,
+              "f1": 0.9286
             }
           },
           "confusion_matrix": {
@@ -1957,18 +2381,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -1976,13 +2403,22 @@
                 0,
                 0,
                 51,
+                0,
                 0
               ],
               [
                 1,
                 2,
                 2,
-                57
+                57,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                1,
+                13
               ]
             ]
           },
@@ -2026,6 +2462,11 @@
               "precision": 0.9839,
               "recall": 0.9531,
               "f1": 0.9683
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -2033,18 +2474,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 34,
                 0,
                 0,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -2052,13 +2496,22 @@
                 0,
                 0,
                 52,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 1,
-                61
+                61,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2074,7 +2527,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.02
+          "train_time_sec": 0.01
         },
         "2023-Jul-Dec": {
           "overall": {
@@ -2102,6 +2555,11 @@
               "precision": 0.9661,
               "recall": 0.8906,
               "f1": 0.9268
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -2109,18 +2567,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 32,
                 1,
                 1,
-                1
+                1,
+                0
               ],
               [
                 0,
                 58,
+                0,
                 0,
                 0
               ],
@@ -2128,13 +2589,22 @@
                 1,
                 0,
                 50,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 1,
-                57
+                57,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2178,6 +2648,11 @@
               "precision": 1.0,
               "recall": 0.9375,
               "f1": 0.9677
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -2185,18 +2660,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 1,
                 0,
-                0
+                0,
+                1
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -2204,13 +2682,22 @@
                 0,
                 1,
                 51,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 1,
-                60
+                60,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2254,6 +2741,11 @@
               "precision": 0.9333,
               "recall": 0.875,
               "f1": 0.9032
+            },
+            "Agroforestry": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
             }
           },
           "confusion_matrix": {
@@ -2261,11 +2753,13 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 35,
+                0,
                 0,
                 0,
                 0
@@ -2274,19 +2768,29 @@
                 0,
                 57,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 50,
+                0,
                 0
               ],
               [
                 2,
                 0,
                 1,
-                56
+                56,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2330,6 +2834,11 @@
               "precision": 0.9672,
               "recall": 0.9219,
               "f1": 0.944
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -2337,18 +2846,21 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 0,
                 1,
-                1
+                1,
+                0
               ],
               [
                 0,
                 59,
+                0,
                 0,
                 0
               ],
@@ -2356,13 +2868,22 @@
                 0,
                 1,
                 51,
+                0,
                 0
               ],
               [
                 1,
                 0,
                 0,
-                59
+                59,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2406,6 +2927,11 @@
               "precision": 0.9365,
               "recall": 0.9219,
               "f1": 0.9291
+            },
+            "Agroforestry": {
+              "precision": 0.9375,
+              "recall": 1.0,
+              "f1": 0.9677
             }
           },
           "confusion_matrix": {
@@ -2413,32 +2939,44 @@
               "Water",
               "Urban",
               "Forest",
-              "Agriculture"
+              "Agriculture",
+              "Agroforestry"
             ],
             "matrix": [
               [
                 33,
                 1,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 57,
                 1,
+                0,
                 0
               ],
               [
                 0,
                 0,
                 43,
-                2
+                2,
+                0
               ],
               [
                 1,
                 0,
                 0,
-                59
+                59,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                15
               ]
             ]
           },
@@ -2454,7 +2992,7 @@
               0.877
             ]
           },
-          "train_time_sec": 0.02
+          "train_time_sec": 0.01
         }
       },
       "average": {
@@ -2529,6 +3067,20 @@
             "f1": {
               "mean": 0.9403,
               "std": 0.0208
+            }
+          },
+          "Agroforestry": {
+            "precision": {
+              "mean": 0.975,
+              "std": 0.0306
+            },
+            "recall": {
+              "mean": 0.98,
+              "std": 0.0427
+            },
+            "f1": {
+              "mean": 0.9765,
+              "std": 0.0222
             }
           }
         },
