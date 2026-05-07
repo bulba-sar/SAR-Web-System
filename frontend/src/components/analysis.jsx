@@ -1091,9 +1091,60 @@ function CompareView({ basemapUrl }) {
 //  MAIN ANALYSIS COMPONENT
 // ============================================================
 
-export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null, isLoggedIn = false }) {
+export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPolygon, permissions = null, isLoggedIn = false, onGoToProfile }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [activeTab, setActiveTab] = useState('lulc'); // 'lulc' | 'crop' | 'compare'
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveDesc, setSaveDesc] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [existingAois, setExistingAois] = useState([]);
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+
+  // Fetch user's saved AOIs when the modal opens to check for duplicates
+  useEffect(() => {
+    if (!saveModalOpen || !isLoggedIn) return;
+    const token = localStorage.getItem('sar_token');
+    fetch(`${API}/profile/aois`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setExistingAois(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [saveModalOpen, isLoggedIn]);
+
+  // Derived duplicate checks (computed inline — no extra state needed)
+  const nameConflict = saveName.trim() !== '' &&
+    existingAois.some(a => a.name.trim().toLowerCase() === saveName.trim().toLowerCase());
+  const geoConflict = drawnPolygon
+    ? existingAois.find(a => a.geojson === JSON.stringify(drawnPolygon)) ?? null
+    : null;
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleSaveArea = async () => {
+    if (!saveName.trim()) return;
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('sar_token');
+      const res = await fetch(`${API}/profile/aois`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: saveName.trim(), description: saveDesc.trim() || null, geojson: JSON.stringify(drawnPolygon) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      setSaveModalOpen(false);
+      setSaveName('');
+      setSaveDesc('');
+      showToast('success', `"${data.name}" saved successfully.`);
+    } catch (err) {
+      showToast('error', err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
   const [analysisYears, setAnalysisYears] = useState(BASE_YEARS);
@@ -1185,7 +1236,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
   };
 
   const handleClearFilters = () => {
-    setStartYear('2022'); setEndYear('2023'); setSelectedSeason('all');
+    setStartYear(''); setEndYear(''); setSelectedSeason('all');
     setSarOpacity(0.5); setDrawnPolygon(null);
     setAnalyticsData(null); setAnalysisError(null);
     setCropData(null); setCropError(null);
@@ -1439,6 +1490,11 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
 
         <div className="flex items-center gap-2 lg:gap-3 ml-auto">
           <button onClick={handleClearFilters} className="text-[10px] lg:text-xs font-bold text-[#23432f] dark:text-green-400 bg-white dark:bg-zinc-800 border border-[#23432f] dark:border-green-700 px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition whitespace-nowrap">Clear</button>
+          {isLoggedIn && can('save_aois') && drawnPolygon && (
+            <button onClick={() => setSaveModalOpen(true)} className="text-[10px] lg:text-xs font-bold text-white bg-gradient-to-r from-[#3f7b56] to-[#2d6b45] px-2 py-1 lg:px-4 lg:py-2 rounded-lg hover:opacity-90 transition shadow-sm whitespace-nowrap">
+              Save Area
+            </button>
+          )}
           {(isAnalyzing || isCropAnalyzing) ? (
             <button onClick={handleCancelAnalysis} className="text-[10px] lg:text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1 lg:px-5 lg:py-2 rounded-lg transition shadow-sm whitespace-nowrap flex items-center gap-2">
               <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -1450,7 +1506,70 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
             </button>
           )}
         </div>
+
+        {/* Save Area Modal */}
+        {saveModalOpen && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-4">Save Area of Interest</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Area Name *</label>
+                  <input type="text" value={saveName} onChange={e => setSaveName(e.target.value)}
+                    placeholder="e.g. Batangas Rice Fields"
+                    className={`w-full border rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 transition
+                      ${nameConflict
+                        ? 'border-red-400 dark:border-red-500 focus:ring-red-300/40 focus:border-red-400'
+                        : 'border-zinc-200 dark:border-zinc-600 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]'}`} />
+                  {nameConflict && (
+                    <p className="mt-1 text-[11px] text-red-500 dark:text-red-400 flex items-center gap-1">
+                      <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                      An area with this name already exists. Choose a different name.
+                    </p>
+                  )}
+                </div>
+                {geoConflict && (
+                  <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                      This polygon is identical to your saved area <strong>"{geoConflict.name}"</strong>. You can still save it with a different name.
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Notes (optional)</label>
+                  <input type="text" value={saveDesc} onChange={e => setSaveDesc(e.target.value)}
+                    placeholder="e.g. Near Taal Lake, irrigated"
+                    className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button onClick={() => { setSaveModalOpen(false); setSaveName(''); setSaveDesc(''); }}
+                  className="flex-1 text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 px-4 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition">
+                  Cancel
+                </button>
+                <button onClick={handleSaveArea} disabled={saving || !saveName.trim() || nameConflict}
+                  className="flex-1 text-xs font-bold text-white bg-[#3f7b56] hover:bg-[#23432f] px-4 py-2 rounded-lg transition disabled:opacity-60">
+                  {saving ? 'Saving…' : 'Save Area'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>}
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all
+          ${toast.type === 'success'
+            ? 'bg-[#23432f] text-white'
+            : 'bg-red-600 text-white'}`}>
+          {toast.type === 'success'
+            ? <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            : <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>}
+          {toast.message}
+        </div>
+      )}
 
       {/* ── Main Grid: Map + Results (hidden on Compare / Model tabs) ── */}
       {activeTab !== 'compare' && activeTab !== 'model' && <>

@@ -349,75 +349,6 @@ function AuthForm({ onSuccess, resetToken = null, onResetDone }) {
 }
 
 // ============================================================
-//  SAVE AOI FORM (inline)
-// ============================================================
-
-function SaveAOIForm({ token, drawnPolygon, onSaved }) {
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  if (!drawnPolygon) return null;
-
-  const handleSave = async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`${API}/profile/aois`, {
-        method: 'POST',
-        headers: authHeaders(token),
-        body: JSON.stringify({ name: name.trim(), description: desc.trim() || null, geojson: JSON.stringify(drawnPolygon) }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail);
-      onSaved(data);
-      setName(''); setDesc(''); setOpen(false);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="border border-[#3f7b56]/30 dark:border-[#3f7b56]/50 bg-[#3f7b56]/5 dark:bg-[#3f7b56]/10 rounded-xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-xs font-bold text-[#3f7b56]">Active drawing — {drawnPolygon.length} vertices</span>
-        </div>
-        <button onClick={() => setOpen(o => !o)}
-          className="text-xs font-bold text-[#3f7b56] hover:underline">
-          {open ? 'Cancel' : 'Save this Area'}
-        </button>
-      </div>
-
-      {open && (
-        <div className="space-y-3 pt-2 border-t border-[#3f7b56]/20">
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Area Name *</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Batangas Rice Fields"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Notes (optional)</label>
-            <input type="text" value={desc} onChange={e => setDesc(e.target.value)}
-              placeholder="e.g. Near Taal Lake, irrigated"
-              className="w-full border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#3f7b56]/30 focus:border-[#3f7b56]" />
-          </div>
-          <button onClick={handleSave} disabled={saving || !name.trim()}
-            className="w-full bg-[#3f7b56] hover:bg-[#23432f] text-white font-bold text-xs py-2 rounded-lg transition-all disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save Area'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
 //  AOI CARD
 // ============================================================
 
@@ -502,7 +433,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmClass, onConfirm, o
 //  MAIN PROFILE COMPONENT
 // ============================================================
 
-export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, onAuthChange, darkMode = false, toggleDark = null, resetToken = null, onResetDone }) {
+export default function Profile({ onLoadAOI, permissions = null, onAuthChange, darkMode = false, toggleDark = null, resetToken = null, onResetDone }) {
   const can = (feature) => permissions === null || permissions?.[feature] !== false;
   const [token, setToken] = useState(localStorage.getItem('sar_token'));
   const [user, setUser] = useState(null);
@@ -606,10 +537,6 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
     }
   };
 
-  const handleAOISaved = (newAOI) => {
-    setAois(prev => [newAOI, ...prev]);
-  };
-
   // ── Not logged in ──
   if (!token) return <AuthForm onSuccess={handleAuthSuccess} resetToken={resetToken} onResetDone={onResetDone} />;
 
@@ -704,17 +631,14 @@ export default function Profile({ drawnPolygon, onLoadAOI, permissions = null, o
             <div>
               <SectionHeader title={`Saved Areas (${aois.length})`} />
 
-              {/* Save current drawing */}
-              <SaveAOIForm token={token} drawnPolygon={drawnPolygon} onSaved={handleAOISaved} />
-
-              {/* No drawing hint when list is empty */}
-              {aois.length === 0 && !drawnPolygon && (
+              {/* No saved areas hint */}
+              {aois.length === 0 && (
                 <div className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-8 text-center">
                   <svg className="w-10 h-10 text-zinc-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                   <p className="text-sm font-bold text-zinc-400">No saved areas yet</p>
-                  <p className="text-xs text-zinc-400 mt-1">Go to <strong>Analysis</strong>, draw a polygon on the map, then come back here to save it.</p>
+                  <p className="text-xs text-zinc-400 mt-1">Go to <strong>Analysis</strong>, draw a polygon, then click <strong>Save Area</strong>.</p>
                 </div>
               )}
 

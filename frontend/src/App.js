@@ -229,7 +229,7 @@ export default function App() {
 
         // SHOW PROFILE DASHBOARD
         <div className="flex-1 h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 pb-16 md:pb-0">
-          <Profile drawnPolygon={drawnPolygon} onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} darkMode={darkMode} toggleDark={() => setDarkMode(d => !d)} resetToken={resetToken} onResetDone={() => setResetToken(null)} />
+          <Profile onLoadAOI={handleLoadAOI} permissions={permissions} onAuthChange={fetchAuthState} darkMode={darkMode} toggleDark={() => setDarkMode(d => !d)} resetToken={resetToken} onResetDone={() => setResetToken(null)} />
         </div>
 
       ) : activeNav === 'admin' ? (
