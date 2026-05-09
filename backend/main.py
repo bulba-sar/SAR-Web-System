@@ -844,6 +844,31 @@ class CropIntensityRequest(BaseModel):
     end_year: int
 
 
+def _lulc_stats_from_tif_roi(year: int, period: str, polygon_coords) -> dict | None:
+    """Count pixels per class in the local TIF clipped to polygon_coords.
+    Returns {class_name: pixel_count} or None if TIF not found / rasterio unavailable.
+    """
+    tif_path = _TIF_DIR / f"{year}-{period}.tif"
+    if not tif_path.exists():
+        return None
+    try:
+        import rasterio
+        from rasterio.mask import mask as rasterio_mask
+        import numpy as np
+        geom = {"type": "Polygon", "coordinates": polygon_coords}
+        with rasterio.open(str(tif_path)) as src:
+            masked, _ = rasterio_mask(src, [geom], crop=True, filled=True, nodata=255)
+        band = masked[0]
+        return {
+            name: int(np.sum(band == idx))
+            for idx, name in CLASS_MAP.items()
+            if int(np.sum(band == idx)) > 0
+        }
+    except Exception as e:
+        print(f"[lulc_stats_tif] {year}/{period}: {e}", flush=True)
+        return None
+
+
 def _get_available_assets(start_year: int, end_year: int) -> list:
     available = []
     for yr in range(start_year, end_year + 1):
@@ -880,32 +905,41 @@ async def get_lulc_change(request: LULCAnalyticsRequest):
 
         analytics = []
         for yr, period_name, asset_id in available:
-            image = ee.Image(asset_id).select(0).clip(roi)
-            histogram = image.reduceRegion(
-                reducer=ee.Reducer.frequencyHistogram(),
-                geometry=roi,
-                scale=10,
-                maxPixels=1e10,
-                bestEffort=True
-            )
-
-            band_name = image.bandNames().get(0).getInfo()
-            hist_dict = histogram.get(band_name).getInfo()
-
-            if not hist_dict:
-                continue
-
-            total_pixels = sum(hist_dict.values())
-            class_data = {}
-
-            if total_pixels > 0:
-                for class_val_str, pixel_count in hist_dict.items():
-                    class_val = int(float(class_val_str))
-                    class_name = CLASS_MAP.get(class_val, f"Class {class_val}")
-                    class_data[class_name] = {
-                        "percentage": round((pixel_count / total_pixels) * 100, 2),
-                        "pixel_count": pixel_count
+            # Use local TIF when available — includes all 5 classes (incl. Agroforestry).
+            local_counts = _lulc_stats_from_tif_roi(yr, period_name, request.geometry.coordinates)
+            if local_counts is not None:
+                total_pixels = sum(local_counts.values())
+                class_data = {
+                    name: {
+                        "percentage": round((cnt / total_pixels) * 100, 2),
+                        "pixel_count": cnt,
                     }
+                    for name, cnt in local_counts.items()
+                } if total_pixels > 0 else {}
+            else:
+                # Fall back to GEE histogram (older assets that lack local TIF)
+                image = ee.Image(asset_id).select(0).clip(roi)
+                histogram = image.reduceRegion(
+                    reducer=ee.Reducer.frequencyHistogram(),
+                    geometry=roi,
+                    scale=10,
+                    maxPixels=1e10,
+                    bestEffort=True
+                )
+                band_name = image.bandNames().get(0).getInfo()
+                hist_dict = histogram.get(band_name).getInfo()
+                if not hist_dict:
+                    continue
+                total_pixels = sum(hist_dict.values())
+                class_data = {}
+                if total_pixels > 0:
+                    for class_val_str, pixel_count in hist_dict.items():
+                        class_val = int(float(class_val_str))
+                        class_name = CLASS_MAP.get(class_val, f"Class {class_val}")
+                        class_data[class_name] = {
+                            "percentage": round((pixel_count / total_pixels) * 100, 2),
+                            "pixel_count": pixel_count,
+                        }
 
             analytics.append({
                 "year": yr,
