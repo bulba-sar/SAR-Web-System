@@ -40,7 +40,7 @@ with open(JSON_FILE) as f:
 models_data = results["models"]
 model_names = results["config"]["models"]
 ranking     = results["comparison"]["ranking"]
-CLASS_NAMES = ["Water", "Urban", "Forest", "Agriculture", "Agroforestry"]
+CLASS_NAMES = ["Water", "Urban", "Forest", "Cropland", "Agroforestry"]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _avg(model_name, *keys, stat="mean"):
@@ -82,11 +82,12 @@ GREEN_MAP = LinearSegmentedColormap.from_list("sar_green", ["#f0faf4", "#1b5e20"
 #  Figure 1 — Grouped bar chart
 # ─────────────────────────────────────────────────────────────────────────────
 metric_defs = [
-    ("Accuracy",  [_avg(m, "accuracy")       for m in model_names]),
-    ("Precision", [macro_avg(m, "precision") for m in model_names]),
-    ("Recall",    [macro_avg(m, "recall")    for m in model_names]),
-    ("F1 Score",  [macro_avg(m, "f1")        for m in model_names]),
-    ("MSE †",     [_avg(m, "mse")            for m in model_names]),
+    ("Accuracy",    [_avg(m, "accuracy")       for m in model_names]),
+    ("Precision",   [macro_avg(m, "precision") for m in model_names]),
+    ("Recall",      [macro_avg(m, "recall")    for m in model_names]),
+    ("F1 Score",    [macro_avg(m, "f1")        for m in model_names]),
+    ("CV Accuracy", [_avg(m, "mean_accuracy")  for m in model_names]),
+    ("MSE",         [_avg(m, "mse")            for m in model_names]),
 ]
 
 metric_labels = [d[0] for d in metric_defs]

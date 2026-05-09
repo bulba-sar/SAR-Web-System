@@ -190,7 +190,8 @@ export default function FilterPanel({
               className="w-full p-2 lg:p-2.5 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-xs lg:text-sm font-medium text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm transition-all"
             >
               <option value="all">All</option>
-              <option value="agriculture">Agriculture</option>
+              <option value="agriculture">Cropland</option>
+              <option value="agroforestry">Agroforestry</option>
               <option value="urban">Urban</option>
               <option value="forest">Forest</option>
             </select>

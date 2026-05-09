@@ -24,30 +24,35 @@
   "periods": {
     "2021-Jan-Jun": {
       "overall": {
-        "accuracy": 0.9319,
-        "kappa": 0.9092,
-        "mse": 0.2298
+        "accuracy": 0.9338,
+        "kappa": 0.9151,
+        "mse": 0.5496
       },
       "per_class": {
         "Water": {
-          "precision": 0.9811,
-          "recall": 0.9455,
-          "f1": 0.963
+          "precision": 0.98,
+          "recall": 0.9423,
+          "f1": 0.9608
         },
         "Urban": {
-          "precision": 0.9153,
-          "recall": 0.9,
-          "f1": 0.9076
+          "precision": 1.0,
+          "recall": 0.9841,
+          "f1": 0.992
         },
         "Forest": {
-          "precision": 0.9828,
-          "recall": 0.95,
-          "f1": 0.9661
+          "precision": 0.9008,
+          "recall": 0.9752,
+          "f1": 0.9365
         },
-        "Agriculture": {
-          "precision": 0.8615,
-          "recall": 0.9333,
-          "f1": 0.896
+        "Agriland": {
+          "precision": 0.9,
+          "recall": 0.9863,
+          "f1": 0.9412
+        },
+        "Agroforestry": {
+          "precision": 0.9429,
+          "recall": 0.7857,
+          "f1": 0.8571
         }
       },
       "confusion_matrix": {
@@ -55,62 +60,79 @@
           "Water",
           "Urban",
           "Forest",
-          "Agriculture"
+          "Agriland",
+          "Agroforestry"
         ],
         "matrix": [
           [
-            52,
-            1,
-            1,
+            49,
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            62,
+            0,
+            0,
             1
           ],
           [
-            1,
-            54,
-            0,
-            5
-          ],
-          [
             0,
             0,
-            57,
+            118,
+            0,
             3
           ],
           [
+            1,
             0,
-            4,
             0,
-            56
+            72,
+            0
+          ],
+          [
+            0,
+            0,
+            13,
+            5,
+            66
           ]
         ]
       }
     },
     "2021-Jul-Dec": {
       "overall": {
-        "accuracy": 0.9274,
-        "kappa": 0.9031,
-        "mse": 0.2179
+        "accuracy": 0.9286,
+        "kappa": 0.9085,
+        "mse": 0.6097
       },
       "per_class": {
         "Water": {
-          "precision": 0.9455,
-          "recall": 0.9455,
-          "f1": 0.9455
+          "precision": 0.9804,
+          "recall": 0.9615,
+          "f1": 0.9709
         },
         "Urban": {
-          "precision": 0.9821,
-          "recall": 0.9167,
-          "f1": 0.9483
+          "precision": 0.9677,
+          "recall": 0.9524,
+          "f1": 0.96
         },
         "Forest": {
-          "precision": 0.931,
-          "recall": 0.9153,
-          "f1": 0.9231
+          "precision": 0.904,
+          "recall": 0.9339,
+          "f1": 0.9187
         },
-        "Agriculture": {
-          "precision": 0.8615,
-          "recall": 0.9333,
-          "f1": 0.896
+        "Agriland": {
+          "precision": 0.9459,
+          "recall": 0.9589,
+          "f1": 0.9524
+        },
+        "Agroforestry": {
+          "precision": 0.8875,
+          "recall": 0.8554,
+          "f1": 0.8712
         }
       },
       "confusion_matrix": {
@@ -118,62 +140,79 @@
           "Water",
           "Urban",
           "Forest",
-          "Agriculture"
+          "Agriland",
+          "Agroforestry"
         ],
         "matrix": [
           [
-            52,
-            1,
+            50,
+            0,
+            0,
             2,
             0
           ],
           [
+            0,
+            60,
+            0,
+            2,
+            1
+          ],
+          [
+            0,
+            0,
+            113,
+            0,
+            8
+          ],
+          [
             1,
-            55,
+            2,
             0,
-            4
+            70,
+            0
           ],
           [
             0,
             0,
-            54,
-            5
-          ],
-          [
-            2,
+            12,
             0,
-            2,
-            56
+            71
           ]
         ]
       }
     },
     "2022-Jan-Jun": {
       "overall": {
-        "accuracy": 0.9574,
-        "kappa": 0.9432,
-        "mse": 0.1319
+        "accuracy": 0.9542,
+        "kappa": 0.9413,
+        "mse": 0.341
       },
       "per_class": {
         "Water": {
-          "precision": 0.9818,
-          "recall": 0.9818,
-          "f1": 0.9818
+          "precision": 1.0,
+          "recall": 0.9615,
+          "f1": 0.9804
         },
         "Urban": {
-          "precision": 0.9492,
-          "recall": 0.9333,
-          "f1": 0.9412
+          "precision": 0.9839,
+          "recall": 0.9683,
+          "f1": 0.976
         },
         "Forest": {
-          "precision": 1.0,
-          "recall": 0.95,
-          "f1": 0.9744
+          "precision": 0.952,
+          "recall": 0.9835,
+          "f1": 0.9675
         },
-        "Agriculture": {
-          "precision": 0.9062,
-          "recall": 0.9667,
-          "f1": 0.9355
+        "Agriland": {
+          "precision": 0.9,
+          "recall": 0.9863,
+          "f1": 0.9412
+        },
+        "Agroforestry": {
+          "precision": 0.9605,
+          "recall": 0.869,
+          "f1": 0.9125
         }
       },
       "confusion_matrix": {
@@ -181,32 +220,44 @@
           "Water",
           "Urban",
           "Forest",
-          "Agriculture"
+          "Agriland",
+          "Agroforestry"
         ],
         "matrix": [
           [
-            54,
-            1,
+            50,
             0,
+            0,
+            2,
             0
           ],
           [
             0,
-            56,
+            61,
             0,
-            4
+            1,
+            1
           ],
           [
-            1,
             0,
-            57,
+            0,
+            119,
+            0,
             2
           ],
           [
             0,
-            2,
+            1,
             0,
-            58
+            72,
+            0
+          ],
+          [
+            0,
+            0,
+            6,
+            5,
+            73
           ]
         ]
       }

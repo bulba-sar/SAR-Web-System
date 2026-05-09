@@ -43,15 +43,16 @@ function MapMover({ targetLocation }) {
 // }
 
 // CALABARZON STATS CARD
-const CLASS_COLORS = { Water: '#1d4ed8', Urban: '#dc2626', Forest: '#15803d', Agriculture: '#ca8a04' };
-const CLASS_ORDER  = ['Forest', 'Agriculture', 'Urban', 'Water'];
+// Fallback colors used before stats load; authoritative colors come from the backend response.
+const CLASS_COLORS = { Water: '#0000ff', Urban: '#ff0000', Forest: '#008000', Cropland: '#ffff00', Agroforestry: '#90ee90' };
+const CLASS_ORDER  = ['Forest', 'Agroforestry', 'Cropland', 'Urban', 'Water'];
 
-function CalabarzonStatsCard({ year, period }) {
+function CalabarzonStatsCard({ year, period, sarUrl }) {
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!year || !period) return;
+    if (!year || !period || !sarUrl) return;
     let cancelled = false;
     setLoading(true);
     setStats(null);
@@ -60,7 +61,7 @@ function CalabarzonStatsCard({ year, period }) {
       .then(d => { if (!cancelled && d) { setStats(d); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [year, period]);
+  }, [year, period, sarUrl]);
 
   return (
     <div className="absolute bottom-8 left-3 lg:left-4 z-[1000] bg-zinc-900/85 backdrop-blur-sm rounded-xl border border-white/10 p-3 min-w-[170px] transition-all">
@@ -76,17 +77,18 @@ function CalabarzonStatsCard({ year, period }) {
       {stats && CLASS_ORDER.map(cls => {
         const d = stats.classes[cls];
         if (!d) return null;
+        const color = d.color || CLASS_COLORS[cls];
         return (
           <div key={cls} className="mb-1.5">
             <div className="flex justify-between items-center mb-0.5">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: CLASS_COLORS[cls] }} />
+                <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
                 <span className="text-[10px] font-bold text-zinc-300">{cls}</span>
               </div>
               <span className="text-[10px] font-black text-white">{d.percentage}%</span>
             </div>
             <div className="w-full h-1 bg-zinc-700 rounded-full overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${d.percentage}%`, backgroundColor: CLASS_COLORS[cls] }} />
+              <div className="h-full rounded-full" style={{ width: `${d.percentage}%`, backgroundColor: color }} />
             </div>
           </div>
         );
@@ -349,7 +351,7 @@ export default function Map({
 
       </MapContainer>
 
-      <CalabarzonStatsCard year={year} period={period} />
+      <CalabarzonStatsCard year={year} period={period} sarUrl={sarUrl} />
     </div>
   );
 }

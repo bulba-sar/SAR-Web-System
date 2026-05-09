@@ -84,7 +84,7 @@ function AboutModal({ onClose }) {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { cls: 'Forest',      color: '#15803d', desc: 'Closed-canopy and open forest areas, including natural and secondary growth.' },
-                { cls: 'Agriculture', color: '#ca8a04', desc: 'Croplands, farmlands, and active agricultural areas detected via SAR backscatter.' },
+                { cls: 'Cropland', color: '#ca8a04', desc: 'Croplands, farmlands, and active agricultural areas detected via SAR backscatter.' },
                 { cls: 'Urban',       color: '#dc2626', desc: 'Built-up areas including settlements, commercial zones, and infrastructure.' },
                 { cls: 'Water',       color: '#1d4ed8', desc: 'Rivers, lakes, reservoirs, and other permanent or seasonal water bodies.' },
               ].map(({ cls, color, desc }) => (

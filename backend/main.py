@@ -53,14 +53,19 @@ except Exception:
     pass
 
 
-def _local_tile_url(year: int, period: str) -> str | None:
+_LAYER_CLASS_INDEX = {
+    "water": 0, "urban": 1, "forest": 2, "agriculture": 3, "agroforestry": 4,
+}
+
+def _local_tile_url(year: int, period: str, layer: str = "all") -> str | None:
     """Return a local tile URL template if a TIF exists for this year/period, else None."""
     if not _RIO_AVAILABLE:
         return None
     tif = _TIF_DIR / f"{year}-{period}.tif"
     if not tif.exists():
         return None
-    return f"{BACKEND_BASE_URL}/lulc-tiles/{year}/{period}/{{z}}/{{x}}/{{y}}.png"
+    base = f"{BACKEND_BASE_URL}/lulc-tiles/{year}/{period}/{{z}}/{{x}}/{{y}}.png"
+    return base if layer == "all" else f"{base}?layer={layer}"
 
 # --- CREATE TABLES ON STARTUP ---
 try:
@@ -134,10 +139,11 @@ CLASS_MAP = {
     0: "Water",
     1: "Urban",
     2: "Forest",
-    3: "Agriculture"
+    3: "Cropland",
+    4: "Agroforestry",
 }
 
-CLASS_PALETTE = ['#1d4ed8', '#dc2626', '#15803d', '#ca8a04']
+CLASS_PALETTE = ['#1d4ed8', '#dc2626', '#15803d', '#ca8a04', '#7a9e3b']
 
 REFRESH_AFTER_HOURS = 5  # refresh URL before GEE token expires (~6-7 h)
 
@@ -233,7 +239,13 @@ LULC_COLORMAP = {
     0: (29,  78,  216, 255),  # Water
     1: (220, 38,  38,  255),  # Urban
     2: (21,  128, 61,  255),  # Forest
-    3: (202, 138, 4,   255),  # Agriculture
+    3: (202, 138, 4,   255),  # Cropland
+    4: (122, 158, 59,  255),  # Agroforestry
+}
+
+# Cropland-only colormap: only class 3 is visible (gold). All other values → transparent.
+CROPLAND_COLORMAP = {
+    3: (202, 138, 4, 255),  # Cropland (gold)
 }
 
 # Pixel value used to mark "outside CALABARZON boundary" in exported TIFs.
@@ -241,11 +253,15 @@ LULC_COLORMAP = {
 LULC_OUTSIDE_VALUE = 255
 
 
+_TILE_CACHE: dict[tuple, bytes] = {}   # (year, period, z, x, y) → PNG bytes
+_TILE_CACHE_MAX = 4096                 # ~64 MB at ~16 KB/tile
+
+
 @app.get("/lulc-tiles/{year}/{period}/{z}/{x}/{y}.png")
-def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
-    """Serve a 256×256 PNG tile from a local raw-class GeoTIFF.
-    Applies the LULC colormap. Pixels with value 255 (outside CALABARZON)
-    are treated as nodata and rendered fully transparent.
+def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int, layer: str = "all"):
+    """Serve a 256×256 PNG tile from a single-band class GeoTIFF.
+    Applies LULC_COLORMAP (class index 0-4 → RGBA). Value 255 (NoData) is transparent.
+    Optional ?layer=<class> param hides all other classes (alpha=0).
     No GEE dependency — reads directly from backend/tif/.
     """
     if not _RIO_AVAILABLE:
@@ -255,18 +271,78 @@ def serve_lulc_tile(year: int, period: str, z: int, x: int, y: int):
     if not tif_path.exists():
         raise HTTPException(status_code=404, detail=f"TIF not found: {year}-{period}.tif")
 
-    try:
-        # nodata=255 is already stored in the TIF metadata (set by fix_tif_nodata.py).
-        # rio-tiler reads it automatically — no need to pass it as a constructor arg.
-        with RioReader(str(tif_path)) as src:
-            img = src.tile(x, y, z, tilesize=256)
+    class_idx = _LAYER_CLASS_INDEX.get(layer)  # None when layer=="all"
+    if class_idx is not None:
+        cmap = {k: (r, g, b, a if k == class_idx else 0) for k, (r, g, b, a) in LULC_COLORMAP.items()}
+    else:
+        cmap = LULC_COLORMAP
+
+    cache_key = (year, period, z, x, y, layer)
+    if cache_key in _TILE_CACHE:
         return Response(
-            content=img.render(img_format="PNG", colormap=LULC_COLORMAP),
+            content=_TILE_CACHE[cache_key],
             media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    try:
+        with RioReader(str(tif_path)) as src:
+            img = src.tile(x, y, z, tilesize=256, indexes=[1])
+        png = img.render(img_format="PNG", colormap=cmap)
+        if len(_TILE_CACHE) >= _TILE_CACHE_MAX:
+            _TILE_CACHE.pop(next(iter(_TILE_CACHE)))  # evict oldest
+        _TILE_CACHE[cache_key] = png
+        return Response(
+            content=png,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
         )
     except TileOutsideBounds:
         return Response(content=_EMPTY_PNG, media_type="image/png")
-    except Exception:
+    except Exception as e:
+        print(f"[lulc-tile] ERROR {year}/{period} {z}/{x}/{y}: {type(e).__name__}: {e}", flush=True)
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+
+
+_CROPLAND_TILE_CACHE: dict[tuple, bytes] = {}
+
+
+@app.get("/cropland-tiles/{year}/{period}/{z}/{x}/{y}.png")
+def serve_cropland_tile(year: int, period: str, z: int, x: int, y: int):
+    """Serve a 256×256 PNG tile showing only Cropland pixels (class 3) in gold.
+    All other classes and NoData are transparent.
+    """
+    if not _RIO_AVAILABLE:
+        raise HTTPException(status_code=503, detail="rio-tiler not installed")
+
+    tif_path = _TIF_DIR / f"{year}-{period}.tif"
+    if not tif_path.exists():
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+
+    cache_key = (year, period, z, x, y)
+    if cache_key in _CROPLAND_TILE_CACHE:
+        return Response(
+            content=_CROPLAND_TILE_CACHE[cache_key],
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    try:
+        with RioReader(str(tif_path)) as src:
+            img = src.tile(x, y, z, tilesize=256, indexes=[1])
+        png = img.render(img_format="PNG", colormap=CROPLAND_COLORMAP)
+        if len(_CROPLAND_TILE_CACHE) >= 2048:
+            _CROPLAND_TILE_CACHE.pop(next(iter(_CROPLAND_TILE_CACHE)))
+        _CROPLAND_TILE_CACHE[cache_key] = png
+        return Response(
+            content=png,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    except TileOutsideBounds:
+        return Response(content=_EMPTY_PNG, media_type="image/png")
+    except Exception as e:
+        print(f"[cropland-tile] ERROR {year}/{period} {z}/{x}/{y}: {type(e).__name__}: {e}", flush=True)
         return Response(content=_EMPTY_PNG, media_type="image/png")
 
 
@@ -389,15 +465,22 @@ def get_metrics_job_status(current_user: models.User = Depends(auth_module.get_c
 @app.get("/api/v1/analytics/calabarzon-stats/{year}/{period}")
 def get_calabarzon_stats(year: int, period: str, db: Session = Depends(get_db)):
     """Return pixel-count stats per LULC class for the full CALABARZON TIF.
-    Results are cached in Supabase (lulc_stats_cache) after the first computation,
-    so subsequent requests for the same year/period are instant DB reads.
-    Falls back to TIF-only computation if the DB is unavailable.
+    TIFs are single-band uint8: class indices 0-4, NoData=255.
+    Results are cached after the first computation.
     """
     import json
-    import numpy as np
     import rasterio
 
-    cache_key = f"{year}-{period}"
+    cache_key = f"v3-{year}-{period}"  # v3 = single-band integer class stats
+
+    CLASS_INDEX_TO_NAME = {0: "Water", 1: "Urban", 2: "Forest", 3: "Cropland", 4: "Agroforestry"}
+    CLASS_HEX = {
+        CLASS_INDEX_TO_NAME[idx]: "#{:02x}{:02x}{:02x}".format(r, g, b)
+        for idx, (r, g, b, _) in LULC_COLORMAP.items()
+        if idx in CLASS_INDEX_TO_NAME
+    }
+
+    tif_path = _TIF_DIR / f"{year}-{period}.tif"
 
     # ── 1. Try cache hit ──────────────────────────────────────────────────────
     try:
@@ -405,33 +488,51 @@ def get_calabarzon_stats(year: int, period: str, db: Session = Depends(get_db)):
             models.LulcStatsCache.cache_key == cache_key
         ).first()
         if cached:
-            return {
-                "year": year,
-                "period": period,
-                "total_pixels": cached.total_pixels,
-                "classes": json.loads(cached.stats_json),
-                "cached": True,
-            }
+            if tif_path.exists():
+                tif_mtime = datetime.fromtimestamp(os.path.getmtime(str(tif_path)), tz=timezone.utc).replace(tzinfo=None)
+                if tif_mtime > cached.created_at:
+                    try:
+                        db.delete(cached)
+                        db.commit()
+                    except Exception:
+                        db.rollback()
+                    cached = None
+            if cached:
+                classes = json.loads(cached.stats_json)
+                for cls_name, cls_data in classes.items():
+                    cls_data["color"] = CLASS_HEX.get(cls_name, "#888888")
+                return {
+                    "year": year, "period": period,
+                    "total_pixels": cached.total_pixels,
+                    "classes": classes, "cached": True,
+                }
     except Exception:
         pass  # DB unavailable — fall through to TIF computation
 
     # ── 2. Compute from TIF ───────────────────────────────────────────────────
-    tif_path = _TIF_DIR / f"{year}-{period}.tif"
     if not tif_path.exists():
         raise HTTPException(status_code=404, detail=f"TIF not found: {year}-{period}.tif")
 
+    from rasterio.enums import Resampling as _Resampling
     with rasterio.open(str(tif_path)) as src:
-        data = src.read(1)
+        # Downsample 8× to avoid OOM on large TIFs; stats accuracy stays within ~1%.
+        scale = 8
+        out_h = max(1, src.height // scale)
+        out_w = max(1, src.width  // scale)
+        band = src.read(
+            1,
+            out_shape=(out_h, out_w),
+            resampling=_Resampling.nearest,
+        )
 
-    class_names = {0: "Water", 1: "Urban", 2: "Forest", 3: "Agriculture"}
-    counts = {name: int(np.sum(data == val)) for val, name in class_names.items()}
-    total = sum(counts.values())
+    counts = {name: int((band == idx).sum()) for idx, name in CLASS_INDEX_TO_NAME.items()}
+    total  = sum(counts.values())
 
     if total == 0:
         raise HTTPException(status_code=404, detail="No valid pixels in TIF")
 
     classes_payload = {
-        name: {"pixel_count": cnt, "percentage": round(cnt / total * 100, 1)}
+        name: {"pixel_count": cnt, "percentage": round(cnt / total * 100, 1), "color": CLASS_HEX[name]}
         for name, cnt in counts.items()
     }
 
@@ -447,11 +548,10 @@ def get_calabarzon_stats(year: int, period: str, db: Session = Depends(get_db)):
         db.add(entry)
         db.commit()
     except Exception:
-        db.rollback()  # Cache write failed — still return the computed result
+        db.rollback()
 
     return {
-        "year": year,
-        "period": period,
+        "year": year, "period": period,
         "total_pixels": total,
         "classes": classes_payload,
         "cached": False,
@@ -464,12 +564,10 @@ def get_calabarzon_stats(year: int, period: str, db: Session = Depends(get_db)):
 
 @app.get("/get-sar-map/{year}/{period}")
 def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depends(get_db)):
-    # Local TIF takes priority — instant tiles, no GEE needed.
-    # Only used for layer="all" since the visualized TIF has all classes pre-colored.
-    if layer == "all":
-        local_url = _local_tile_url(year, period)
-        if local_url:
-            return {"tile_url": local_url, "from_cache": True, "source": "local"}
+    # Local TIF takes priority for all layers — instant tiles, no GEE needed.
+    local_url = _local_tile_url(year, period, layer)
+    if local_url:
+        return {"tile_url": local_url, "from_cache": True, "source": "local"}
 
     cache_key = f"sar:{year}:{period}:{layer}"
 
@@ -494,8 +592,10 @@ def get_sar_map(year: int, period: str, layer: str = "all", db: Session = Depend
             sar_image = sar_image.updateMask(sar_image.eq(2))
         elif layer == "agriculture":
             sar_image = sar_image.updateMask(sar_image.eq(3))
+        elif layer == "agroforestry":
+            sar_image = sar_image.updateMask(sar_image.eq(4))
 
-        vis_params = {'min': 0, 'max': 3, 'palette': CLASS_PALETTE}
+        vis_params = {'min': 0, 'max': 4, 'palette': CLASS_PALETTE}
         map_id = sar_image.getMapId(vis_params)
         tile_url = map_id['tile_fetcher'].url_format
         _set_cached_tile(db, cache_key, tile_url)

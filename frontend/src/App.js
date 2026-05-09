@@ -34,7 +34,6 @@ export default function App() {
   const [sarUrl, setSarUrl] = useState(null);
   const [basemapUrl, setBasemapUrl] = useState(null); 
   const [agriLayerUrl, setAgriLayerUrl] = useState(null);
-  const [cropSuitabilityUrl, setCropSuitabilityUrl] = useState(null); 
   
   // Map Configurations
   const [year, setYear] = useState(2025);
@@ -153,25 +152,10 @@ export default function App() {
     fetchMaps();
   }, [year, period, activeLayer]);
 
-  // --- 3. Fetch Crop Suitability Map ---
-  useEffect(() => {
-    const fetchCropSuitability = async () => {
-      if (!showCropSuitability) {
-        setCropSuitabilityUrl(null);
-        return;
-      }
-      
-      try {
-        const response = await fetch(`${API}/get-crop-suitability/${year}/${period}`);
-        const data = await response.json();
-        setCropSuitabilityUrl(data.tile_url || null);
-      } catch (error) {
-        console.error("Cannot connect to FastAPI for Crop Suitability.", error);
-      }
-    };
-
-    fetchCropSuitability();
-  }, [year, period, showCropSuitability]);
+  // Crop suitability: serve directly from local TIF (cropland-only tile layer, no GEE needed)
+  const cropSuitabilityUrl = showCropSuitability
+    ? `${API}/cropland-tiles/${year}/${period}/{z}/{x}/{y}.png`
+    : null;
 
   // --- 4. Fetch Agricultural Layer ---
   useEffect(() => {

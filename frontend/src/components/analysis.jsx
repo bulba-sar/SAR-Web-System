@@ -18,10 +18,11 @@ const CLASS_COLORS = {
   Water: '#1d4ed8',
   Urban: '#dc2626',
   Forest: '#15803d',
-  Agriculture: '#ca8a04'
+  Cropland: '#ca8a04',
+  Agroforestry: '#90ee90'
 };
 
-const CLASS_ORDER = ['Water', 'Urban', 'Forest', 'Agriculture'];
+const CLASS_ORDER = ['Water', 'Urban', 'Forest', 'Agroforestry', 'Cropland'];
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -436,10 +437,11 @@ const CropAreaTooltip = ({ active, payload }) => {
 
 const COMPARE_PERIODS = ['Jan-Jun', 'Jul-Dec'];
 const COMPARE_CLASSES = [
-  { value: 'all',         label: 'All Classes' },
-  { value: 'urban',       label: 'Urban',        color: '#dc2626' },
-  { value: 'forest',      label: 'Forest',       color: '#15803d' },
-  { value: 'agriculture', label: 'Agriculture',  color: '#ca8a04' },
+  { value: 'all',           label: 'All Classes' },
+  { value: 'urban',         label: 'Urban',         color: '#dc2626' },
+  { value: 'forest',        label: 'Forest',        color: '#15803d' },
+  { value: 'agriculture',   label: 'Cropland',      color: '#ca8a04' },
+  { value: 'agroforestry',  label: 'Agroforestry',  color: '#90ee90' },
 ];
 
 // Stores the Leaflet map instance in a ref so siblings can read it
@@ -1687,7 +1689,7 @@ export default function Analysis({ sarUrl, basemapUrl, drawnPolygon, setDrawnPol
                           <svg className="w-4 h-4 text-[#2d6a4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                           Crop Area Coverage
                         </h4>
-                        <p className="text-[10px] lg:text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Agriculture pixels present in both semesters</p>
+                        <p className="text-[10px] lg:text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Cropland pixels present in both semesters</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div title="Average crop area percentage across all analyzed years" className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 rounded-lg px-3 py-1.5 text-center cursor-help">

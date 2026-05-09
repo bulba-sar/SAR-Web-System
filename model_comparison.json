@@ -105,7 +105,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.62
+          "train_time_sec": 0.61
         },
         "2021-Jul-Dec": {
           "overall": {
@@ -198,7 +198,7 @@
               0.871
             ]
           },
-          "train_time_sec": 0.6
+          "train_time_sec": 0.61
         },
         "2022-Jan-Jun": {
           "overall": {
@@ -291,7 +291,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.6
+          "train_time_sec": 0.59
         },
         "2022-Jul-Dec": {
           "overall": {
@@ -384,7 +384,7 @@
               0.9305
             ]
           },
-          "train_time_sec": 0.6
+          "train_time_sec": 0.59
         },
         "2023-Jan-Jun": {
           "overall": {
@@ -570,7 +570,7 @@
               0.8984
             ]
           },
-          "train_time_sec": 0.6
+          "train_time_sec": 0.61
         },
         "2024-Jan-Jun": {
           "overall": {
@@ -663,7 +663,7 @@
               0.8877
             ]
           },
-          "train_time_sec": 0.59
+          "train_time_sec": 0.61
         },
         "2024-Jul-Dec": {
           "overall": {
@@ -756,7 +756,7 @@
               0.8798
             ]
           },
-          "train_time_sec": 0.62
+          "train_time_sec": 0.59
         },
         "2025-Jan-Jun": {
           "overall": {
@@ -849,7 +849,7 @@
               0.8717
             ]
           },
-          "train_time_sec": 0.68
+          "train_time_sec": 0.63
         },
         "2025-Jul-Dec": {
           "overall": {
@@ -1130,7 +1130,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.64
+          "train_time_sec": 0.55
         },
         "2021-Jul-Dec": {
           "overall": {
@@ -1223,7 +1223,7 @@
               0.8817
             ]
           },
-          "train_time_sec": 0.39
+          "train_time_sec": 0.36
         },
         "2022-Jan-Jun": {
           "overall": {
@@ -1502,7 +1502,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.41
+          "train_time_sec": 0.42
         },
         "2023-Jul-Dec": {
           "overall": {
@@ -1688,7 +1688,7 @@
               0.8877
             ]
           },
-          "train_time_sec": 0.43
+          "train_time_sec": 0.41
         },
         "2024-Jul-Dec": {
           "overall": {
@@ -1781,7 +1781,7 @@
               0.8798
             ]
           },
-          "train_time_sec": 0.4
+          "train_time_sec": 0.37
         },
         "2025-Jan-Jun": {
           "overall": {
@@ -1874,7 +1874,7 @@
               0.877
             ]
           },
-          "train_time_sec": 0.39
+          "train_time_sec": 0.34
         },
         "2025-Jul-Dec": {
           "overall": {
@@ -1967,7 +1967,7 @@
               0.861
             ]
           },
-          "train_time_sec": 0.39
+          "train_time_sec": 0.36
         }
       },
       "average": {
@@ -2248,7 +2248,7 @@
               0.8602
             ]
           },
-          "train_time_sec": 0.02
+          "train_time_sec": 0.01
         },
         "2022-Jan-Jun": {
           "overall": {
@@ -2341,7 +2341,7 @@
               0.8824
             ]
           },
-          "train_time_sec": 0.02
+          "train_time_sec": 0.01
         },
         "2022-Jul-Dec": {
           "overall": {
@@ -2527,7 +2527,7 @@
               0.9037
             ]
           },
-          "train_time_sec": 0.01
+          "train_time_sec": 0.02
         },
         "2023-Jul-Dec": {
           "overall": {
@@ -2992,7 +2992,7 @@
               0.877
             ]
           },
-          "train_time_sec": 0.01
+          "train_time_sec": 0.02
         }
       },
       "average": {
