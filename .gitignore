@@ -1,6 +1,7 @@
 # --- BACKEND ---
 backend/tif/*.tif
 backend/basemap/*.tif
+backend/basemap/backup/*.tif
 backend/venv/
 backend/.venv/
 backend/__pycache__/
