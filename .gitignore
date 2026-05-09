@@ -1,5 +1,5 @@
 # --- BACKEND ---
-backend/tif/*.tif
+backend/tif/
 backend/basemap/*.tif
 backend/basemap/backup/*.tif
 backend/venv/
