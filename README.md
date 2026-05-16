@@ -426,7 +426,4 @@ if user.role == "Admin":
 ---
 
 **Last Updated:** 2026-05-16  
-**System Version:** 1.0  
-**Prepared for:** DENR CALABARZON LULC Analysis Platform  
-**Contact:** bulbarsar03@gmail.com
-
+**System Version:** 1.0
